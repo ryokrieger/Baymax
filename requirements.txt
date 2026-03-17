@@ -16,6 +16,11 @@ lime
 
 # UTILITIES
 joblib
+django
+psycopg2-binary
+python-dotenv
+django-allauth
+gunicorn
 
 # JUPYTER NOTEBOOK SUPPORT
 jupyterlab
