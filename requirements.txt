@@ -1,6 +1,6 @@
 # CORE DATA SCIENCE & COMPUTING
-pandas
 numpy
+pandas
 python-dateutil
 
 # VISUALIZATION
@@ -11,18 +11,28 @@ seaborn
 scikit-learn
 scipy
 
-# EXPLAINABILITY
+# MODEL EXPLAINABILITY
 lime
 
-# UTILITIES
-joblib
+# WEB FRAMEWORK
 django
-psycopg2-binary
-python-dotenv
 django-allauth
 gunicorn
 
+# DATABASE
+psycopg2-binary
+
+# AUTHENTICATION & SECURITY
+PyJWT
+cryptography
+
+# ENVIRONMENT & CONFIGURATION
+python-dotenv
+
+# PARALLELIZATION & MODEL SAVING
+joblib
+
 # JUPYTER NOTEBOOK SUPPORT
+ipywidgets
 jupyterlab
 notebook
-ipywidgets

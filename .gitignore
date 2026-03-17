@@ -1,2 +1,19 @@
+# Project folder
 toby/
+
+# Environment variables
 .env
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+env/
+
+# OS files
+.DS_Store
+
+# Logs
+*.log
