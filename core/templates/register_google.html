@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baymax — Complete Your Registration</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'styles/access.css' %}">
+</head>
+<body>
+
+<div class="page-wrapper">
+
+    <!-- ── Brand Mark ─────────────────────────────────────── -->
+    <header class="site-header">
+        <a href="{% url 'landing' %}" class="brand-logo">🏥 BAYMAX</a>
+        <p class="brand-tagline">University Mental Health Tracking System</p>
+    </header>
+
+    <!-- ── Auth Card ──────────────────────────────────────── -->
+    <main class="auth-card" role="main">
+
+        <!-- Back to landing (Google flow — no obvious "back to login") -->
+        <a href="{% url 'landing' %}" class="back-link">
+            &#8592; Back to home
+        </a>
+
+        <!-- Role badge -->
+        <div class="auth-card__role-badge">Student — Google Sign-In</div>
+
+        <!-- Card heading -->
+        <h1 class="auth-card__title">Almost there!</h1>
+        <p class="auth-card__subtitle">
+            We just need a few more details to finish setting up your account.
+        </p>
+
+        <!-- ── Flash Messages ─────────────────────────────── -->
+        {% if messages %}
+        <ul class="flash-list">
+            {% for message in messages %}
+            <li class="flash flash--{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <!-- ── Google Account Info Box ────────────────────── -->
+        <!--
+            Confirms to the student which Google account they used,
+            and shows their name as retrieved from Google.
+            Both fields are read-only — they are set by Google OAuth
+            and cannot be changed here.
+        -->
+        <div class="google-info-box">
+            <strong>Signed in with Google:</strong>
+            {{ google_full_name }} &mdash; {{ google_email }}
+        </div>
+
+        <!-- ── Completion Form ─────────────────────────────── -->
+        <!--
+            The student must provide three extra pieces of information
+            that Google does not supply:
+              1. Student ID   — their university registration number
+              2. Department   — their faculty / programme
+              3. Password     — used for future email/password logins
+                                (Google Sign-In continues to work too)
+
+            google_email and google_full_name are passed as hidden
+            fields so the view can use them on POST without relying
+            on allauth session state.
+        -->
+        <form method="POST" action="{% url 'register_google' %}" novalidate>
+            {% csrf_token %}
+
+            <!-- Hidden: carry Google-supplied values through POST -->
+            <input type="hidden" name="google_email"     value="{{ google_email }}">
+            <input type="hidden" name="google_full_name" value="{{ google_full_name }}">
+
+            <!-- University Details -->
+            <p class="form-section-title">University Details</p>
+
+            <div class="form-group">
+                <label for="full_name_display">Full Name (from Google)</label>
+                <input
+                    type="text"
+                    id="full_name_display"
+                    value="{{ google_full_name }}"
+                    readonly
+                    aria-describedby="name-hint"
+                >
+                <p class="form-hint" id="name-hint">
+                    This is the name attached to your Google account.
+                </p>
+            </div>
+
+            <div class="form-group">
+                <label for="email_display">Email (from Google)</label>
+                <input
+                    type="email"
+                    id="email_display"
+                    value="{{ google_email }}"
+                    readonly
+                    aria-describedby="email-hint"
+                >
+                <p class="form-hint" id="email-hint">
+                    This is the email address used to sign in with Google.
+                </p>
+            </div>
+
+            <div class="form-group">
+                <label for="student_id">Student ID</label>
+                <input
+                    type="text"
+                    id="student_id"
+                    name="student_id"
+                    value="{{ student_id|default:'' }}"
+                    placeholder="e.g. 221-1381-042"
+                    autocomplete="off"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="department">Department</label>
+                <select id="department" name="department" required>
+                    <option value="" disabled {% if not department %}selected{% endif %}>
+                        — Select your department —
+                    </option>
+                    <option value="CSE" {% if department == "CSE" %}selected{% endif %}>
+                        CSE — Computer Science &amp; Engineering
+                    </option>
+                    <option value="EEE" {% if department == "EEE" %}selected{% endif %}>
+                        EEE — Electrical &amp; Electronic Engineering
+                    </option>
+                    <option value="ENG" {% if department == "ENG" %}selected{% endif %}>
+                        ENG — English
+                    </option>
+                    <option value="ECO" {% if department == "ECO" %}selected{% endif %}>
+                        ECO — Economics
+                    </option>
+                    <option value="BBA" {% if department == "BBA" %}selected{% endif %}>
+                        BBA — Business Administration
+                    </option>
+                </select>
+            </div>
+
+            <!-- Set a Password -->
+            <p class="form-section-title">Set a Password</p>
+
+            <!--
+                A password is required even for Google-registered students
+                so they can also log in using email/password if needed,
+                and for account security.
+            -->
+            <div class="form-group">
+                <label for="password">Choose a Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Choose a strong password"
+                    autocomplete="new-password"
+                    required
+                >
+                <p class="password-hint">At least 8 characters.</p>
+            </div>
+
+            <div class="form-group">
+                <label for="confirm">Confirm Password</label>
+                <input
+                    type="password"
+                    id="confirm"
+                    name="confirm"
+                    placeholder="Repeat your password"
+                    autocomplete="new-password"
+                    required
+                >
+            </div>
+
+            <button type="submit" class="btn-submit">
+                Complete Registration
+            </button>
+        </form>
+
+        <!-- ── Card Footer ─────────────────────────────────── -->
+        <div class="auth-card__footer">
+            Already have an account?
+            <a href="{% url 'login' %}?role=student">Sign in here</a>
+        </div>
+
+    </main><!-- /.auth-card -->
+
+    <footer class="page-footer">
+        Baymax &mdash; University Mental Health Tracking System
+    </footer>
+
+</div><!-- /.page-wrapper -->
+
+</body>
+</html>

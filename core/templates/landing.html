@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baymax — Who Are You?</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'styles/access.css' %}">
+</head>
+<body>
+
+<div class="landing-wrapper">
+
+    <!-- ── Flash Messages ─────────────────────────────────── -->
+    {% if messages %}
+    <ul class="flash-list" style="width:100%; max-width:760px;">
+        {% for message in messages %}
+        <li class="flash flash--{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <!-- ── Hero Section ───────────────────────────────────── -->
+    <header class="landing-hero">
+        <div class="landing-hero__title">🏥 BAYMAX</div>
+        <p class="landing-hero__question">Who are you?</p>
+        <p class="landing-hero__sub">
+            Select your role to continue to the login page.
+        </p>
+    </header>
+
+    <!-- ── Role Selection Grid ────────────────────────────── -->
+    <!--
+        Each card is an <a> that navigates to /login/?role=<role>.
+        The login view reads the ?role= query parameter to determine
+        which role's login form to show.
+    -->
+    <nav class="role-grid" aria-label="Role selection">
+
+        <!-- Student -->
+        <a href="{% url 'login' %}?role=student"
+           class="role-card role-card--student"
+           aria-label="Log in as a Student">
+            <span class="role-card__icon">🎓</span>
+            <span class="role-card__label">Student</span>
+            <span class="role-card__desc">
+                Take your mental health assessment and track your wellbeing.
+            </span>
+        </a>
+
+        <!-- Mental Health Professional -->
+        <a href="{% url 'login' %}?role=professional"
+           class="role-card role-card--prof"
+           aria-label="Log in as a Mental Health Professional">
+            <span class="role-card__icon">🧠</span>
+            <span class="role-card__label">Mental Health Professional</span>
+            <span class="role-card__desc">
+                Manage student appointments and monitor campus mental health.
+            </span>
+        </a>
+
+        <!-- University Authority -->
+        <a href="{% url 'login' %}?role=authority"
+           class="role-card role-card--authority"
+           aria-label="Log in as a University Authority">
+            <span class="role-card__icon">🏛️</span>
+            <span class="role-card__label">University Authority</span>
+            <span class="role-card__desc">
+                View aggregated mental health data and manage university events.
+            </span>
+        </a>
+
+        <!-- Admin IT -->
+        <a href="{% url 'login' %}?role=admin_it"
+           class="role-card role-card--admin"
+           aria-label="Log in as Admin IT">
+            <span class="role-card__icon">⚙️</span>
+            <span class="role-card__label">Admin IT</span>
+            <span class="role-card__desc">
+                Manage all user accounts, semesters, appointments, and events.
+            </span>
+        </a>
+
+    </nav>
+
+    <!-- ── Page Footer ────────────────────────────────────── -->
+    <footer class="page-footer">
+        Baymax &mdash; University Mental Health Tracking System
+    </footer>
+
+</div><!-- /.landing-wrapper -->
+
+</body>
+</html>

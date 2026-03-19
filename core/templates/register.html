@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baymax — Student Registration</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'styles/access.css' %}">
+</head>
+<body>
+
+<div class="page-wrapper">
+
+    <!-- ── Brand Mark ─────────────────────────────────────── -->
+    <header class="site-header">
+        <a href="{% url 'landing' %}" class="brand-logo">🏥 BAYMAX</a>
+        <p class="brand-tagline">University Mental Health Tracking System</p>
+    </header>
+
+    <!-- ── Auth Card ──────────────────────────────────────── -->
+    <main class="auth-card" role="main">
+
+        <!-- Back to student login -->
+        <a href="{% url 'login' %}?role=student" class="back-link">
+            &#8592; Back to login
+        </a>
+
+        <!-- Role badge -->
+        <div class="auth-card__role-badge">Student</div>
+
+        <!-- Card heading -->
+        <h1 class="auth-card__title">Create your account.</h1>
+        <p class="auth-card__subtitle">
+            Register to access your mental health assessment and support resources.
+        </p>
+
+        <!-- ── Flash Messages ─────────────────────────────── -->
+        {% if messages %}
+        <ul class="flash-list">
+            {% for message in messages %}
+            <li class="flash flash--{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <!-- ── Google Sign-In Option ──────────────────────── -->
+        <!--
+            Students can alternatively register via Google.
+            After OAuth, allauth redirects to /register/google/
+            where the student supplies student ID, department,
+            and a password to complete their account.
+        -->
+        <a href="/accounts/google/login/?process=login&next=/register/google/"
+           class="btn-google"
+           aria-label="Register with Google">
+            <!-- Google "G" SVG icon -->
+            <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"
+                 aria-hidden="true" focusable="false">
+                <path fill="#EA4335"
+                      d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9
+                         2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56
+                         13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4"
+                      d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58
+                         2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18
+                         7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05"
+                      d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92
+                         16.46 0 20.12 0 24c0 3.88.92 7.54 2.56
+                         10.78l7.97-6.19z"/>
+                <path fill="#34A853"
+                      d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15
+                         1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98
+                         6.19C6.51 42.62 14.62 48 24 48z"/>
+                <path fill="none" d="M0 0h48v48H0z"/>
+            </svg>
+            Register with Google
+        </a>
+
+        <div class="divider"><span>or register with email</span></div>
+
+        <!-- ── Manual Registration Form ───────────────────── -->
+        <!--
+            All five fields are required.
+            The view preserves full_name, student_id, department,
+            and email on validation failure so the user does not
+            need to retype them.
+        -->
+        <form method="POST" action="{% url 'register' %}" novalidate>
+            {% csrf_token %}
+
+            <!-- Personal Information -->
+            <p class="form-section-title">Personal Information</p>
+
+            <div class="form-group">
+                <label for="full_name">Full Name</label>
+                <input
+                    type="text"
+                    id="full_name"
+                    name="full_name"
+                    value="{{ full_name|default:'' }}"
+                    placeholder="e.g. Farhan Shahid"
+                    autocomplete="name"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="student_id">Student ID</label>
+                <input
+                    type="text"
+                    id="student_id"
+                    name="student_id"
+                    value="{{ student_id|default:'' }}"
+                    placeholder="e.g. 221-1381-042"
+                    autocomplete="off"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="department">Department</label>
+                <select id="department" name="department" required>
+                    <option value="" disabled {% if not department %}selected{% endif %}>
+                        — Select your department —
+                    </option>
+                    <option value="CSE" {% if department == "CSE" %}selected{% endif %}>
+                        CSE — Computer Science &amp; Engineering
+                    </option>
+                    <option value="EEE" {% if department == "EEE" %}selected{% endif %}>
+                        EEE — Electrical &amp; Electronic Engineering
+                    </option>
+                    <option value="ENG" {% if department == "ENG" %}selected{% endif %}>
+                        ENG — English
+                    </option>
+                    <option value="ECO" {% if department == "ECO" %}selected{% endif %}>
+                        ECO — Economics
+                    </option>
+                    <option value="BBA" {% if department == "BBA" %}selected{% endif %}>
+                        BBA — Business Administration
+                    </option>
+                </select>
+            </div>
+
+            <!-- Account Credentials -->
+            <p class="form-section-title">Account Credentials</p>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value="{{ email|default:'' }}"
+                    placeholder="you@university.edu"
+                    autocomplete="email"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Choose a strong password"
+                    autocomplete="new-password"
+                    required
+                >
+                <p class="password-hint">At least 8 characters.</p>
+            </div>
+
+            <div class="form-group">
+                <label for="confirm">Confirm Password</label>
+                <input
+                    type="password"
+                    id="confirm"
+                    name="confirm"
+                    placeholder="Repeat your password"
+                    autocomplete="new-password"
+                    required
+                >
+            </div>
+
+            <button type="submit" class="btn-submit">
+                Create Account
+            </button>
+        </form>
+
+        <!-- ── Card Footer ─────────────────────────────────── -->
+        <div class="auth-card__footer">
+            Already have an account?
+            <a href="{% url 'login' %}?role=student">Sign in here</a>
+        </div>
+
+    </main><!-- /.auth-card -->
+
+    <footer class="page-footer">
+        Baymax &mdash; University Mental Health Tracking System
+    </footer>
+
+</div><!-- /.page-wrapper -->
+
+</body>
+</html>
