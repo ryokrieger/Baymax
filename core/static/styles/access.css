@@ -1,0 +1,648 @@
+/*
+ * access.css — Baymax Authentication & Landing Page Styles
+ * Shared by:  landing.html, login.html, register.html, register_google.html
+ */
+
+/* ═══════════════════════════════════════════════════════════
+   GOOGLE FONTS IMPORT
+   ═══════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Fjalla+One&family=Poppins:wght@400;500;600;700&display=swap');
+
+
+/* ═══════════════════════════════════════════════════════════
+   CSS CUSTOM PROPERTIES (design tokens)
+   ═══════════════════════════════════════════════════════════ */
+:root {
+    --yellow        : #F5C518;
+    --yellow-hover  : #e6b800;
+    --yellow-light  : #fffbe6;
+    --teal          : #0EA5E9;
+    --teal-hover    : #0284c7;
+    --red           : #EF4444;
+    --green         : #22C55E;
+    --black         : #000000;
+    --white         : #ffffff;
+    --cream         : #fffae5;
+    --grey-light    : #f0ece0;
+    --grey-mid      : #d1c9b0;
+    --grey-text     : #555555;
+    --shadow-hard   : 6px 6px 0px var(--black);
+    --shadow-medium : 4px 4px 0px var(--black);
+    --shadow-small  : 3px 3px 0px var(--black);
+    --border        : 4px solid var(--black);
+    --border-thin   : 2px solid var(--black);
+    --radius        : 4px;
+    --font-body     : 'Poppins', 'Segoe UI', sans-serif;
+    --font-heading  : 'Fjalla One', 'Arial Black', sans-serif;
+    --transition    : 0.15s ease;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   RESET & BASE
+   ═══════════════════════════════════════════════════════════ */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family   : var(--font-body);
+    font-size     : 1rem;
+    line-height   : 1.6;
+    color         : var(--black);
+    min-height    : 100vh;
+
+    /* Warm radial gradient background */
+    background-color : #ffe066;
+    background-image :
+        radial-gradient(circle at 50% 40%, #ffe066 20%, #fffae5 80%),
+        /* Subtle dot overlay for texture */
+        radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px);
+    background-size : 100% 100%, 24px 24px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   PAGE WRAPPER
+   Used on login.html, register.html, register_google.html
+   ═══════════════════════════════════════════════════════════ */
+.page-wrapper {
+    display         : flex;
+    flex-direction  : column;
+    align-items     : center;
+    justify-content : flex-start;
+    min-height      : 100vh;
+    padding         : 40px 16px 60px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   SITE HEADER — small brand mark above the form
+   ═══════════════════════════════════════════════════════════ */
+.site-header {
+    text-align    : center;
+    margin-bottom : 28px;
+}
+
+.site-header .brand-logo {
+    font-family : var(--font-heading);
+    font-size   : 2.2rem;
+    letter-spacing : 2px;
+    color       : var(--black);
+    text-decoration : none;
+    display     : inline-block;
+    background  : var(--yellow);
+    border      : var(--border);
+    box-shadow  : var(--shadow-hard);
+    padding     : 6px 20px;
+    border-radius : var(--radius);
+    transition  : transform var(--transition), box-shadow var(--transition);
+}
+
+.site-header .brand-logo:hover {
+    transform  : translateY(-2px);
+    box-shadow : 8px 8px 0px var(--black);
+}
+
+.site-header .brand-tagline {
+    font-size  : 0.85rem;
+    color      : var(--grey-text);
+    margin-top : 6px;
+    font-weight: 500;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   AUTH CARD — the white/cream centred container
+   max-width 600px, hard shadow, bold border
+   ═══════════════════════════════════════════════════════════ */
+.auth-card {
+    width         : 100%;
+    max-width     : 600px;
+    background    : var(--cream);
+    border        : var(--border);
+    box-shadow    : var(--shadow-hard);
+    border-radius : var(--radius);
+    padding       : 40px 44px;
+}
+
+.auth-card__title {
+    font-family    : var(--font-heading);
+    font-size      : 1.9rem;
+    letter-spacing : 1px;
+    margin-bottom  : 4px;
+    line-height    : 1.2;
+}
+
+.auth-card__subtitle {
+    font-size     : 0.9rem;
+    color         : var(--grey-text);
+    margin-bottom : 28px;
+    font-weight   : 500;
+}
+
+/* Role badge shown in the card header on the login page */
+.auth-card__role-badge {
+    display      : inline-block;
+    background   : var(--yellow);
+    border       : var(--border-thin);
+    box-shadow   : var(--shadow-small);
+    border-radius: var(--radius);
+    padding      : 2px 12px;
+    font-size    : 0.8rem;
+    font-weight  : 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom : 16px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   FLASH MESSAGES
+   ═══════════════════════════════════════════════════════════ */
+.flash-list {
+    list-style    : none;
+    margin-bottom : 20px;
+}
+
+.flash {
+    padding       : 10px 16px;
+    border        : var(--border-thin);
+    border-radius : var(--radius);
+    font-size     : 0.875rem;
+    font-weight   : 500;
+    margin-bottom : 8px;
+    box-shadow    : var(--shadow-small);
+}
+
+.flash--success { background: #dcfce7; border-color: var(--green);  color: #166534; }
+.flash--error   { background: #fee2e2; border-color: var(--red);    color: #991b1b; }
+.flash--info    { background: #dbeafe; border-color: var(--teal);   color: #1e40af; }
+.flash--warning { background: #fef9c3; border-color: var(--yellow); color: #854d0e; }
+
+
+/* ═══════════════════════════════════════════════════════════
+   FORM ELEMENTS
+   ═══════════════════════════════════════════════════════════ */
+.form-group {
+    margin-bottom : 18px;
+}
+
+.form-group label {
+    display       : block;
+    font-size     : 0.85rem;
+    font-weight   : 700;
+    margin-bottom : 6px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group select {
+    width         : 100%;
+    padding       : 10px 14px;
+    font-family   : var(--font-body);
+    font-size     : 0.95rem;
+    background    : var(--yellow-light);
+    border        : var(--border-thin);
+    border-radius : var(--radius);
+    box-shadow    : var(--shadow-small);
+    outline       : none;
+    transition    : border-color var(--transition), box-shadow var(--transition);
+    color         : var(--black);
+}
+
+.form-group select {
+    /* Custom dropdown arrow */
+    appearance          : none;
+    -webkit-appearance  : none;
+    background-image    : url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23000' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat   : no-repeat;
+    background-position : right 14px center;
+    padding-right       : 38px;
+    cursor              : pointer;
+}
+
+.form-group select option[value=""][disabled] {
+    color : #aaa;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color : var(--teal);
+    box-shadow   : 3px 3px 0px var(--teal);
+    background   : var(--white);
+}
+
+.form-group input::placeholder {
+    color       : #aaa;
+    font-weight : 400;
+}
+
+/* Read-only field (used in register_google for prefilled email/name) */
+.form-group input[readonly] {
+    background : var(--grey-light);
+    color      : var(--grey-text);
+    cursor     : not-allowed;
+    box-shadow : none;
+}
+
+/* Helper text below an input */
+.form-hint {
+    font-size  : 0.78rem;
+    color      : var(--grey-text);
+    margin-top : 4px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   BUTTONS
+   ═══════════════════════════════════════════════════════════ */
+
+/* Primary submit button — yellow */
+.btn-submit {
+    display        : block;
+    width          : 100%;
+    padding        : 12px 20px;
+    font-family    : var(--font-heading);
+    font-size      : 1.1rem;
+    letter-spacing : 1px;
+    text-align     : center;
+    text-transform : uppercase;
+    background     : var(--yellow);
+    color          : var(--black);
+    border         : var(--border);
+    border-radius  : var(--radius);
+    box-shadow     : var(--shadow-medium);
+    cursor         : pointer;
+    transition     : transform var(--transition),
+                     box-shadow var(--transition),
+                     background var(--transition);
+    margin-top     : 8px;
+}
+
+.btn-submit:hover {
+    background : var(--yellow-hover);
+    transform  : translateY(-2px) rotate(-0.5deg);
+    box-shadow : 6px 6px 0px var(--black);
+}
+
+.btn-submit:active {
+    transform  : translateY(1px);
+    box-shadow : 2px 2px 0px var(--black);
+}
+
+/* Google Sign-In button — white with Google colours */
+.btn-google {
+    display        : flex;
+    align-items    : center;
+    justify-content: center;
+    gap            : 10px;
+    width          : 100%;
+    padding        : 11px 20px;
+    font-family    : var(--font-body);
+    font-size      : 0.95rem;
+    font-weight    : 600;
+    background     : var(--white);
+    color          : #444;
+    border         : var(--border-thin);
+    border-radius  : var(--radius);
+    box-shadow     : var(--shadow-small);
+    cursor         : pointer;
+    text-decoration: none;
+    transition     : transform var(--transition), box-shadow var(--transition);
+    margin-top     : 4px;
+}
+
+.btn-google:hover {
+    transform  : translateY(-2px);
+    box-shadow : 5px 5px 0px var(--black);
+    color      : var(--black);
+}
+
+.btn-google svg {
+    flex-shrink: 0;
+    width      : 20px;
+    height     : 20px;
+}
+
+/* Divider between password-login and Google Sign-In */
+.divider {
+    display         : flex;
+    align-items     : center;
+    gap             : 10px;
+    margin          : 20px 0;
+    color           : var(--grey-text);
+    font-size       : 0.8rem;
+    font-weight     : 600;
+    text-transform  : uppercase;
+    letter-spacing  : 1px;
+}
+
+.divider::before,
+.divider::after {
+    content    : '';
+    flex       : 1;
+    height     : 2px;
+    background : var(--grey-mid);
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   AUTH CARD FOOTER LINKS
+   (Register link, Back to login, etc.)
+   ═══════════════════════════════════════════════════════════ */
+.auth-card__footer {
+    margin-top : 24px;
+    text-align : center;
+    font-size  : 0.875rem;
+    color      : var(--grey-text);
+}
+
+.auth-card__footer a {
+    color           : var(--black);
+    font-weight     : 700;
+    text-decoration : underline;
+    text-decoration-color: var(--teal);
+    text-underline-offset: 2px;
+    transition      : color var(--transition);
+}
+
+.auth-card__footer a:hover {
+    color : var(--teal-hover);
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   LANDING PAGE — ROLE SELECTOR
+   ═══════════════════════════════════════════════════════════ */
+.landing-wrapper {
+    display         : flex;
+    flex-direction  : column;
+    align-items     : center;
+    min-height      : 100vh;
+    padding         : 60px 16px 80px;
+}
+
+/* Big centred hero heading */
+.landing-hero {
+    text-align    : center;
+    margin-bottom : 48px;
+}
+
+.landing-hero__title {
+    font-family    : var(--font-heading);
+    font-size      : clamp(2.6rem, 6vw, 4rem);
+    letter-spacing : 3px;
+    text-transform : uppercase;
+    line-height    : 1;
+    margin-bottom  : 12px;
+
+    /* Yellow highlight block */
+    background    : var(--yellow);
+    border        : var(--border);
+    box-shadow    : var(--shadow-hard);
+    display       : inline-block;
+    padding       : 10px 28px;
+    border-radius : var(--radius);
+}
+
+.landing-hero__question {
+    font-family  : var(--font-heading);
+    font-size    : clamp(1.3rem, 3vw, 1.8rem);
+    margin-top   : 20px;
+    color        : var(--black);
+    letter-spacing: 1px;
+}
+
+.landing-hero__sub {
+    font-size  : 0.95rem;
+    color      : var(--grey-text);
+    margin-top : 8px;
+    font-weight: 500;
+}
+
+/* 2×2 grid of role cards on wider screens, 1-col on mobile */
+.role-grid {
+    display               : grid;
+    grid-template-columns : repeat(2, 1fr);
+    gap                   : 20px;
+    width                 : 100%;
+    max-width             : 760px;
+}
+
+/* Individual role card — a styled <a> tag */
+.role-card {
+    display         : flex;
+    flex-direction  : column;
+    align-items     : center;
+    justify-content : center;
+    gap             : 12px;
+    padding         : 36px 24px;
+    background      : var(--cream);
+    border          : var(--border);
+    box-shadow      : var(--shadow-hard);
+    border-radius   : var(--radius);
+    text-decoration : none;
+    color           : var(--black);
+    transition      : transform var(--transition),
+                      box-shadow var(--transition),
+                      background var(--transition);
+    cursor          : pointer;
+    text-align      : center;
+}
+
+.role-card:hover {
+    background : var(--yellow);
+    transform  : translateY(-4px) rotate(-0.5deg);
+    box-shadow : 10px 10px 0px var(--black);
+}
+
+.role-card:active {
+    transform  : translateY(1px) rotate(0deg);
+    box-shadow : 3px 3px 0px var(--black);
+}
+
+/* Large emoji/icon inside each role card */
+.role-card__icon {
+    font-size      : 3rem;
+    line-height    : 1;
+    display        : block;
+    filter         : drop-shadow(2px 2px 0px rgba(0,0,0,0.15));
+    transition     : transform var(--transition);
+}
+
+.role-card:hover .role-card__icon {
+    transform : scale(1.15) rotate(5deg);
+}
+
+.role-card__label {
+    font-family    : var(--font-heading);
+    font-size      : 1.05rem;
+    letter-spacing : 1px;
+    text-transform : uppercase;
+    line-height    : 1.2;
+}
+
+.role-card__desc {
+    font-size  : 0.78rem;
+    color      : var(--grey-text);
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.role-card:hover .role-card__desc {
+    color : #333;
+}
+
+/* Colour accent stripe at the top of each card */
+.role-card--student    { border-top: 6px solid var(--teal);   }
+.role-card--prof       { border-top: 6px solid #8b5cf6;       }  /* purple */
+.role-card--authority  { border-top: 6px solid var(--green);  }
+.role-card--admin      { border-top: 6px solid var(--red);    }
+
+
+/* ═══════════════════════════════════════════════════════════
+   GOOGLE SIGN-IN INFO BOX
+   (shown on the Google registration completion page)
+   ═══════════════════════════════════════════════════════════ */
+.google-info-box {
+    background    : #e0f2fe;
+    border        : var(--border-thin);
+    border-left   : 5px solid var(--teal);
+    border-radius : var(--radius);
+    padding       : 12px 16px;
+    font-size     : 0.875rem;
+    margin-bottom : 20px;
+    color         : #0369a1;
+    box-shadow    : var(--shadow-small);
+}
+
+.google-info-box strong {
+    font-weight : 700;
+    color       : var(--black);
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   FORM SECTION HEADING
+   (used in register.html to group fields)
+   ═══════════════════════════════════════════════════════════ */
+.form-section-title {
+    font-family    : var(--font-heading);
+    font-size      : 0.85rem;
+    letter-spacing : 2px;
+    text-transform : uppercase;
+    color          : var(--grey-text);
+    border-bottom  : var(--border-thin);
+    padding-bottom : 6px;
+    margin-bottom  : 16px;
+    margin-top     : 24px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   PASSWORD STRENGTH HINT ROW
+   ═══════════════════════════════════════════════════════════ */
+.password-hint {
+    font-size  : 0.78rem;
+    color      : var(--grey-text);
+    margin-top : 4px;
+    padding    : 4px 8px;
+    background : var(--grey-light);
+    border-left: 3px solid var(--grey-mid);
+    border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   BACK LINK  (← Back to landing)
+   ═══════════════════════════════════════════════════════════ */
+.back-link {
+    display         : inline-flex;
+    align-items     : center;
+    gap             : 6px;
+    font-size       : 0.85rem;
+    font-weight     : 700;
+    color           : var(--black);
+    text-decoration : none;
+    margin-bottom   : 20px;
+    padding         : 4px 10px;
+    background      : var(--yellow-light);
+    border          : var(--border-thin);
+    border-radius   : var(--radius);
+    box-shadow      : var(--shadow-small);
+    transition      : transform var(--transition), box-shadow var(--transition);
+}
+
+.back-link:hover {
+    transform  : translateX(-3px);
+    box-shadow : 4px 4px 0px var(--black);
+    background : var(--yellow);
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   FOOTER CREDIT
+   ═══════════════════════════════════════════════════════════ */
+.page-footer {
+    margin-top  : 40px;
+    text-align  : center;
+    font-size   : 0.78rem;
+    color       : var(--grey-text);
+    font-weight : 500;
+}
+
+.page-footer a {
+    color           : var(--black);
+    font-weight     : 700;
+    text-decoration : underline;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE ADJUSTMENTS
+   ═══════════════════════════════════════════════════════════ */
+
+/* Tablet and below: stack role cards into single column */
+@media (max-width: 600px) {
+    .role-grid {
+        grid-template-columns: 1fr;
+        max-width: 420px;
+    }
+
+    .auth-card {
+        padding: 28px 24px;
+    }
+
+    .landing-hero__title {
+        font-size  : 2.2rem;
+        padding    : 8px 16px;
+    }
+
+    .role-card {
+        padding: 28px 20px;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 380px) {
+    .auth-card {
+        padding: 22px 16px;
+    }
+
+    .auth-card__title {
+        font-size: 1.5rem;
+    }
+}
