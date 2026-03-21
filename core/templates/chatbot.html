@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baymax — {% if show_result %}Assessment Result{% else %}Mental Health Assessment{% endif %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'styles/chatbot.css' %}">
+</head>
+<body>
+
+<!-- ── Brand Header ───────────────────────────────────────── -->
+<header class="site-header">
+    <span class="brand-logo">🏥 BAYMAX</span>
+</header>
+
+<!-- ── Flash Messages ─────────────────────────────────────── -->
+{% if messages %}
+<ul class="flash-list" style="width:100%;max-width:680px;">
+    {% for message in messages %}
+    <li class="flash flash--{{ message.tags }}">{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+{% if show_result %}
+<!-- ════════════════════════════════════════════════════════════
+     RESULT SCREEN
+     Shown after all 26 questions are answered and ML has run.
+     ════════════════════════════════════════════════════════════ -->
+<div class="result-wrapper">
+    <div class="result-card">
+
+        <!-- Card header -->
+        <div class="result-card__header">
+            <p class="result-card__header-title">🧾 Assessment Complete</p>
+        </div>
+
+        <div class="result-card__body">
+            <p class="result-card__intro">
+                Based on your responses this semester, your mental health status has been classified as:
+            </p>
+
+            <!-- Status badge — colour changes by status -->
+            {% if final_status == 'Stable' %}
+                <div class="status-badge status-badge--stable">
+                    <span class="status-badge__icon">✅</span>
+                    Stable
+                </div>
+            {% elif final_status == 'Challenged' %}
+                <div class="status-badge status-badge--challenged">
+                    <span class="status-badge__icon">⚠️</span>
+                    Challenged
+                </div>
+            {% elif final_status == 'Critical' %}
+                <div class="status-badge status-badge--critical">
+                    <span class="status-badge__icon">🚨</span>
+                    Critical
+                </div>
+            {% endif %}
+
+            <!-- Status description -->
+            {% if final_status == 'Stable' %}
+            <div class="result-description">
+                You are managing academic stress well this semester. Keep maintaining healthy routines,
+                and remember that support is always available if things change.
+            </div>
+            {% elif final_status == 'Challenged' %}
+            <div class="result-description">
+                You are experiencing moderate levels of academic stress and/or anxiety.
+                Consider reaching out to a Mental Health Professional through the
+                <strong>Request Mental Health Help</strong> page on your dashboard if you feel
+                you need extra support.
+            </div>
+            {% elif final_status == 'Critical' %}
+            <div class="result-description">
+                Your responses indicate high levels of distress this semester.
+                We strongly recommend connecting with a Mental Health Professional.
+                Click the button below and we will assign you to an available professional right away.
+            </div>
+            {% endif %}
+
+            <!-- ── Triage outcome (shown after clicking "Request a Professional") -->
+            {% if triage_done %}
+                {% if triage_assigned %}
+                <div class="triage-box triage-box--assigned">
+                    <p class="triage-box__title">✅ Professional Assigned</p>
+                    <p>
+                        You have been matched with <strong>{{ triage_professional }}</strong>.
+                        A pending appointment has been created. You can view the details
+                        on your <strong>Request Mental Health Help</strong> page.
+                    </p>
+                </div>
+                {% else %}
+                <div class="triage-box triage-box--unavailable">
+                    <p class="triage-box__title">⚠️ No Professionals Currently Available</p>
+                    <p>
+                        All Mental Health Professionals are currently at full capacity.
+                        Please check the <strong>Request Mental Health Help</strong> page
+                        on your dashboard to request help when a slot becomes available.
+                    </p>
+                </div>
+                {% endif %}
+            {% endif %}
+
+            <!-- ── Action buttons ─────────────────────────────────────── -->
+            <div class="result-actions">
+
+                {% if final_status == 'Critical' and not triage_done %}
+                <!-- Request a Professional button (Critical only, before triage) -->
+                <form method="POST" action="{% url 'chatbot_request_professional' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-request">
+                        🤝 Request a Professional
+                    </button>
+                </form>
+                {% endif %}
+
+                <!-- Go to Dashboard button — always shown -->
+                {% url 'student_dashboard' as dash_url %}
+                {% if dash_url %}
+                    <a href="{{ dash_url }}" class="btn-dashboard">
+                        🏠 Go to Dashboard
+                    </a>
+                {% else %}
+                    <a href="{% url 'landing' %}" class="btn-dashboard">
+                        🏠 Go to Dashboard
+                    </a>
+                {% endif %}
+
+            </div><!-- /.result-actions -->
+        </div><!-- /.result-card__body -->
+    </div><!-- /.result-card -->
+</div><!-- /.result-wrapper -->
+
+
+{% else %}
+<!-- ════════════════════════════════════════════════════════════
+     QUESTION SCREEN
+     Shown for each of the 26 questions one at a time.
+     ════════════════════════════════════════════════════════════ -->
+<div class="chatbot-wrapper">
+
+    <!-- Chat header -->
+    <div class="chat-header">
+        <span class="chat-header__title">💬 Mental Health Assessment</span>
+        <span class="chat-header__counter">Question {{ q_number }} of {{ q_total }}</span>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="progressFill" data-progress="{{ progress }}"></div>
+    </div>
+
+    <!-- Scrollable chat area -->
+    <div class="chat-box" id="chatBox">
+
+        <!-- Scale badge -->
+        <div>
+            <span class="scale-badge scale-badge--{{ q_scale }}">{{ q_scale }}</span>
+        </div>
+
+        <!-- Baymax question bubble -->
+        <div class="bubble-row bubble-row--bot">
+            <div class="bubble-avatar">🤖</div>
+            <div class="bubble bubble--bot">
+                <span class="bubble__symptom">{{ q_symptom }}</span>
+                {{ q_text }}
+            </div>
+        </div>
+
+    </div><!-- /#chatBox -->
+
+    <!-- Answer buttons -->
+    <div class="answer-panel">
+        <p class="answer-panel__prompt">Choose your answer:</p>
+        <div class="answer-grid">
+            <!--
+                Each answer option is its own tiny form.
+                Submitting posts: col (column name), answer (integer value).
+                The view validates col against QUESTION_COLS whitelist
+                and answer against the scale's maximum value.
+            -->
+            {% for value, label in labels %}
+            <form method="POST" action="{% url 'chatbot' %}">
+                {% csrf_token %}
+                <input type="hidden" name="col"    value="{{ q_col }}">
+                <input type="hidden" name="answer" value="{{ value }}">
+                <button type="submit" class="answer-btn">
+                    <span class="answer-btn__value">{{ value }}</span>{{ label }}
+                </button>
+            </form>
+            {% endfor %}
+        </div>
+    </div><!-- /.answer-panel -->
+
+</div><!-- /.chatbot-wrapper -->
+{% endif %}
+
+
+<footer class="page-footer">
+    Baymax &mdash; University Mental Health Tracking System
+</footer>
+
+<script>
+    // Apply progress bar width from data attribute.
+    var fill = document.getElementById('progressFill');
+    if (fill) {
+        fill.style.width = (fill.dataset.progress || '0') + '%';
+    }
+
+    // Auto-scroll the chat box to the bottom so the latest bubble
+    // is always visible without the student having to scroll manually.
+    (function () {
+        var box = document.getElementById('chatBox');
+        if (box) {
+            box.scrollTop = box.scrollHeight;
+        }
+    })();
+</script>
+
+</body>
+</html>
