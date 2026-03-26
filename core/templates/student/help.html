@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baymax — Request Mental Health Help</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'styles/status.css' %}">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     TOP NAVIGATION BAR
+     ══════════════════════════════════════════════════════════ -->
+<nav class="topbar">
+    <a href="{% url 'student_dashboard' %}" class="topbar__brand">🏥 BAYMAX</a>
+    <div class="topbar__right">
+        <span class="topbar__name">{{ full_name }}</span>
+        <span class="topbar__role">Student</span>
+        <a href="{% url 'logout' %}" class="topbar__logout">Logout</a>
+    </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE CONTENT
+     ══════════════════════════════════════════════════════════ -->
+<main class="subpage">
+<div class="subpage__inner">
+
+    <!-- Back link -->
+    <a href="{% url 'student_dashboard' %}" class="back-link">
+        &#8592; Back to Dashboard
+    </a>
+
+    <!-- Page heading -->
+    <h1 class="subpage__heading">🤝 Request Mental Health Help</h1>
+    <p class="subpage__meta">{{ semester }} &mdash; {{ full_name }}</p>
+
+    <!-- Flash messages -->
+    {% if messages %}
+    <ul class="flash-list">
+        {% for message in messages %}
+        <li class="flash flash--{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════════════════
+         ACTIVE APPOINTMENT BANNER
+         Shown when the student has a pending or accepted appointment.
+         ══════════════════════════════════════════════════════ -->
+    {% if active_appt %}
+        {% if active_appt.status == 'pending' %}
+        <div class="appt-banner appt-banner--pending">
+            <p class="appt-banner__title">⏳ Pending Request</p>
+            <p>
+                Your request to <strong>{{ active_appt.professional_name }}</strong>
+                is awaiting their acceptance. You can cancel it below if you change
+                your mind.
+            </p>
+        </div>
+        {% elif active_appt.status == 'accepted' %}
+        <div class="appt-banner appt-banner--accepted">
+            <p class="appt-banner__title">✅ Currently in Treatment</p>
+            <p>
+                You are currently assigned to
+                <strong>{{ active_appt.professional_name }}</strong>.
+                {% if active_appt.scheduled_at %}
+                    Your session is scheduled for
+                    <strong>{{ active_appt.scheduled_at|date:"N j, Y" }}
+                    at {{ active_appt.scheduled_at|time:"g:i A" }}</strong>.
+                {% endif %}
+            </p>
+        </div>
+        {% endif %}
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════════════════
+         STABLE STUDENT — no request option
+         ══════════════════════════════════════════════════════ -->
+    {% if final_status == 'Stable' %}
+    <div class="stable-info">
+        ✅ Your current classification is <strong>Stable</strong>. You do not
+        need to request professional support at this time. If your situation
+        changes, complete a new assessment at the start of the next semester.
+    </div>
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════════════════
+         PROFESSIONAL LIST
+         ══════════════════════════════════════════════════════ -->
+    <p class="section-title">👩‍⚕️ Mental Health Professionals</p>
+
+    <div class="prof-list">
+        {% for prof in professionals %}
+        <div class="prof-row">
+
+            <!-- Avatar -->
+            <div class="prof-row__avatar">🧑‍⚕️</div>
+
+            <!-- Name + availability -->
+            <div class="prof-row__info">
+                <p class="prof-row__name">{{ prof.full_name }}</p>
+
+                {% if prof.is_available %}
+                    <span class="avail-tag avail-tag--available">Available</span>
+                {% else %}
+                    <span class="avail-tag avail-tag--full">Full</span>
+                {% endif %}
+
+                <p class="prof-row__slots">
+                    {{ prof.active_count }} / 12 students
+                </p>
+            </div>
+
+            <!-- Action button — rendered conditionally based on appointment state -->
+            <div class="prof-row__action">
+
+                {% if final_status == 'Stable' %}
+                    {# Stable students see no button #}
+
+                {% elif active_appt and active_appt.status == 'accepted' %}
+                    {# In treatment — no action available #}
+
+                {% elif active_appt and active_appt.status == 'pending' %}
+                    {% if active_appt.professional_id == prof.id %}
+                    <!-- Cancel button — only on the professional they requested -->
+                    <form method="POST"
+                          action="{% url 'student_help_cancel' active_appt.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-cancel">
+                            ✕ Cancel Request
+                        </button>
+                    </form>
+                    {% endif %}
+
+                {% else %}
+                    <!-- No active appointment — show Request button if available -->
+                    {% if prof.is_available %}
+                    <form method="POST"
+                          action="{% url 'student_help_request' prof.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-request">
+                            Request
+                        </button>
+                    </form>
+                    {% else %}
+                    <span style="font-size:0.78rem; color:#888; font-weight:600;">
+                        At capacity
+                    </span>
+                    {% endif %}
+
+                {% endif %}
+
+            </div><!-- /.prof-row__action -->
+
+        </div><!-- /.prof-row -->
+        {% empty %}
+        <p style="color:#888; font-size:0.9rem; padding:16px 0;">
+            No Mental Health Professionals are registered yet.
+        </p>
+        {% endfor %}
+    </div><!-- /.prof-list -->
+
+</div><!-- /.subpage__inner -->
+</main>
+
+<footer class="page-footer">
+    Baymax &mdash; University Mental Health Tracking System
+</footer>
+
+</body>
+</html>

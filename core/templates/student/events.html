@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baymax — Mental Health Events</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'styles/events.css' %}">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     TOP NAVIGATION BAR
+     ══════════════════════════════════════════════════════════ -->
+<nav class="topbar">
+    <a href="{% url 'student_dashboard' %}" class="topbar__brand">🏥 BAYMAX</a>
+    <div class="topbar__right">
+        <span class="topbar__name">{{ full_name }}</span>
+        <span class="topbar__role">Student</span>
+        <a href="{% url 'logout' %}" class="topbar__logout">Logout</a>
+    </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE CONTENT
+     ══════════════════════════════════════════════════════════ -->
+<main class="subpage">
+<div class="subpage__inner">
+
+    <!-- Back link -->
+    <a href="{% url 'student_dashboard' %}" class="back-link">
+        &#8592; Back to Dashboard
+    </a>
+
+    <!-- Page heading -->
+    <h1 class="subpage__heading">📅 Mental Health Events</h1>
+    <p class="subpage__meta">
+        Upcoming workshops and seminars &mdash; {{ semester }}
+    </p>
+
+    <!-- Flash messages -->
+    {% if messages %}
+    <ul class="flash-list">
+        {% for message in messages %}
+        <li class="flash flash--{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════════════════
+         EVENT CARDS
+         ══════════════════════════════════════════════════════ -->
+    {% if events %}
+    <div class="events-list">
+
+        {% for event in events %}
+        <div class="event-card">
+            <div class="event-card__body">
+
+                <!-- ── Date column (left) ─────────────────── -->
+                <div class="event-card__date-col">
+                    <span class="event-card__day">
+                        {{ event.date|date:"j" }}
+                    </span>
+                    <span class="event-card__month">
+                        {{ event.date|date:"M" }}
+                    </span>
+                    <span class="event-card__year">
+                        {{ event.date|date:"Y" }}
+                    </span>
+                </div>
+
+                <!-- ── Main content ───────────────────────── -->
+                <div class="event-card__content">
+
+                    <h2 class="event-card__title">{{ event.title }}</h2>
+
+                    <!-- Time + venue meta row -->
+                    <div class="event-card__meta">
+                        <span class="event-card__meta-item">
+                            <span class="icon">🕐</span>
+                            {{ event.time|time:"g:i A" }}
+                        </span>
+                        <span class="event-card__meta-item">
+                            <span class="icon">📍</span>
+                            {{ event.venue }}
+                        </span>
+                    </div>
+
+                    <!-- Description -->
+                    {% if event.description %}
+                    <p class="event-card__desc">{{ event.description }}</p>
+                    {% endif %}
+
+                    <!-- RSVP count chip -->
+                    <span class="rsvp-count">
+                        👥 {{ event.rsvp_count }}
+                        {% if event.rsvp_count == 1 %}person going
+                        {% else %}people going{% endif %}
+                    </span>
+
+                </div><!-- /.event-card__content -->
+
+                <!-- ── Action column (right) ──────────────── -->
+                <div class="event-card__action">
+
+                    {% if event.has_rsvpd %}
+                    <!-- Already RSVP'd — show Cancel RSVP button -->
+                    <form method="POST"
+                          action="{% url 'student_events_cancel_rsvp' event.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-cancel-rsvp">
+                            ✓ Going<br>
+                            <span style="font-size:0.75rem; font-weight:500;">
+                                Cancel RSVP
+                            </span>
+                        </button>
+                    </form>
+
+                    {% else %}
+                    <!-- Not RSVP'd — show RSVP button -->
+                    <form method="POST"
+                          action="{% url 'student_events_rsvp' event.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-rsvp">
+                            RSVP
+                        </button>
+                    </form>
+                    {% endif %}
+
+                </div><!-- /.event-card__action -->
+
+            </div><!-- /.event-card__body -->
+        </div><!-- /.event-card -->
+        {% endfor %}
+
+    </div><!-- /.events-list -->
+
+    {% else %}
+    <!-- ── Empty state ────────────────────────────────────── -->
+    <div class="empty-state">
+        <span class="empty-state__icon">📭</span>
+        <p class="empty-state__title">No Events Yet</p>
+        <p class="empty-state__desc">
+            There are no upcoming mental health events scheduled at the moment.
+            Check back later — new events are added throughout the semester.
+        </p>
+    </div>
+    {% endif %}
+
+</div><!-- /.subpage__inner -->
+</main>
+
+<footer class="page-footer">
+    Baymax &mdash; University Mental Health Tracking System
+</footer>
+
+</body>
+</html>

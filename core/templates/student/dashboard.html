@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baymax — Student Dashboard</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'styles/dashboard.css' %}">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     TOP NAVIGATION BAR
+     ══════════════════════════════════════════════════════════ -->
+<nav class="topbar">
+    <span class="topbar__brand">🏥 BAYMAX</span>
+    <div class="topbar__right">
+        <span class="topbar__name">{{ full_name }}</span>
+        <span class="topbar__role">Student</span>
+        <a href="{% url 'logout' %}" class="topbar__logout">Logout</a>
+    </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════
+     MAIN CONTENT
+     ══════════════════════════════════════════════════════════ -->
+<main class="dashboard-page">
+
+    <!-- Flash messages -->
+    {% if messages %}
+    <ul class="flash-list">
+        {% for message in messages %}
+        <li class="flash flash--{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <!-- Welcome heading -->
+    <div class="dashboard-welcome">
+        <h1 class="dashboard-welcome__title">
+            <span>👋 Welcome, {{ full_name }}</span>
+        </h1>
+        <p class="dashboard-welcome__sub">
+            Your mental health dashboard for this semester.
+        </p>
+        <span class="semester-badge">{{ semester }}</span>
+    </div>
+
+    <!-- ── Three-card navigation grid ──────────────────────── -->
+    <!--
+        Each card is a plain <a> tag styled as a large clickable tile.
+        The colour-coded top border (set by the modifier class) gives
+        each section its own visual identity.
+    -->
+    <div class="card-grid card-grid--3">
+
+        <!-- Mental Health Status -->
+        <a href="{% url 'student_status' %}" class="dash-card dash-card--status">
+            <span class="dash-card__icon">📊</span>
+            <span class="dash-card__title">Mental Health Status</span>
+            <span class="dash-card__desc">
+                View your classification, individual responses,
+                and the symptoms affecting you most.
+            </span>
+        </a>
+
+        <!-- Request Mental Health Help -->
+        <a href="{% url 'student_help' %}" class="dash-card dash-card--help">
+            <span class="dash-card__icon">🤝</span>
+            <span class="dash-card__title">Request Mental Health Help</span>
+            <span class="dash-card__desc">
+                Browse available Mental Health Professionals
+                and submit or manage an appointment request.
+            </span>
+        </a>
+
+        <!-- Mental Health Events -->
+        <a href="{% url 'student_events' %}" class="dash-card dash-card--events">
+            <span class="dash-card__icon">📅</span>
+            <span class="dash-card__title">Mental Health Events</span>
+            <span class="dash-card__desc">
+                Discover upcoming workshops and seminars.
+                RSVP to events you plan to attend.
+            </span>
+        </a>
+
+    </div><!-- /.card-grid -->
+
+</main>
+
+<footer class="page-footer">
+    Baymax &mdash; University Mental Health Tracking System
+</footer>
+
+</body>
+</html>

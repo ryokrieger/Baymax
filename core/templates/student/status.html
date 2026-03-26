@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baymax — Mental Health Status</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'styles/status.css' %}">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     TOP NAVIGATION BAR
+     ══════════════════════════════════════════════════════════ -->
+<nav class="topbar">
+    <a href="{% url 'student_dashboard' %}" class="topbar__brand">🏥 BAYMAX</a>
+    <div class="topbar__right">
+        <span class="topbar__name">{{ full_name }}</span>
+        <span class="topbar__role">Student</span>
+        <a href="{% url 'logout' %}" class="topbar__logout">Logout</a>
+    </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE CONTENT
+     ══════════════════════════════════════════════════════════ -->
+<main class="subpage">
+<div class="subpage__inner">
+
+    <!-- Back link -->
+    <a href="{% url 'student_dashboard' %}" class="back-link">
+        &#8592; Back to Dashboard
+    </a>
+
+    <!-- Page heading -->
+    <h1 class="subpage__heading">📊 Mental Health Status</h1>
+    <p class="subpage__meta">{{ semester }} &mdash; {{ full_name }}</p>
+
+    <!-- Flash messages -->
+    {% if messages %}
+    <ul class="flash-list">
+        {% for message in messages %}
+        <li class="flash flash--{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════════════════
+         1. CLASSIFICATION BADGE
+         ══════════════════════════════════════════════════════ -->
+    <div class="classification-card">
+        <div>
+            <p class="classification-card__label">Your Classification</p>
+
+            {% if final_status == 'Stable' %}
+                <div class="status-badge status-badge--stable">
+                    <span class="status-badge__icon">✅</span>
+                    Stable
+                </div>
+            {% elif final_status == 'Challenged' %}
+                <div class="status-badge status-badge--challenged">
+                    <span class="status-badge__icon">⚠️</span>
+                    Challenged
+                </div>
+            {% elif final_status == 'Critical' %}
+                <div class="status-badge status-badge--critical">
+                    <span class="status-badge__icon">🚨</span>
+                    Critical
+                </div>
+            {% endif %}
+        </div>
+
+        <p class="classification-card__desc">
+            {% if final_status == 'Stable' %}
+                You are managing academic stress well this semester.
+                Your responses across the PSS, GAD, and PHQ scales indicate
+                low levels of stress, anxiety, and depressive symptoms.
+            {% elif final_status == 'Challenged' %}
+                Your responses indicate moderate levels of academic stress
+                and/or anxiety this semester. Consider visiting the
+                <strong>Request Mental Health Help</strong> page if you feel
+                you need additional support from a professional.
+            {% elif final_status == 'Critical' %}
+                Your responses indicate high levels of distress this semester.
+                We strongly encourage you to request support from a
+                Mental Health Professional through the
+                <strong>Request Mental Health Help</strong> page.
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         2. TOP SYMPTOMS
+         Top 3 questions ranked by severity score.
+══════════════════════════════════════════════════════ -->
+    {% if top_symptoms %}
+    <p class="section-title">🔍 Top Symptoms Affecting You</p>
+
+    <div class="top-symptoms-grid">
+        {% for item in top_symptoms %}
+        <div class="symptom-card">
+
+            <!-- Rank label -->
+            <p class="symptom-card__rank symptom-card__rank--{{ forloop.counter }}">
+                {% if forloop.counter == 1 %}🥇 Most Impactful
+                {% elif forloop.counter == 2 %}🥈 2nd Most Impactful
+                {% else %}🥉 3rd Most Impactful
+                {% endif %}
+            </p>
+
+            <!-- Symptom name -->
+            <p class="symptom-card__name">{{ item.symptom }}</p>
+
+            <!-- Scale chip -->
+            <span class="symptom-card__scale symptom-card__scale--{{ item.scale }}">
+                {{ item.scale }}
+            </span>
+
+            <!-- Severity bar
+                 Max scale: PSS = 4, GAD/PHQ = 3.
+                 Bar width = (severity / max_for_scale) * 100%.
+                 We normalise to the PSS max (4) for a consistent bar. -->
+            {% if item.severity >= 3 %}
+                {% with bar_class="severity-bar-fill--high" %}
+                <div class="severity-bar-track">
+                    <div class="severity-bar-fill {{ bar_class }}"
+                         id="sevBar{{ forloop.counter }}"
+                         data-severity="{{ item.severity }}"
+                         data-max="4"></div>
+                </div>
+                {% endwith %}
+            {% elif item.severity >= 2 %}
+                {% with bar_class="severity-bar-fill--medium" %}
+                <div class="severity-bar-track">
+                    <div class="severity-bar-fill {{ bar_class }}"
+                         id="sevBar{{ forloop.counter }}"
+                         data-severity="{{ item.severity }}"
+                         data-max="4"></div>
+                </div>
+                {% endwith %}
+            {% else %}
+                {% with bar_class="severity-bar-fill--low" %}
+                <div class="severity-bar-track">
+                    <div class="severity-bar-fill {{ bar_class }}"
+                         id="sevBar{{ forloop.counter }}"
+                         data-severity="{{ item.severity }}"
+                         data-max="4"></div>
+                </div>
+                {% endwith %}
+            {% endif %}
+
+            <p class="symptom-card__score">
+                Score: {{ item.severity }} / 4
+
+            </p>
+
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════════════════
+         3. FULL 26-RESPONSE TABLE
+         ══════════════════════════════════════════════════════ -->
+    <p class="section-title">📋 All Responses — {{ semester }}</p>
+
+    <div class="response-table-wrap">
+        <table class="response-table">
+            <thead>
+                <tr>
+                    <th class="col-num">#</th>
+                    <th>Scale</th>
+                    <th>Symptom</th>
+                    <th>Question</th>
+                    <th class="col-answer">Score</th>
+                    <th>Your Answer</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in responses %}
+                <tr>
+                    <!-- Question number -->
+                    <td class="col-num">{{ r.number }}</td>
+
+                    <!-- Scale chip (PSS / GAD / PHQ) -->
+                    <td>
+                        <span class="scale-chip scale-chip--{{ r.scale }}">
+                            {{ r.scale }}
+                        </span>
+                    </td>
+
+                    <!-- Symptom label -->
+                    <td class="col-symptom">{{ r.symptom }}</td>
+
+                    <!-- Question text (truncated on small screens via CSS) -->
+                    <td style="font-size:0.82rem; color:#444; line-height:1.45;">
+                        {{ r.text }}
+                    </td>
+
+                    <!-- Raw numeric answer -->
+                    <td class="col-answer">{{ r.raw }}</td>
+
+                    <!-- Human-readable answer label -->
+                    <td class="col-label">{{ r.answer_label }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align:center; padding:24px; color:#888;">
+                        No responses recorded for this semester.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div><!-- /.response-table-wrap -->
+
+</div><!-- /.subpage__inner -->
+</main>
+
+<footer class="page-footer">
+    Baymax &mdash; University Mental Health Tracking System
+</footer>
+
+<!--
+    Set severity bar widths from data attributes.
+-->
+<script>
+    document.querySelectorAll('.severity-bar-fill[data-severity]').forEach(function(el) {
+        var severity = parseFloat(el.dataset.severity) || 0;
+        var max      = parseFloat(el.dataset.max)      || 4;
+        el.style.width = Math.min((severity / max) * 100, 100) + '%';
+    });
+</script>
+
+</body>
+</html>
