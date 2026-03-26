@@ -10,7 +10,7 @@ TRUNCATE TABLE users                   RESTART IDENTITY CASCADE;
 INSERT INTO semester_schedule
     (semester, reset_date, bulk_reset_performed, is_current, notification_pending)
 VALUES
-    ('Spring 2026', '2026-03-01', FALSE, TRUE,  FALSE),
+    ('Spring 2026', '2026-03-01', TRUE,  TRUE,  FALSE),
     ('Fall 2025',   '2025-11-01', TRUE,  FALSE, FALSE),
     ('Summer 2025', '2025-07-01', TRUE,  FALSE, FALSE);
 
