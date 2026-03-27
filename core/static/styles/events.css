@@ -1,0 +1,476 @@
+/*
+ * events.css — Mental Health Events Page
+ * Used by:  student/events.html, authority/events.html
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Fjalla+One&family=Poppins:wght@400;500;600;700&display=swap');
+
+/* ═══════════════════════════════════════════════════════════
+   DESIGN TOKENS
+   ═══════════════════════════════════════════════════════════ */
+:root {
+    --yellow        : #F5C518;
+    --yellow-hover  : #e6b800;
+    --yellow-light  : #fffbe6;
+    --teal          : #0EA5E9;
+    --teal-hover    : #0284c7;
+    --teal-light    : #e0f2fe;
+    --green         : #22C55E;
+    --green-light   : #dcfce7;
+    --amber         : #F59E0B;
+    --amber-light   : #fef9c3;
+    --red           : #EF4444;
+    --red-light     : #fee2e2;
+    --black         : #000000;
+    --white         : #ffffff;
+    --cream         : #fffae5;
+    --grey-light    : #f0ece0;
+    --grey-mid      : #d1c9b0;
+    --grey-text     : #555555;
+    --shadow-hard   : 6px 6px 0px var(--black);
+    --shadow-medium : 4px 4px 0px var(--black);
+    --shadow-small  : 3px 3px 0px var(--black);
+    --border        : 4px solid var(--black);
+    --border-thin   : 2px solid var(--black);
+    --radius        : 4px;
+    --font-body     : 'Poppins', 'Segoe UI', sans-serif;
+    --font-heading  : 'Fjalla One', 'Arial Black', sans-serif;
+    --transition    : 0.15s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESET & BASE
+   ═══════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+
+body {
+    font-family      : var(--font-body);
+    color            : var(--black);
+    min-height       : 100vh;
+    background-color : #ffe066;
+    background-image :
+        radial-gradient(circle at 50% 40%, #ffe066 20%, #fffae5 80%),
+        radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px);
+    background-size  : 100% 100%, 24px 24px;
+    display          : flex;
+    flex-direction   : column;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TOPBAR
+   ═══════════════════════════════════════════════════════════ */
+.topbar {
+    background    : var(--yellow);
+    border-bottom : var(--border);
+    box-shadow    : 0 4px 0px var(--black);
+    padding       : 0 28px;
+    height        : 60px;
+    display       : flex;
+    align-items   : center;
+    justify-content: space-between;
+    gap           : 16px;
+    position      : sticky;
+    top           : 0;
+    z-index       : 100;
+}
+
+.topbar__brand {
+    font-family    : var(--font-heading);
+    font-size      : 1.4rem;
+    letter-spacing : 2px;
+    text-decoration: none;
+    color          : var(--black);
+    display        : flex;
+    align-items    : center;
+    gap            : 8px;
+}
+
+.topbar__brand:hover { opacity: 0.85; }
+
+.topbar__right {
+    display    : flex;
+    align-items: center;
+    gap        : 12px;
+}
+
+.topbar__role {
+    font-size      : 0.75rem;
+    font-weight    : 700;
+    letter-spacing : 0.5px;
+    text-transform : uppercase;
+    background     : var(--black);
+    color          : var(--yellow);
+    padding        : 3px 10px;
+    border-radius  : var(--radius);
+    white-space    : nowrap;
+}
+
+.topbar__name {
+    font-size    : 0.85rem;
+    font-weight  : 600;
+    white-space  : nowrap;
+    max-width    : 180px;
+    overflow     : hidden;
+    text-overflow: ellipsis;
+}
+
+.topbar__logout {
+    font-size      : 0.82rem;
+    font-weight    : 700;
+    text-decoration: none;
+    color          : var(--black);
+    background     : var(--white);
+    border         : var(--border-thin);
+    border-radius  : var(--radius);
+    box-shadow     : var(--shadow-small);
+    padding        : 4px 14px;
+    transition     : transform var(--transition), box-shadow var(--transition), background var(--transition);
+    white-space    : nowrap;
+}
+
+.topbar__logout:hover {
+    background: var(--red);
+    color     : var(--white);
+    transform : translateY(-2px);
+    box-shadow: 5px 5px 0px var(--black);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SUB-PAGE LAYOUT
+   ═══════════════════════════════════════════════════════════ */
+.subpage {
+    flex    : 1;
+    padding : 36px 28px 60px;
+    display : flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.subpage__inner {
+    width    : 100%;
+    max-width: 900px;
+}
+
+.back-link {
+    display        : inline-flex;
+    align-items    : center;
+    gap            : 6px;
+    font-size      : 0.85rem;
+    font-weight    : 700;
+    color          : var(--black);
+    text-decoration: none;
+    margin-bottom  : 20px;
+    padding        : 4px 12px;
+    background     : var(--yellow-light);
+    border         : var(--border-thin);
+    border-radius  : var(--radius);
+    box-shadow     : var(--shadow-small);
+    transition     : transform var(--transition), box-shadow var(--transition), background var(--transition);
+}
+
+.back-link:hover {
+    background : var(--yellow);
+    transform  : translateX(-3px);
+    box-shadow : 4px 4px 0px var(--black);
+}
+
+.subpage__heading {
+    font-family    : var(--font-heading);
+    font-size      : clamp(1.5rem, 3.5vw, 2rem);
+    letter-spacing : 1px;
+    text-transform : uppercase;
+    margin-bottom  : 6px;
+}
+
+.subpage__meta {
+    font-size    : 0.85rem;
+    color        : var(--grey-text);
+    font-weight  : 500;
+    margin-bottom: 24px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FLASH MESSAGES
+   ═══════════════════════════════════════════════════════════ */
+.flash-list { list-style: none; margin-bottom: 20px; }
+
+.flash {
+    padding      : 10px 16px;
+    border       : var(--border-thin);
+    border-radius: var(--radius);
+    font-size    : 0.875rem;
+    font-weight  : 500;
+    margin-bottom: 8px;
+    box-shadow   : var(--shadow-small);
+}
+
+.flash--success { background: var(--green-light);  border-color: var(--green);  color: #166534; }
+.flash--error   { background: var(--red-light);    border-color: var(--red);    color: #991b1b; }
+.flash--info    { background: #dbeafe;              border-color: var(--teal);   color: #1e40af; }
+.flash--warning { background: var(--amber-light);  border-color: var(--amber);  color: #854d0e; }
+
+/* ═══════════════════════════════════════════════════════════
+   EVENT CARDS
+   One card per event, stacked vertically.
+   ═══════════════════════════════════════════════════════════ */
+.events-list {
+    display       : flex;
+    flex-direction: column;
+    gap           : 18px;
+}
+
+.event-card {
+    background    : var(--cream);
+    border        : var(--border);
+    box-shadow    : var(--shadow-hard);
+    border-radius : var(--radius);
+    overflow      : hidden;
+    transition    : transform var(--transition), box-shadow var(--transition);
+}
+
+.event-card:hover {
+    transform  : translateY(-3px);
+    box-shadow : 8px 8px 0px var(--black);
+}
+
+/* Coloured left accent bar */
+.event-card { border-left: 6px solid var(--teal); }
+
+/* Card layout: date column + main content + action */
+.event-card__body {
+    display  : flex;
+    align-items: stretch;
+    gap      : 0;
+}
+
+/* Date column — left side */
+.event-card__date-col {
+    background     : var(--yellow);
+    border-right   : var(--border-thin);
+    padding        : 18px 16px;
+    display        : flex;
+    flex-direction : column;
+    align-items    : center;
+    justify-content: center;
+    min-width      : 80px;
+    text-align     : center;
+    flex-shrink    : 0;
+}
+
+.event-card__day {
+    font-family  : var(--font-heading);
+    font-size    : 2rem;
+    line-height  : 1;
+    margin-bottom: 2px;
+}
+
+.event-card__month {
+    font-size      : 0.72rem;
+    font-weight    : 700;
+    text-transform : uppercase;
+    letter-spacing : 1px;
+    color          : var(--grey-text);
+}
+
+.event-card__year {
+    font-size  : 0.7rem;
+    color      : var(--grey-text);
+    font-weight: 600;
+}
+
+/* Main content area */
+.event-card__content {
+    flex      : 1;
+    padding   : 16px 18px;
+    min-width : 0;
+}
+
+.event-card__title {
+    font-family    : var(--font-heading);
+    font-size      : 1.05rem;
+    letter-spacing : 0.5px;
+    margin-bottom  : 8px;
+    line-height    : 1.2;
+}
+
+/* Meta row: time, venue */
+.event-card__meta {
+    display    : flex;
+    flex-wrap  : wrap;
+    gap        : 12px;
+    margin-bottom: 10px;
+}
+
+.event-card__meta-item {
+    display    : flex;
+    align-items: center;
+    gap        : 5px;
+    font-size  : 0.82rem;
+    color      : var(--grey-text);
+    font-weight: 500;
+}
+
+.event-card__meta-item .icon {
+    font-size: 0.9rem;
+}
+
+.event-card__desc {
+    font-size  : 0.85rem;
+    color      : var(--grey-text);
+    line-height: 1.55;
+    margin-bottom: 12px;
+}
+
+/* RSVP count chip */
+.rsvp-count {
+    display      : inline-flex;
+    align-items  : center;
+    gap          : 5px;
+    font-size    : 0.78rem;
+    font-weight  : 700;
+    padding      : 2px 10px;
+    background   : var(--yellow-light);
+    border       : 1px solid var(--grey-mid);
+    border-radius: var(--radius);
+}
+
+/* Action column — right side */
+.event-card__action {
+    padding     : 16px 18px;
+    display     : flex;
+    align-items : center;
+    justify-content: center;
+    border-left : var(--border-thin);
+    flex-shrink : 0;
+    min-width   : 130px;
+}
+
+/* ── RSVP button ── */
+.btn-rsvp {
+    padding       : 9px 18px;
+    font-family   : var(--font-body);
+    font-size     : 0.85rem;
+    font-weight   : 700;
+    background    : var(--teal);
+    color         : var(--white);
+    border        : var(--border-thin);
+    border-radius : var(--radius);
+    box-shadow    : var(--shadow-small);
+    cursor        : pointer;
+    transition    : transform var(--transition), box-shadow var(--transition), background var(--transition);
+    white-space   : nowrap;
+    width         : 100%;
+    text-align    : center;
+}
+
+.btn-rsvp:hover {
+    background: var(--teal-hover);
+    transform : translateY(-2px);
+    box-shadow: 5px 5px 0px var(--black);
+}
+
+/* ── Cancel RSVP button ── */
+.btn-cancel-rsvp {
+    padding       : 9px 18px;
+    font-family   : var(--font-body);
+    font-size     : 0.85rem;
+    font-weight   : 700;
+    background    : var(--green-light);
+    color         : #166534;
+    border        : var(--border-thin);
+    border-color  : var(--green);
+    border-radius : var(--radius);
+    box-shadow    : var(--shadow-small);
+    cursor        : pointer;
+    transition    : transform var(--transition), box-shadow var(--transition), background var(--transition);
+    white-space   : nowrap;
+    width         : 100%;
+    text-align    : center;
+}
+
+.btn-cancel-rsvp:hover {
+    background  : var(--red);
+    color       : var(--white);
+    border-color: var(--red);
+    transform   : translateY(-2px);
+    box-shadow  : 5px 5px 0px var(--black);
+}
+
+/* "Going!" confirmed label shown instead of button */
+.rsvp-confirmed {
+    font-size  : 0.82rem;
+    font-weight: 700;
+    color      : #166534;
+    text-align : center;
+    line-height: 1.4;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   EMPTY STATE
+   ═══════════════════════════════════════════════════════════ */
+.empty-state {
+    text-align   : center;
+    padding      : 52px 24px;
+    background   : var(--cream);
+    border       : var(--border);
+    box-shadow   : var(--shadow-medium);
+    border-radius: var(--radius);
+}
+
+.empty-state__icon  { font-size: 3.5rem; margin-bottom: 14px; display: block; }
+.empty-state__title {
+    font-family : var(--font-heading);
+    font-size   : 1.2rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+.empty-state__desc  { font-size: 0.88rem; color: var(--grey-text); }
+
+
+/* ═══════════════════════════════════════════════════════════
+   PAGE FOOTER
+   ═══════════════════════════════════════════════════════════ */
+.page-footer {
+    text-align : center;
+    font-size  : 0.78rem;
+    color      : var(--grey-text);
+    font-weight: 500;
+    padding    : 24px 0 12px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 700px) {
+    .topbar { padding: 0 16px; }
+    .topbar__name, .topbar__role { display: none; }
+    .subpage { padding: 24px 16px 48px; }
+
+    .event-card__body {
+        flex-direction: column;
+    }
+
+    .event-card__date-col {
+        flex-direction: row;
+        justify-content: flex-start;
+        gap           : 10px;
+        border-right  : none;
+        border-bottom : var(--border-thin);
+        min-width     : unset;
+        padding       : 12px 16px;
+    }
+
+    .event-card__day   { font-size: 1.4rem; margin-bottom: 0; }
+
+    .event-card__action {
+        border-left: none;
+        border-top : var(--border-thin);
+        padding    : 12px 16px;
+        min-width  : unset;
+    }
+
+    .btn-rsvp,
+    .btn-cancel-rsvp { padding: 10px; }
+}

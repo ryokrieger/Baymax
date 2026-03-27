@@ -1,0 +1,689 @@
+/*
+ * status.css — Mental Health Status Page & Request Help Page
+ * Shared by:  student/status.html, student/help.html
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Fjalla+One&family=Poppins:wght@400;500;600;700&display=swap');
+
+/* ═══════════════════════════════════════════════════════════
+   DESIGN TOKENS  (mirrors dashboard.css)
+   ═══════════════════════════════════════════════════════════ */
+:root {
+    --yellow        : #F5C518;
+    --yellow-hover  : #e6b800;
+    --yellow-light  : #fffbe6;
+    --teal          : #0EA5E9;
+    --teal-hover    : #0284c7;
+    --green         : #22C55E;
+    --green-light   : #dcfce7;
+    --amber         : #F59E0B;
+    --amber-light   : #fef9c3;
+    --red           : #EF4444;
+    --red-light     : #fee2e2;
+    --purple        : #8b5cf6;
+    --black         : #000000;
+    --white         : #ffffff;
+    --cream         : #fffae5;
+    --grey-light    : #f0ece0;
+    --grey-mid      : #d1c9b0;
+    --grey-text     : #555555;
+    --shadow-hard   : 6px 6px 0px var(--black);
+    --shadow-medium : 4px 4px 0px var(--black);
+    --shadow-small  : 3px 3px 0px var(--black);
+    --border        : 4px solid var(--black);
+    --border-thin   : 2px solid var(--black);
+    --radius        : 4px;
+    --font-body     : 'Poppins', 'Segoe UI', sans-serif;
+    --font-heading  : 'Fjalla One', 'Arial Black', sans-serif;
+    --transition    : 0.15s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESET & BASE
+   ═══════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+
+body {
+    font-family      : var(--font-body);
+    color            : var(--black);
+    min-height       : 100vh;
+    background-color : #ffe066;
+    background-image :
+        radial-gradient(circle at 50% 40%, #ffe066 20%, #fffae5 80%),
+        radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px);
+    background-size  : 100% 100%, 24px 24px;
+    display          : flex;
+    flex-direction   : column;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TOPBAR  (same as dashboard.css)
+   ═══════════════════════════════════════════════════════════ */
+.topbar {
+    background    : var(--yellow);
+    border-bottom : var(--border);
+    box-shadow    : 0 4px 0px var(--black);
+    padding       : 0 28px;
+    height        : 60px;
+    display       : flex;
+    align-items   : center;
+    justify-content: space-between;
+    gap           : 16px;
+    position      : sticky;
+    top           : 0;
+    z-index       : 100;
+}
+
+.topbar__brand {
+    font-family    : var(--font-heading);
+    font-size      : 1.4rem;
+    letter-spacing : 2px;
+    text-decoration: none;
+    color          : var(--black);
+    display        : flex;
+    align-items    : center;
+    gap            : 8px;
+}
+
+.topbar__brand:hover { opacity: 0.85; }
+
+.topbar__right {
+    display    : flex;
+    align-items: center;
+    gap        : 12px;
+}
+
+.topbar__role {
+    font-size      : 0.75rem;
+    font-weight    : 700;
+    letter-spacing : 0.5px;
+    text-transform : uppercase;
+    background     : var(--black);
+    color          : var(--yellow);
+    padding        : 3px 10px;
+    border-radius  : var(--radius);
+    white-space    : nowrap;
+}
+
+.topbar__name {
+    font-size    : 0.85rem;
+    font-weight  : 600;
+    white-space  : nowrap;
+    max-width    : 180px;
+    overflow     : hidden;
+    text-overflow: ellipsis;
+}
+
+.topbar__logout {
+    font-size      : 0.82rem;
+    font-weight    : 700;
+    text-decoration: none;
+    color          : var(--black);
+    background     : var(--white);
+    border         : var(--border-thin);
+    border-radius  : var(--radius);
+    box-shadow     : var(--shadow-small);
+    padding        : 4px 14px;
+    transition     : transform var(--transition), box-shadow var(--transition), background var(--transition);
+    white-space    : nowrap;
+}
+
+.topbar__logout:hover {
+    background: var(--red);
+    color     : var(--white);
+    transform : translateY(-2px);
+    box-shadow: 5px 5px 0px var(--black);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SUB-PAGE LAYOUT
+   ═══════════════════════════════════════════════════════════ */
+.subpage {
+    flex    : 1;
+    padding : 36px 28px 60px;
+    display : flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.subpage__inner {
+    width    : 100%;
+    max-width: 960px;
+}
+
+/* Back link */
+.back-link {
+    display        : inline-flex;
+    align-items    : center;
+    gap            : 6px;
+    font-size      : 0.85rem;
+    font-weight    : 700;
+    color          : var(--black);
+    text-decoration: none;
+    margin-bottom  : 20px;
+    padding        : 4px 12px;
+    background     : var(--yellow-light);
+    border         : var(--border-thin);
+    border-radius  : var(--radius);
+    box-shadow     : var(--shadow-small);
+    transition     : transform var(--transition), box-shadow var(--transition), background var(--transition);
+}
+
+.back-link:hover {
+    background : var(--yellow);
+    transform  : translateX(-3px);
+    box-shadow : 4px 4px 0px var(--black);
+}
+
+/* Page heading */
+.subpage__heading {
+    font-family    : var(--font-heading);
+    font-size      : clamp(1.5rem, 3.5vw, 2rem);
+    letter-spacing : 1px;
+    text-transform : uppercase;
+    margin-bottom  : 6px;
+}
+
+.subpage__meta {
+    font-size    : 0.85rem;
+    color        : var(--grey-text);
+    font-weight  : 500;
+    margin-bottom: 24px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FLASH MESSAGES
+   ═══════════════════════════════════════════════════════════ */
+.flash-list { list-style: none; margin-bottom: 20px; }
+
+.flash {
+    padding      : 10px 16px;
+    border       : var(--border-thin);
+    border-radius: var(--radius);
+    font-size    : 0.875rem;
+    font-weight  : 500;
+    margin-bottom: 8px;
+    box-shadow   : var(--shadow-small);
+}
+
+.flash--success { background: var(--green-light);  border-color: var(--green);  color: #166534; }
+.flash--error   { background: var(--red-light);    border-color: var(--red);    color: #991b1b; }
+.flash--info    { background: #dbeafe;              border-color: var(--teal);   color: #1e40af; }
+.flash--warning { background: var(--amber-light);  border-color: var(--amber);  color: #854d0e; }
+
+/* ═══════════════════════════════════════════════════════════
+   STATUS — CLASSIFICATION BADGE
+   ═══════════════════════════════════════════════════════════ */
+.classification-card {
+    background    : var(--cream);
+    border        : var(--border);
+    box-shadow    : var(--shadow-hard);
+    border-radius : var(--radius);
+    padding       : 24px 28px;
+    margin-bottom : 24px;
+    display       : flex;
+    align-items   : center;
+    gap           : 20px;
+    flex-wrap     : wrap;
+}
+
+.classification-card__label {
+    font-size    : 0.78rem;
+    font-weight  : 700;
+    color        : var(--grey-text);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+}
+
+/* The coloured badge pill */
+.status-badge {
+    display      : inline-flex;
+    align-items  : center;
+    gap          : 8px;
+    padding      : 8px 20px;
+    border       : var(--border);
+    border-radius: var(--radius);
+    box-shadow   : var(--shadow-medium);
+    font-family  : var(--font-heading);
+    font-size    : 1.4rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.status-badge--stable    { background: var(--green-light);  border-color: var(--green);  color: #166534; }
+.status-badge--challenged{ background: var(--amber-light);  border-color: var(--amber);  color: #92400e; }
+.status-badge--critical  { background: var(--red-light);    border-color: var(--red);    color: #991b1b; }
+
+.status-badge__icon { font-size: 1.5rem; }
+
+/* Short description next to the badge */
+.classification-card__desc {
+    font-size  : 0.88rem;
+    color      : var(--grey-text);
+    line-height: 1.6;
+    flex       : 1;
+    min-width  : 200px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   STATUS — TOP SYMPTOMS HIGHLIGHT CARDS
+   ═══════════════════════════════════════════════════════════ */
+.section-title {
+    font-family    : var(--font-heading);
+    font-size      : 1rem;
+    letter-spacing : 1px;
+    text-transform : uppercase;
+    margin-bottom  : 14px;
+    padding-bottom : 8px;
+    border-bottom  : var(--border-thin);
+}
+
+.top-symptoms-grid {
+    display              : grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap                  : 14px;
+    margin-bottom        : 28px;
+}
+
+.symptom-card {
+    background    : var(--cream);
+    border        : var(--border);
+    box-shadow    : var(--shadow-medium);
+    border-radius : var(--radius);
+    padding       : 16px 18px;
+    transition    : transform var(--transition), box-shadow var(--transition);
+}
+
+.symptom-card:hover {
+    transform  : translateY(-2px);
+    box-shadow : var(--shadow-hard);
+}
+
+.symptom-card__rank {
+    font-family    : var(--font-heading);
+    font-size      : 0.8rem;
+    letter-spacing : 1px;
+    text-transform : uppercase;
+    color          : var(--grey-text);
+    margin-bottom  : 6px;
+}
+
+.symptom-card__rank--1 { color: var(--red);   }
+.symptom-card__rank--2 { color: var(--amber); }
+.symptom-card__rank--3 { color: var(--teal);  }
+
+.symptom-card__name {
+    font-weight  : 700;
+    font-size    : 0.92rem;
+    margin-bottom: 8px;
+    line-height  : 1.3;
+}
+
+.symptom-card__scale {
+    display      : inline-block;
+    font-size    : 0.7rem;
+    font-weight  : 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding      : 2px 7px;
+    border       : 1px solid var(--black);
+    border-radius: var(--radius);
+    margin-bottom: 8px;
+}
+
+.symptom-card__scale--PSS { background: #fde68a; }
+.symptom-card__scale--GAD { background: #bfdbfe; }
+.symptom-card__scale--PHQ { background: #d9f99d; }
+
+/* Severity bar */
+.severity-bar-track {
+    height        : 10px;
+    background    : var(--grey-light);
+    border        : 1px solid var(--grey-mid);
+    border-radius : 2px;
+    overflow      : hidden;
+    margin-top    : 6px;
+}
+
+.severity-bar-fill {
+    height    : 100%;
+    background: var(--teal);
+    transition: width 0.4s ease;
+}
+
+.severity-bar-fill--high   { background: var(--red);   }
+.severity-bar-fill--medium { background: var(--amber);  }
+.severity-bar-fill--low    { background: var(--green);  }
+
+.symptom-card__score {
+    font-size  : 0.75rem;
+    color      : var(--grey-text);
+    margin-top : 4px;
+    font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   STATUS — 26-RESPONSE TABLE
+   ═══════════════════════════════════════════════════════════ */
+.response-table-wrap {
+    overflow-x   : auto;
+    margin-bottom: 28px;
+    border       : var(--border);
+    box-shadow   : var(--shadow-hard);
+    border-radius: var(--radius);
+}
+
+.response-table {
+    width          : 100%;
+    border-collapse: collapse;
+    background     : var(--white);
+    font-size      : 0.85rem;
+}
+
+.response-table thead th {
+    background     : var(--yellow);
+    border-bottom  : var(--border);
+    padding        : 10px 14px;
+    text-align     : left;
+    font-family    : var(--font-heading);
+    font-size      : 0.78rem;
+    letter-spacing : 0.5px;
+    text-transform : uppercase;
+    white-space    : nowrap;
+}
+
+.response-table tbody tr {
+    border-bottom: 1px solid var(--grey-light);
+    transition   : transform var(--transition), background var(--transition);
+}
+
+.response-table tbody tr:last-child { border-bottom: none; }
+
+.response-table tbody tr:hover {
+    background: var(--yellow-light);
+    transform : translateX(4px);
+}
+
+.response-table tbody td {
+    padding    : 10px 14px;
+    vertical-align: middle;
+}
+
+/* Q# column */
+.response-table .col-num {
+    width      : 44px;
+    font-weight: 700;
+    color      : var(--grey-text);
+    text-align : center;
+}
+
+/* Scale badge inside table */
+.scale-chip {
+    display      : inline-block;
+    font-size    : 0.68rem;
+    font-weight  : 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding      : 2px 6px;
+    border       : 1px solid var(--black);
+    border-radius: var(--radius);
+    white-space  : nowrap;
+}
+
+.scale-chip--PSS { background: #fde68a; }
+.scale-chip--GAD { background: #bfdbfe; }
+.scale-chip--PHQ { background: #d9f99d; }
+
+/* Symptom label column */
+.col-symptom {
+    font-weight: 600;
+    font-size  : 0.82rem;
+}
+
+/* Answer value column */
+.col-answer {
+    text-align : center;
+    font-weight: 700;
+    font-size  : 0.92rem;
+}
+
+/* Answer label */
+.col-label {
+    font-size : 0.82rem;
+    color     : var(--grey-text);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HELP PAGE — PROFESSIONAL LIST
+   ═══════════════════════════════════════════════════════════ */
+.prof-list {
+    display       : flex;
+    flex-direction: column;
+    gap           : 12px;
+    margin-bottom : 28px;
+}
+
+.prof-row {
+    background    : var(--cream);
+    border        : var(--border);
+    box-shadow    : var(--shadow-medium);
+    border-radius : var(--radius);
+    padding       : 16px 20px;
+    display       : flex;
+    align-items   : center;
+    gap           : 16px;
+    flex-wrap     : wrap;
+    transition    : transform var(--transition), box-shadow var(--transition);
+}
+
+.prof-row:hover {
+    transform  : translateY(-2px);
+    box-shadow : var(--shadow-hard);
+}
+
+/* Avatar circle */
+.prof-row__avatar {
+    width          : 44px;
+    height         : 44px;
+    background     : var(--yellow);
+    border         : var(--border-thin);
+    border-radius  : 50%;
+    box-shadow     : var(--shadow-small);
+    display        : flex;
+    align-items    : center;
+    justify-content: center;
+    font-size      : 1.3rem;
+    flex-shrink    : 0;
+}
+
+/* Name + availability group */
+.prof-row__info {
+    flex    : 1;
+    min-width: 160px;
+}
+
+.prof-row__name {
+    font-weight  : 700;
+    font-size    : 0.95rem;
+    margin-bottom: 4px;
+}
+
+/* Availability tag */
+.avail-tag {
+    display      : inline-block;
+    font-size    : 0.72rem;
+    font-weight  : 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding      : 2px 8px;
+    border       : 1px solid var(--black);
+    border-radius: var(--radius);
+}
+
+.avail-tag--available {
+    background: var(--green-light);
+    color     : #166534;
+    border-color: var(--green);
+}
+
+.avail-tag--full {
+    background: var(--red-light);
+    color     : #991b1b;
+    border-color: var(--red);
+}
+
+/* Slot counter text */
+.prof-row__slots {
+    font-size  : 0.78rem;
+    color      : var(--grey-text);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* Action cell — buttons on the right */
+.prof-row__action {
+    display    : flex;
+    align-items: center;
+    gap        : 8px;
+    flex-wrap  : wrap;
+}
+
+/* ── Button styles for the Help page ─── */
+.btn-request {
+    padding       : 8px 18px;
+    font-family   : var(--font-body);
+    font-size     : 0.85rem;
+    font-weight   : 700;
+    background    : var(--teal);
+    color         : var(--white);
+    border        : var(--border-thin);
+    border-radius : var(--radius);
+    box-shadow    : var(--shadow-small);
+    cursor        : pointer;
+    transition    : transform var(--transition), box-shadow var(--transition), background var(--transition);
+    text-decoration: none;
+    white-space   : nowrap;
+}
+
+.btn-request:hover {
+    background: var(--teal-hover);
+    transform : translateY(-2px);
+    box-shadow: 5px 5px 0px var(--black);
+}
+
+.btn-cancel {
+    padding       : 8px 18px;
+    font-family   : var(--font-body);
+    font-size     : 0.85rem;
+    font-weight   : 700;
+    background    : var(--red-light);
+    color         : #991b1b;
+    border        : var(--border-thin);
+    border-color  : var(--red);
+    border-radius : var(--radius);
+    box-shadow    : var(--shadow-small);
+    cursor        : pointer;
+    transition    : transform var(--transition), box-shadow var(--transition);
+    white-space   : nowrap;
+}
+
+.btn-cancel:hover {
+    background: var(--red);
+    color     : var(--white);
+    transform : translateY(-2px);
+    box-shadow: 5px 5px 0px var(--black);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HELP PAGE — ACTIVE APPOINTMENT BANNER
+   Shown at the top of the help page when student has an
+   active (pending or accepted) appointment.
+   ═══════════════════════════════════════════════════════════ */
+.appt-banner {
+    padding      : 14px 20px;
+    border       : var(--border);
+    border-radius: var(--radius);
+    box-shadow   : var(--shadow-medium);
+    margin-bottom: 20px;
+    font-size    : 0.9rem;
+    line-height  : 1.55;
+}
+
+.appt-banner--pending {
+    background  : var(--amber-light);
+    border-color: var(--amber);
+}
+
+.appt-banner--accepted {
+    background  : var(--green-light);
+    border-color: var(--green);
+}
+
+.appt-banner__title {
+    font-weight    : 700;
+    font-size      : 0.82rem;
+    text-transform : uppercase;
+    letter-spacing : 0.5px;
+    margin-bottom  : 4px;
+}
+
+.appt-banner--pending  .appt-banner__title { color: #92400e; }
+.appt-banner--accepted .appt-banner__title { color: #166534; }
+
+/* Stable-student info box */
+.stable-info {
+    background   : var(--green-light);
+    border       : var(--border-thin);
+    border-color : var(--green);
+    border-radius: var(--radius);
+    padding      : 14px 18px;
+    font-size    : 0.9rem;
+    color        : #166534;
+    margin-bottom: 20px;
+    box-shadow   : var(--shadow-small);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PAGE FOOTER
+   ═══════════════════════════════════════════════════════════ */
+.page-footer {
+    text-align : center;
+    font-size  : 0.78rem;
+    color      : var(--grey-text);
+    font-weight: 500;
+    padding    : 24px 0 12px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 700px) {
+    .topbar { padding: 0 16px; }
+    .topbar__name, .topbar__role { display: none; }
+    .subpage { padding: 24px 16px 48px; }
+
+    .top-symptoms-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .classification-card {
+        flex-direction: column;
+        align-items   : flex-start;
+    }
+
+    .prof-row {
+        flex-direction: column;
+        align-items   : flex-start;
+    }
+
+    .prof-row__action { width: 100%; }
+
+    .btn-request,
+    .btn-cancel { width: 100%; text-align: center; }
+}
+
+@media (max-width: 500px) {
+    .top-symptoms-grid { grid-template-columns: 1fr; }
+}

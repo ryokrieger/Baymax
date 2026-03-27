@@ -1,0 +1,348 @@
+/*
+ * dashboard.css — Baymax Role Dashboards
+ * Shared by:  student/dashboard.html, professional/dashboard.html, authority/dashboard.html, admin/dashboard.html
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Fjalla+One&family=Poppins:wght@400;500;600;700&display=swap');
+
+/* ═══════════════════════════════════════════════════════════
+   DESIGN TOKENS
+   ═══════════════════════════════════════════════════════════ */
+:root {
+    --yellow        : #F5C518;
+    --yellow-hover  : #e6b800;
+    --yellow-light  : #fffbe6;
+    --teal          : #0EA5E9;
+    --teal-hover    : #0284c7;
+    --green         : #22C55E;
+    --amber         : #F59E0B;
+    --red           : #EF4444;
+    --black         : #000000;
+    --white         : #ffffff;
+    --cream         : #fffae5;
+    --grey-light    : #f0ece0;
+    --grey-mid      : #d1c9b0;
+    --grey-text     : #555555;
+    --shadow-hard   : 6px 6px 0px var(--black);
+    --shadow-medium : 4px 4px 0px var(--black);
+    --shadow-small  : 3px 3px 0px var(--black);
+    --border        : 4px solid var(--black);
+    --border-thin   : 2px solid var(--black);
+    --radius        : 4px;
+    --font-body     : 'Poppins', 'Segoe UI', sans-serif;
+    --font-heading  : 'Fjalla One', 'Arial Black', sans-serif;
+    --transition    : 0.15s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESET & BASE
+   ═══════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 16px; }
+
+body {
+    font-family      : var(--font-body);
+    color            : var(--black);
+    min-height       : 100vh;
+    background-color : #ffe066;
+    background-image :
+        radial-gradient(circle at 50% 40%, #ffe066 20%, #fffae5 80%),
+        radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px);
+    background-size  : 100% 100%, 24px 24px;
+    display          : flex;
+    flex-direction   : column;
+    min-height       : 100vh;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TOP NAVIGATION BAR
+   ═══════════════════════════════════════════════════════════ */
+.topbar {
+    background    : var(--yellow);
+    border-bottom : var(--border);
+    box-shadow    : 0 4px 0px var(--black);
+    padding       : 0 28px;
+    height        : 60px;
+    display       : flex;
+    align-items   : center;
+    justify-content: space-between;
+    gap           : 16px;
+    position      : sticky;
+    top           : 0;
+    z-index       : 100;
+}
+
+/* Brand logo in the top-bar */
+.topbar__brand {
+    font-family    : var(--font-heading);
+    font-size      : 1.4rem;
+    letter-spacing : 2px;
+    text-decoration: none;
+    color          : var(--black);
+    display        : flex;
+    align-items    : center;
+    gap            : 8px;
+    white-space    : nowrap;
+}
+
+.topbar__brand:hover {
+    opacity: 0.85;
+}
+
+/* Right-side group: role badge + logout */
+.topbar__right {
+    display    : flex;
+    align-items: center;
+    gap        : 12px;
+}
+
+/* Role label pill */
+.topbar__role {
+    font-size      : 0.75rem;
+    font-weight    : 700;
+    letter-spacing : 0.5px;
+    text-transform : uppercase;
+    background     : var(--black);
+    color          : var(--yellow);
+    padding        : 3px 10px;
+    border-radius  : var(--radius);
+    white-space    : nowrap;
+}
+
+/* User's name shown in topbar */
+.topbar__name {
+    font-size  : 0.85rem;
+    font-weight: 600;
+    color      : var(--black);
+    white-space: nowrap;
+    max-width  : 180px;
+    overflow   : hidden;
+    text-overflow: ellipsis;
+}
+
+/* Logout link */
+.topbar__logout {
+    font-family    : var(--font-body);
+    font-size      : 0.82rem;
+    font-weight    : 700;
+    text-decoration: none;
+    color          : var(--black);
+    background     : var(--white);
+    border         : var(--border-thin);
+    border-radius  : var(--radius);
+    box-shadow     : var(--shadow-small);
+    padding        : 4px 14px;
+    transition     : transform var(--transition),
+                     box-shadow var(--transition),
+                     background var(--transition);
+    white-space    : nowrap;
+}
+
+.topbar__logout:hover {
+    background : var(--red);
+    color      : var(--white);
+    transform  : translateY(-2px);
+    box-shadow : 5px 5px 0px var(--black);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MAIN PAGE CONTENT
+   ═══════════════════════════════════════════════════════════ */
+.dashboard-page {
+    flex    : 1;
+    padding : 40px 28px 60px;
+    display : flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Welcome heading above the card grid */
+.dashboard-welcome {
+    text-align    : center;
+    margin-bottom : 36px;
+    width         : 100%;
+    max-width     : 860px;
+}
+
+.dashboard-welcome__title {
+    font-family    : var(--font-heading);
+    font-size      : clamp(1.8rem, 4vw, 2.6rem);
+    letter-spacing : 2px;
+    text-transform : uppercase;
+    line-height    : 1.1;
+}
+
+.dashboard-welcome__title span {
+    background    : var(--yellow);
+    border        : var(--border);
+    box-shadow    : var(--shadow-hard);
+    display       : inline-block;
+    padding       : 4px 20px;
+    border-radius : var(--radius);
+}
+
+.dashboard-welcome__sub {
+    font-size  : 0.95rem;
+    color      : var(--grey-text);
+    margin-top : 10px;
+    font-weight: 500;
+}
+
+/* Semester badge */
+.semester-badge {
+    display      : inline-block;
+    background   : var(--black);
+    color        : var(--yellow);
+    font-size    : 0.75rem;
+    font-weight  : 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding      : 3px 12px;
+    border-radius: var(--radius);
+    margin-top   : 8px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CARD GRID
+   2 columns on desktop, 1 column on mobile.
+   Each card is a styled <a> link.
+   ═══════════════════════════════════════════════════════════ */
+.card-grid {
+    display              : grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap                  : 20px;
+    width                : 100%;
+    max-width            : 860px;
+}
+
+/* A card with 3 items uses a 3-column layout */
+.card-grid--3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+/* Individual dashboard card */
+.dash-card {
+    display        : flex;
+    flex-direction : column;
+    align-items    : center;
+    justify-content: center;
+    gap            : 14px;
+    padding        : 36px 24px;
+    text-decoration: none;
+    color          : var(--black);
+    background     : var(--cream);
+    border         : var(--border);
+    box-shadow     : var(--shadow-hard);
+    border-radius  : var(--radius);
+    text-align     : center;
+    transition     : transform var(--transition),
+                     box-shadow var(--transition),
+                     background var(--transition);
+    cursor         : pointer;
+}
+
+.dash-card:hover {
+    background : var(--yellow);
+    transform  : translateY(-4px) rotate(-0.5deg);
+    box-shadow : 10px 10px 0px var(--black);
+    color      : var(--black);
+}
+
+.dash-card:active {
+    transform  : translateY(1px) rotate(0deg);
+    box-shadow : 3px 3px 0px var(--black);
+}
+
+/* Card icon */
+.dash-card__icon {
+    font-size : 3rem;
+    line-height: 1;
+    filter    : drop-shadow(2px 2px 0px rgba(0,0,0,0.12));
+    transition: transform var(--transition);
+}
+
+.dash-card:hover .dash-card__icon {
+    transform: scale(1.15) rotate(5deg);
+}
+
+/* Card title */
+.dash-card__title {
+    font-family    : var(--font-heading);
+    font-size      : 1rem;
+    letter-spacing : 1px;
+    text-transform : uppercase;
+    line-height    : 1.2;
+}
+
+/* Card description */
+.dash-card__desc {
+    font-size  : 0.8rem;
+    color      : var(--grey-text);
+    font-weight: 500;
+    line-height: 1.45;
+}
+
+.dash-card:hover .dash-card__desc {
+    color: #333;
+}
+
+/* Colour accent top border per card type */
+.dash-card--status    { border-top: 6px solid var(--teal);  }
+.dash-card--help      { border-top: 6px solid #8b5cf6;      }
+.dash-card--events    { border-top: 6px solid var(--green);  }
+.dash-card--appts     { border-top: 6px solid var(--amber);  }
+.dash-card--stats     { border-top: 6px solid var(--red);    }
+.dash-card--students  { border-top: 6px solid var(--teal);   }
+.dash-card--profs     { border-top: 6px solid #8b5cf6;       }
+.dash-card--authority { border-top: 6px solid var(--green);  }
+.dash-card--admin     { border-top: 6px solid var(--red);    }
+
+/* ═══════════════════════════════════════════════════════════
+   FLASH MESSAGES
+   ═══════════════════════════════════════════════════════════ */
+.flash-list { list-style: none; margin-bottom: 20px; width: 100%; max-width: 860px; }
+
+.flash {
+    padding      : 10px 16px;
+    border       : var(--border-thin);
+    border-radius: var(--radius);
+    font-size    : 0.875rem;
+    font-weight  : 500;
+    margin-bottom: 8px;
+    box-shadow   : var(--shadow-small);
+}
+
+.flash--success { background: #dcfce7; border-color: var(--green);  color: #166534; }
+.flash--error   { background: #fee2e2; border-color: var(--red);    color: #991b1b; }
+.flash--info    { background: #dbeafe; border-color: var(--teal);   color: #1e40af; }
+.flash--warning { background: #fef9c3; border-color: var(--amber);  color: #854d0e; }
+
+/* ═══════════════════════════════════════════════════════════
+   PAGE FOOTER
+   ═══════════════════════════════════════════════════════════ */
+.page-footer {
+    text-align : center;
+    font-size  : 0.78rem;
+    color      : var(--grey-text);
+    font-weight: 500;
+    padding    : 24px 0 12px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 700px) {
+    .card-grid,
+    .card-grid--3 {
+        grid-template-columns: 1fr;
+        max-width: 460px;
+    }
+
+    .topbar { padding: 0 16px; }
+
+    .topbar__name,
+    .topbar__role { display: none; }
+
+    .dashboard-page { padding: 28px 16px 48px; }
+}
