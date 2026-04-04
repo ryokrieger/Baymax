@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baymax — Appointments</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'styles/tables.css' %}">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     TOPBAR
+     ══════════════════════════════════════════════════════════ -->
+<nav class="topbar">
+    <a href="{% url 'professional_dashboard' %}" class="topbar__brand">🏥 BAYMAX</a>
+    <div class="topbar__right">
+        <span class="topbar__name">{{ full_name }}</span>
+        <span class="topbar__role">Mental Health Professional</span>
+        <a href="{% url 'logout' %}" class="topbar__logout">Logout</a>
+    </div>
+</nav>
+
+<main class="subpage">
+<div class="subpage__inner">
+
+    <a href="{% url 'professional_dashboard' %}" class="back-link">
+        &#8592; Back to Dashboard
+    </a>
+
+    <h1 class="subpage__heading">📋 Appointments</h1>
+    {% if semester %}
+    <p class="subpage__meta">{{ semester }} &mdash; {{ full_name }}</p>
+    {% endif %}
+
+    {% if messages %}
+    <ul class="flash-list">
+        {% for message in messages %}
+        <li class="flash flash--{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════════════════
+         SECTION 1 — CURRENTLY TREATING
+         ══════════════════════════════════════════════════════ -->
+    <p class="section-title">✅ Currently Treating</p>
+
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Student Name</th>
+                    <th>Student ID</th>
+                    <th>Department</th>
+                    <th>Scheduled Session</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in treating_rows %}
+                <tr>
+                    <td class="td-center">
+                        {{ forloop.counter|add:treating_rows|add:"-1" }}
+                    </td>
+                    <td style="font-weight:600;">{{ row.student_name }}</td>
+                    <td>{{ row.student_id }}</td>
+                    <td>{{ row.department }}</td>
+                    <td>
+                        {% if row.scheduled_at %}
+                            <span style="font-weight:600;">
+                                Every {{ row.scheduled_at|date:"l" }}
+                            </span>
+                            <br>
+                            <span style="font-size:0.8rem;color:#555;">
+                                {{ row.scheduled_at|time:"g:i A" }}
+                                &mdash; 2 hrs
+                            </span>
+                        {% else %}
+                            <span style="color:#888;font-style:italic;">
+                                Not set
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="actions-cell">
+                            <!-- View student detail -->
+                            <a href="{% url 'professional_appointments_view' row.appt_id %}"
+                               class="btn btn-view">
+                                👁 View
+                            </a>
+                            <!-- Release student -->
+                            <form method="POST"
+                                  action="{% url 'professional_appointments_release' row.appt_id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-release"
+                                        onclick="return confirm('Release this student? The appointment will be marked as completed.');">
+                                    ✓ Release
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr class="empty-row">
+                    <td colspan="6">
+                        You are not currently treating any students.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination — Currently Treating -->
+    {% if pages_treating > 1 %}
+    <div class="pagination">
+        {% if page_t > 1 %}
+            <a href="?page_t={{ page_t|add:'-1' }}&page_p={{ page_p }}">&#8592; Prev</a>
+        {% else %}
+            <span class="disabled">&#8592; Prev</span>
+        {% endif %}
+
+        {% if range_t.start > 1 %}
+            <a href="?page_t=1&page_p={{ page_p }}">1</a>
+            {% if range_t.start > 2 %}<span class="ellipsis">…</span>{% endif %}
+        {% endif %}
+
+        {% for p in range_t %}
+            {% if p == page_t %}
+                <span class="current-page">{{ p }}</span>
+            {% else %}
+                <a href="?page_t={{ p }}&page_p={{ page_p }}">{{ p }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if range_t.stop <= pages_treating %}
+            {% if range_t.stop < pages_treating %}
+                <span class="ellipsis">…</span>
+            {% endif %}
+            <a href="?page_t={{ pages_treating }}&page_p={{ page_p }}">
+                {{ pages_treating }}
+            </a>
+        {% endif %}
+
+        {% if page_t < pages_treating %}
+            <a href="?page_t={{ page_t|add:'1' }}&page_p={{ page_p }}">Next &#8594;</a>
+        {% else %}
+            <span class="disabled">Next &#8594;</span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════════════════
+         SECTION 2 — PENDING REQUESTS
+         ══════════════════════════════════════════════════════ -->
+    <div class="section-gap">
+        <p class="section-title">⏳ Pending Requests</p>
+    </div>
+
+    {% if pending_rows %}
+        {% for row in pending_rows %}
+        <!--
+            Each pending request is its own card showing the student's
+            full 26 responses and the Accept / Decline action buttons.
+        -->
+        <div style="background:var(--cream);border:4px solid #000;
+                    box-shadow:6px 6px 0 #000;border-radius:4px;
+                    margin-bottom:20px;overflow:hidden;">
+
+            <!-- Card header: student info + action buttons -->
+            <div style="background:var(--yellow-light);border-bottom:2px solid #000;
+                        padding:14px 18px;display:flex;align-items:center;
+                        justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                <div>
+                    <span style="font-family:'Fjalla One',sans-serif;font-size:1rem;
+                                 letter-spacing:0.5px;">
+                        {{ row.student_name }}
+                    </span>
+                    <span style="font-size:0.8rem;color:#555;margin-left:10px;">
+                        {{ row.student_id }} &bull; {{ row.department }}
+                    </span>
+                </div>
+
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                    <!-- Accept form with datetime-local input -->
+                    <form method="POST"
+                          action="{% url 'professional_appointments_accept' row.appt_id %}"
+                          class="accept-form">
+                        {% csrf_token %}
+                        <input type="datetime-local"
+                               name="scheduled_at"
+                               required
+                               title="Pick any date that falls on the desired weekday — the session repeats every week on that day at this time for 2 hours.">
+                        <button type="submit" class="btn btn-accept">
+                            ✓ Accept
+                        </button>
+                    </form>
+                    <!-- Decline button -->
+                    <form method="POST"
+                          action="{% url 'professional_appointments_decline' row.appt_id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-decline"
+                                onclick="return confirm('Decline this request?');">
+                            ✕ Decline
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Response table for this student -->
+            {% if row.responses %}
+            <div style="overflow-x:auto;">
+                <table class="data-table" style="min-width:700px;">
+                    <thead>
+                        <tr>
+                            <th style="width:44px;">#</th>
+                            <th>Scale</th>
+                            <th>Symptom</th>
+                            <th>Question</th>
+                            <th style="width:60px;">Score</th>
+                            <th>Answer</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in row.responses %}
+                        <tr>
+                            <td class="td-center"
+                                style="font-weight:700;color:#888;">
+                                {{ r.number }}
+                            </td>
+                            <td>
+                                <span class="scale-chip scale-chip--{{ r.scale }}">
+                                    {{ r.scale }}
+                                </span>
+                            </td>
+                            <td style="font-weight:600;font-size:0.82rem;">
+                                {{ r.symptom }}
+                            </td>
+                            <td style="font-size:0.8rem;color:#444;line-height:1.4;">
+                                {{ r.text }}
+                            </td>
+                            <td class="td-center"
+                                style="font-weight:700;">
+                                {{ r.raw }}
+                            </td>
+                            <td style="font-size:0.82rem;color:#555;">
+                                {{ r.answer_label }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p style="padding:16px 18px;color:#888;font-style:italic;font-size:0.88rem;">
+                No questionnaire responses found for this student this semester.
+            </p>
+            {% endif %}
+
+        </div><!-- /pending card -->
+        {% endfor %}
+
+    {% else %}
+    <div style="background:var(--cream);border:4px solid #000;
+                box-shadow:4px 4px 0 #000;border-radius:4px;
+                text-align:center;padding:36px 24px;">
+        <span style="font-size:2.5rem;display:block;margin-bottom:10px;">📭</span>
+        <p style="font-family:'Fjalla One',sans-serif;font-size:1rem;
+                  text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">
+            No Pending Requests
+        </p>
+        <p style="font-size:0.88rem;color:#555;">
+            There are no pending appointment requests at the moment.
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Pagination — Pending Requests -->
+    {% if pages_pending > 1 %}
+    <div class="pagination">
+        {% if page_p > 1 %}
+            <a href="?page_t={{ page_t }}&page_p={{ page_p|add:'-1' }}">&#8592; Prev</a>
+        {% else %}
+            <span class="disabled">&#8592; Prev</span>
+        {% endif %}
+
+        {% if range_p.start > 1 %}
+            <a href="?page_t={{ page_t }}&page_p=1">1</a>
+            {% if range_p.start > 2 %}<span class="ellipsis">…</span>{% endif %}
+        {% endif %}
+
+        {% for p in range_p %}
+            {% if p == page_p %}
+                <span class="current-page">{{ p }}</span>
+            {% else %}
+                <a href="?page_t={{ page_t }}&page_p={{ p }}">{{ p }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if range_p.stop <= pages_pending %}
+            {% if range_p.stop < pages_pending %}
+                <span class="ellipsis">…</span>
+            {% endif %}
+            <a href="?page_t={{ page_t }}&page_p={{ pages_pending }}">
+                {{ pages_pending }}
+            </a>
+        {% endif %}
+
+        {% if page_p < pages_pending %}
+            <a href="?page_t={{ page_t }}&page_p={{ page_p|add:'1' }}">Next &#8594;</a>
+        {% else %}
+            <span class="disabled">Next &#8594;</span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+</div><!-- /.subpage__inner -->
+</main>
+
+<footer class="page-footer">
+    Baymax &mdash; University Mental Health Tracking System
+</footer>
+
+</body>
+</html>

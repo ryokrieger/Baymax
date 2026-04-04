@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baymax — Student Detail</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'styles/tables.css' %}">
+</head>
+<body>
+
+<nav class="topbar">
+    <a href="{% url 'professional_dashboard' %}" class="topbar__brand">🏥 BAYMAX</a>
+    <div class="topbar__right">
+        <span class="topbar__name">{{ full_name }}</span>
+        <span class="topbar__role">Mental Health Professional</span>
+        <a href="{% url 'logout' %}" class="topbar__logout">Logout</a>
+    </div>
+</nav>
+
+<main class="subpage">
+<div class="subpage__inner">
+
+    <a href="{% url 'professional_appointments' %}" class="back-link">
+        &#8592; Back to Appointments
+    </a>
+
+    <h1 class="subpage__heading">👤 Student Detail</h1>
+    {% if semester %}
+    <p class="subpage__meta">{{ semester }}</p>
+    {% endif %}
+
+    {% if messages %}
+    <ul class="flash-list">
+        {% for message in messages %}
+        <li class="flash flash--{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════════════════
+         STUDENT INFO CARD
+         ══════════════════════════════════════════════════════ -->
+    <div class="student-info-card">
+
+        <div class="student-info-card__avatar">🎓</div>
+
+        <div class="student-info-card__details">
+            <p class="student-info-card__name">{{ appt.student_name }}</p>
+            <p class="student-info-card__meta">
+                <strong>Student ID:</strong> {{ appt.student_id }}<br>
+                <strong>Department:</strong> {{ appt.department }}
+            </p>
+        </div>
+
+        {% if appt.scheduled_at %}
+        <div class="session-time-box">
+            <p class="session-time-box__label">📅 Weekly Recurring Session</p>
+            <p class="session-time-box__value">
+                Every {{ appt.scheduled_at|date:"l" }}<br>
+                {{ appt.scheduled_at|time:"g:i A" }} &mdash; 2 hrs
+            </p>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         TOP 5 SYMPTOMS
+         ══════════════════════════════════════════════════════ -->
+    {% if top_symptoms %}
+    <p class="section-title">🔍 Top 5 Symptoms</p>
+    <div class="top-symptoms-row">
+        {% for item in top_symptoms %}
+        <div class="symptom-pill symptom-pill--{{ forloop.counter }}">
+            <span class="symptom-pill__rank">
+                {% if forloop.counter == 1 %}🥇
+                {% elif forloop.counter == 2 %}🥈
+                {% elif forloop.counter == 3 %}🥉
+                {% else %}{{ forloop.counter }}.
+                {% endif %}
+            </span>
+            <span class="scale-chip scale-chip--{{ item.scale }}"
+                  style="font-size:0.65rem;">{{ item.scale }}</span>
+            {{ item.symptom }}
+            <span style="font-size:0.75rem;color:#777;font-weight:500;">
+                ({{ item.raw }})
+            </span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════════════════
+         FULL 26-RESPONSE TABLE
+         ══════════════════════════════════════════════════════ -->
+    <p class="section-title">📋 Full Questionnaire Responses</p>
+
+    {% if responses %}
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width:44px;">#</th>
+                    <th>Scale</th>
+                    <th>Symptom</th>
+                    <th>Question</th>
+                    <th style="width:60px;">Score</th>
+                    <th>Answer</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in responses %}
+                <tr>
+                    <td class="td-center"
+                        style="font-weight:700;color:#888;">
+                        {{ r.number }}
+                    </td>
+                    <td>
+                        <span class="scale-chip scale-chip--{{ r.scale }}">
+                            {{ r.scale }}
+                        </span>
+                    </td>
+                    <td style="font-weight:600;font-size:0.82rem;">
+                        {{ r.symptom }}
+                    </td>
+                    <td style="font-size:0.82rem;color:#444;line-height:1.45;">
+                        {{ r.text }}
+                    </td>
+                    <td class="td-center" style="font-weight:700;">
+                        {{ r.raw }}
+                    </td>
+                    <td style="font-size:0.82rem;color:#555;">
+                        {{ r.answer_label }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="background:var(--cream);border:4px solid #000;
+                box-shadow:4px 4px 0 #000;border-radius:4px;
+                text-align:center;padding:36px 24px;">
+        <p style="color:#888;font-style:italic;">
+            No questionnaire responses found for this student this semester.
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Back button at the bottom for convenience -->
+    <div style="margin-top:24px;">
+        <a href="{% url 'professional_appointments' %}" class="btn btn-outline btn-lg">
+            &#8592; Back to Appointments
+        </a>
+    </div>
+
+</div>
+</main>
+
+<footer class="page-footer">
+    Baymax &mdash; University Mental Health Tracking System
+</footer>
+
+</body>
+</html>

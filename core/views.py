@@ -88,8 +88,7 @@ def login_view(request):
         if role not in valid_roles:
             role = 'student'
         return render(request, 'login.html', {
-            'role':       role,
-            'role_label': ROLE_LABELS[role],
+            'role': role, 'role_label': ROLE_LABELS[role],
         })
 
     role     = request.POST.get('role', 'student')
@@ -140,13 +139,9 @@ def login_view(request):
 
         # ── Student post-login flow ───────────────────────────────────
         ResetAgent().run()
-
         semester = get_current_semester(cursor)
         if not semester:
-            messages.error(
-                request,
-                'No active semester has been configured. Please contact Admin IT.'
-            )
+            messages.error(request, 'No active semester configured. Please contact Admin IT.')
             return redirect('landing')
 
         cursor.execute(
@@ -236,6 +231,7 @@ def register(request):
         conn.rollback()
         messages.error(request, f'An unexpected error occurred. ({exc})')
         return render(request, 'register.html', form_data)
+
     finally:
         cursor.close()
         conn.close()
@@ -263,20 +259,13 @@ def register_google(request):
     conn   = connect_db()
     cursor = conn.cursor()
     try:
-        cursor.execute(
-            "SELECT id, full_name, role FROM users WHERE email = %s",
-            (google_email,),
-        )
+        cursor.execute("SELECT id, full_name, role FROM users WHERE email = %s", (google_email,))
         existing_user = cursor.fetchone()
 
         # ── Case B: existing account ──────────────────────────────────
         if existing_user:
             if existing_user['role'] != 'student':
-                messages.error(
-                    request,
-                    'This email is registered under a non-student role. '
-                    'Please use email/password login.'
-                )
+                messages.error(request, 'This email is registered under a non-student role.')
                 return redirect('login')
 
             request.session['user_id']   = existing_user['id']
@@ -303,15 +292,13 @@ def register_google(request):
 
         # ── Case A: new user ──────────────────────────────────────────
         google_full_name = (
-            request.user.get_full_name()
-            or request.user.username
+            request.user.get_full_name() or request.user.username
             or google_email.split('@')[0]
         )
 
         if request.method == 'GET':
             return render(request, 'register_google.html', {
-                'google_email':     google_email,
-                'google_full_name': google_full_name,
+                'google_email': google_email, 'google_full_name': google_full_name,
             })
 
         student_id = request.POST.get('student_id', '').strip()
@@ -364,6 +351,7 @@ def register_google(request):
         conn.rollback()
         messages.error(request, f'An unexpected error occurred. ({exc})')
         return redirect('landing')
+
     finally:
         cursor.close()
         conn.close()
@@ -419,7 +407,8 @@ QUESTIONS = [
 ]
 
 # Column names in exact feature order — used for ML answer extraction
-QUESTION_COLS = [q[0] for q in QUESTIONS]
+QUESTION_COLS    = [q[0] for q in QUESTIONS]
+QUESTION_SYMPTOMS = {q[0]: q[3] for q in QUESTIONS}
 
 # Answer button labels per scale
 SCALE_LABELS = {
@@ -444,6 +433,35 @@ def _next_unanswered(qr_row):
             return i
     return None
 
+def _build_responses(qr_row):
+    """
+    Given a questionnaire_responses DB row, return a list of 26 dicts
+    suitable for display in templates.  Used by both student status and
+    professional appointment/detail views.
+    """
+    scale_answer_labels = {
+        'pss': SCALE_LABELS['pss'],
+        'gad': SCALE_LABELS['gad'],
+        'phq': SCALE_LABELS['phq'],
+    }
+    responses = []
+    for i, (col, scale, text, symptom) in enumerate(QUESTIONS):
+        raw = qr_row[col] if qr_row else None
+        if raw is None:
+            continue
+        answer_label = scale_answer_labels[scale][raw]
+        responses.append({
+            'number':       i + 1,
+            'col':          col,
+            'scale':        scale.upper(),
+            'symptom':      symptom,
+            'text':         text,
+            'raw':          raw,
+            'answer_label': answer_label,
+            'severity':     raw,
+        })
+    return responses
+
 # ─────────────────────────────────────────────
 #  CHATBOT  GET/POST /chatbot/
 # ─────────────────────────────────────────────
@@ -463,10 +481,7 @@ def chatbot(request):
     try:
         semester = get_current_semester(cursor)
         if not semester:
-            messages.error(
-                request,
-                'No active semester has been configured. Please contact Admin IT.'
-            )
+            messages.error(request, 'No active semester configured. Please contact Admin IT.')
             return redirect('landing')
 
         # ── GET ───────────────────────────────────────────────────────
@@ -564,18 +579,13 @@ def chatbot(request):
         # ── All 26 answered — run the model ───────────────────────────
         answers = [qr[c] for c in QUESTION_COLS]
         if any(v is None for v in answers):
-            messages.error(request, 'Some answers are missing. Please complete the assessment again.')
+            messages.error(request, 'Some answers are missing.')
             return redirect('chatbot')
 
         status = ml_predict(answers)
-
         cursor.execute(
-            """
-            UPDATE questionnaire_responses
-            SET    final_status    = %s,
-                   responses_reset = FALSE
-            WHERE  student_id = %s AND semester = %s
-            """,
+            "UPDATE questionnaire_responses SET final_status = %s, responses_reset = FALSE "
+            "WHERE student_id = %s AND semester = %s",
             (status, user_id, semester),
         )
         conn.commit()
@@ -584,6 +594,7 @@ def chatbot(request):
     except Exception:
         conn.rollback()
         raise
+
     finally:
         cursor.close()
         conn.close()
@@ -645,7 +656,6 @@ def chatbot_request_professional(request):
     """Run Triage Agent for Critical students."""
     user_id, role = get_session_user(request)
     if not user_id or role != 'student':
-        messages.error(request, 'Please log in as a student.')
         return redirect('landing')
 
     try:
@@ -679,10 +689,7 @@ def student_dashboard(request):
     try:
         semester = get_current_semester(cursor)
         if not semester:
-            messages.error(
-                request,
-                'No active semester has been configured. Please contact Admin IT.'
-            )
+            messages.error(request, 'No active semester configured.')
             return redirect('landing')
 
         # Guard: if assessment not complete or was reset, send to chatbot
@@ -720,7 +727,7 @@ def student_status(request):
     if not user_id or role != 'student':
         messages.error(request, 'Please log in as a student.')
         return redirect('landing')
- 
+
     conn   = connect_db()
     cursor = conn.cursor()
     try:
@@ -728,52 +735,25 @@ def student_status(request):
         if not semester:
             messages.error(request, 'No active semester configured.')
             return redirect('landing')
- 
+
         cursor.execute(
             "SELECT * FROM questionnaire_responses "
             "WHERE student_id = %s AND semester = %s",
             (user_id, semester),
         )
         qr = cursor.fetchone()
- 
+
         # No complete assessment → redirect to chatbot
         if not qr or not qr['final_status'] or qr['responses_reset']:
             return redirect('chatbot')
- 
+
         final_status = qr['final_status']
- 
-        # ── Build response rows for the table ─────────────────────────
-        # Each row: question number, scale, symptom label, raw answer,
-        #           human-readable answer label, severity score
-        scale_answer_labels = {
-            'pss': ['Never', 'Almost Never', 'Sometimes', 'Fairly Often', 'Very Often'],
-            'gad': ['Not at all', 'Several days', 'More than half the days', 'Nearly every day'],
-            'phq': ['Not at all', 'Several days', 'More than half the days', 'Nearly every day'],
-        }
- 
-        responses = []
-        for i, (col, scale, text, symptom) in enumerate(QUESTIONS):
-            raw = qr[col]
-            if raw is None:
-                continue
-            answer_label = scale_answer_labels[scale][raw] if raw is not None else '—'
-            severity     = raw
-            responses.append({
-                'number':       i + 1,
-                'col':          col,
-                'scale':        scale.upper(),
-                'symptom':      symptom,
-                'text':         text,
-                'raw':          raw,
-                'answer_label': answer_label,
-                'severity':     severity,
-            })
- 
+        responses    = _build_responses(qr)
+
         # ── Top 3 symptoms by severity score ──────────────────────────
         # Sort by severity descending, take top 3
-        sorted_by_severity = sorted(responses, key=lambda r: r['severity'], reverse=True)
-        top_symptoms = sorted_by_severity[:3]
- 
+        top_symptoms = sorted(responses, key=lambda r: r['severity'], reverse=True)[:3]
+
         return render(request, 'student/status.html', {
             'full_name':    request.session.get('full_name', 'Student'),
             'semester':     semester,
@@ -781,7 +761,7 @@ def student_status(request):
             'responses':    responses,
             'top_symptoms': top_symptoms,
         })
- 
+
     finally:
         cursor.close()
         conn.close()
@@ -808,7 +788,7 @@ def student_help(request):
     if not user_id or role != 'student':
         messages.error(request, 'Please log in as a student.')
         return redirect('landing')
- 
+
     conn   = connect_db()
     cursor = conn.cursor()
     try:
@@ -816,7 +796,7 @@ def student_help(request):
         if not semester:
             messages.error(request, 'No active semester configured.')
             return redirect('landing')
- 
+
         # Student's classification for this semester
         cursor.execute(
             "SELECT final_status, responses_reset FROM questionnaire_responses "
@@ -824,55 +804,49 @@ def student_help(request):
             (user_id, semester),
         )
         qr = cursor.fetchone()
- 
+
         if not qr or not qr['final_status'] or qr['responses_reset']:
             return redirect('chatbot')
- 
+
         final_status = qr['final_status']
- 
+
         # Student's current active appointment (pending or accepted)
         cursor.execute(
             """
             SELECT a.id, a.status, a.scheduled_at,
-                   u.full_name AS professional_name,
-                   a.professional_id
+                   u.full_name AS professional_name, a.professional_id
             FROM   appointments a
             JOIN   users u ON u.id = a.professional_id
-            WHERE  a.student_id = %s
-            AND    a.status IN ('pending', 'accepted')
-            ORDER  BY a.id DESC
-            LIMIT  1
+            WHERE  a.student_id = %s AND a.status IN ('pending','accepted')
+            ORDER  BY a.id DESC LIMIT 1
             """,
             (user_id,)
         )
         active_appt = cursor.fetchone()
- 
+
         # All professionals with their current active student count
         cursor.execute(
             """
-            SELECT  u.id,
-                    u.full_name,
+            SELECT  u.id, u.full_name,
                     COUNT(a.id) AS active_count,
                     CASE WHEN COUNT(a.id) < 12 THEN TRUE ELSE FALSE END AS is_available
             FROM    users u
-            LEFT JOIN appointments a
-                   ON a.professional_id = u.id
-                   AND a.status = 'accepted'
+            LEFT JOIN appointments a ON a.professional_id = u.id AND a.status = 'accepted'
             WHERE   u.role = 'professional'
             GROUP BY u.id, u.full_name
             ORDER BY u.full_name ASC
             """
         )
         professionals = cursor.fetchall()
- 
+
         return render(request, 'student/help.html', {
-            'full_name':    request.session.get('full_name', 'Student'),
-            'semester':     semester,
-            'final_status': final_status,
-            'active_appt':  active_appt,
+            'full_name':     request.session.get('full_name', 'Student'),
+            'semester':      semester,
+            'final_status':  final_status,
+            'active_appt':   active_appt,
             'professionals': professionals,
         })
- 
+
     finally:
         cursor.close()
         conn.close()
@@ -890,14 +864,14 @@ def student_help_request(request, professional_id):
     user_id, role = get_session_user(request)
     if not user_id or role != 'student':
         return redirect('landing')
- 
+
     conn   = connect_db()
     cursor = conn.cursor()
     try:
         semester = get_current_semester(cursor)
         if not semester:
             return redirect('landing')
- 
+
         # Guard: student must be Challenged or Critical
         cursor.execute(
             "SELECT final_status FROM questionnaire_responses "
@@ -908,25 +882,23 @@ def student_help_request(request, professional_id):
         if not qr or qr['final_status'] not in ('Challenged', 'Critical'):
             messages.error(request, 'Only Challenged or Critical students can request help.')
             return redirect('student_help')
- 
+
         # Guard: no existing active appointment
         cursor.execute(
             "SELECT id FROM appointments WHERE student_id = %s "
-            "AND status IN ('pending', 'accepted')",
+            "AND status IN ('pending','accepted')",
             (user_id,)
         )
         if cursor.fetchone():
             messages.error(request, 'You already have an active appointment.')
             return redirect('student_help')
- 
+
         # Guard: professional exists and is available
         cursor.execute(
             """
-            SELECT u.id,
-                   COUNT(a.id) AS active_count
+            SELECT u.id, COUNT(a.id) AS active_count
             FROM   users u
-            LEFT JOIN appointments a
-                   ON a.professional_id = u.id AND a.status = 'accepted'
+            LEFT JOIN appointments a ON a.professional_id = u.id AND a.status = 'accepted'
             WHERE  u.id = %s AND u.role = 'professional'
             GROUP BY u.id
             """,
@@ -939,7 +911,7 @@ def student_help_request(request, professional_id):
         if prof['active_count'] >= 12:
             messages.error(request, 'That professional is currently at full capacity.')
             return redirect('student_help')
- 
+
         cursor.execute(
             "INSERT INTO appointments (student_id, professional_id, status) "
             "VALUES (%s, %s, 'pending')",
@@ -948,11 +920,12 @@ def student_help_request(request, professional_id):
         conn.commit()
         messages.success(request, 'Your request has been submitted successfully.')
         return redirect('student_help')
- 
+
     except Exception as exc:
         conn.rollback()
         messages.error(request, f'An error occurred: {exc}')
         return redirect('student_help')
+
     finally:
         cursor.close()
         conn.close()
@@ -972,7 +945,7 @@ def student_help_cancel(request, appointment_id):
     user_id, role = get_session_user(request)
     if not user_id or role != 'student':
         return redirect('landing')
- 
+
     conn   = connect_db()
     cursor = conn.cursor()
     try:
@@ -985,7 +958,7 @@ def student_help_cancel(request, appointment_id):
         if not cursor.fetchone():
             messages.error(request, 'Appointment not found or cannot be cancelled.')
             return redirect('student_help')
- 
+
         cursor.execute(
             "DELETE FROM appointments WHERE id = %s AND student_id = %s",
             (appointment_id, user_id)
@@ -993,11 +966,12 @@ def student_help_cancel(request, appointment_id):
         conn.commit()
         messages.success(request, 'Your request has been cancelled.')
         return redirect('student_help')
- 
+
     except Exception as exc:
         conn.rollback()
         messages.error(request, f'An error occurred: {exc}')
         return redirect('student_help')
+
     finally:
         cursor.close()
         conn.close()
@@ -1017,7 +991,7 @@ def student_events(request):
     if not user_id or role != 'student':
         messages.error(request, 'Please log in as a student.')
         return redirect('landing')
- 
+
     conn   = connect_db()
     cursor = conn.cursor()
     try:
@@ -1025,24 +999,17 @@ def student_events(request):
         if not semester:
             messages.error(request, 'No active semester configured.')
             return redirect('landing')
- 
+
         # All events ordered by date ascending
         cursor.execute(
-            """
-            SELECT id, title, date, time, venue, description, rsvp_count
-            FROM   events
-            ORDER  BY date ASC, time ASC
-            """
+            "SELECT id, title, date, time, venue, description, rsvp_count "
+            "FROM events ORDER BY date ASC, time ASC"
         )
         events_raw = cursor.fetchall()
- 
         # Which events has this student RSVPd to?
-        cursor.execute(
-            "SELECT event_id FROM event_rsvps WHERE student_id = %s",
-            (user_id,)
-        )
+        cursor.execute("SELECT event_id FROM event_rsvps WHERE student_id = %s", (user_id,))
         rsvped_ids = {row['event_id'] for row in cursor.fetchall()}
- 
+
         # Attach has_rsvpd flag to each event
         events = []
         for ev in events_raw:
@@ -1056,7 +1023,7 @@ def student_events(request):
                 'rsvp_count': ev['rsvp_count'],
                 'has_rsvpd':  ev['id'] in rsvped_ids,
             })
- 
+
         return render(request, 'student/events.html', {
             'full_name': request.session.get('full_name', 'Student'),
             'semester':  semester,
@@ -1081,7 +1048,7 @@ def student_events_rsvp(request, event_id):
     user_id, role = get_session_user(request)
     if not user_id or role != 'student':
         return redirect('landing')
- 
+
     conn   = connect_db()
     cursor = conn.cursor()
     try:
@@ -1090,29 +1057,28 @@ def student_events_rsvp(request, event_id):
         if not cursor.fetchone():
             messages.error(request, 'Event not found.')
             return redirect('student_events')
- 
+
         # Insert RSVP (ignore if already exists)
         cursor.execute(
             "INSERT INTO event_rsvps (student_id, event_id) "
             "VALUES (%s, %s) ON CONFLICT DO NOTHING",
             (user_id, event_id)
         )
- 
+
         # Only increment if a row was actually inserted
         if cursor.rowcount > 0:
             cursor.execute(
-                "UPDATE events SET rsvp_count = rsvp_count + 1 WHERE id = %s",
-                (event_id,)
+                "UPDATE events SET rsvp_count = rsvp_count + 1 WHERE id = %s", (event_id,)
             )
- 
         conn.commit()
         messages.success(request, "You're going! RSVP confirmed.")
         return redirect('student_events')
- 
+
     except Exception as exc:
         conn.rollback()
         messages.error(request, f'An error occurred: {exc}')
         return redirect('student_events')
+
     finally:
         cursor.close()
         conn.close()
@@ -1130,7 +1096,7 @@ def student_events_cancel_rsvp(request, event_id):
     user_id, role = get_session_user(request)
     if not user_id or role != 'student':
         return redirect('landing')
- 
+
     conn   = connect_db()
     cursor = conn.cursor()
     try:
@@ -1138,22 +1104,605 @@ def student_events_cancel_rsvp(request, event_id):
             "DELETE FROM event_rsvps WHERE student_id = %s AND event_id = %s",
             (user_id, event_id)
         )
- 
+
         # Only decrement if a row was actually deleted
         if cursor.rowcount > 0:
             cursor.execute(
                 "UPDATE events SET rsvp_count = GREATEST(rsvp_count - 1, 0) WHERE id = %s",
                 (event_id,)
             )
- 
         conn.commit()
         messages.success(request, 'RSVP cancelled.')
         return redirect('student_events')
- 
+
     except Exception as exc:
         conn.rollback()
         messages.error(request, f'An error occurred: {exc}')
         return redirect('student_events')
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  PROFESSIONAL DASHBOARD  GET /professional/dashboard/
+# ─────────────────────────────────────────────
+@require_http_methods(['GET'])
+def professional_dashboard(request):
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'professional':
+        messages.error(request, 'Please log in as a Mental Health Professional.')
+        return redirect('landing')
+
+    return render(request, 'professional/dashboard.html', {
+        'full_name': request.session.get('full_name', 'Professional'),
+    })
+
+# ─────────────────────────────────────────────
+#  APPOINTMENTS  GET /professional/appointments/
+# ─────────────────────────────────────────────
+@require_http_methods(['GET'])
+def professional_appointments(request):
+    """
+    Two sections, both paginated 10 per page:
+
+    Section 1 — Currently Treating (status = 'accepted'):
+      student name, student_id, department, scheduled_at
+      + View button + Release button
+
+    Section 2 — Pending Requests (status = 'pending'):
+      each student's full 26-question responses with symptom labels
+      + Accept form (datetime input) + Decline button
+    """
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'professional':
+        messages.error(request, 'Please log in as a Mental Health Professional.')
+        return redirect('landing')
+
+    PER_PAGE = 10
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        semester = get_current_semester(cursor)
+
+        # ── Section 1: Currently Treating ────────────────────────────
+        page_t = max(1, int(request.GET.get('page_t', 1)))
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS total
+            FROM   appointments a
+            WHERE  a.professional_id = %s AND a.status = 'accepted'
+            """,
+            (user_id,)
+        )
+        total_treating  = cursor.fetchone()['total']
+        pages_treating  = max(1, (total_treating + PER_PAGE - 1) // PER_PAGE)
+        page_t          = min(page_t, pages_treating)
+
+        cursor.execute(
+            """
+            SELECT a.id        AS appt_id,
+                   a.scheduled_at,
+                   u.full_name AS student_name,
+                   s.student_id,
+                   s.department
+            FROM   appointments a
+            JOIN   users    u ON u.id       = a.student_id
+            JOIN   students s ON s.user_id  = a.student_id
+            WHERE  a.professional_id = %s AND a.status = 'accepted'
+            ORDER  BY a.scheduled_at ASC NULLS LAST, a.id ASC
+            LIMIT  %s OFFSET %s
+            """,
+            (user_id, PER_PAGE, (page_t - 1) * PER_PAGE)
+        )
+        treating_rows = cursor.fetchall()
+
+        # ── Section 2: Pending Requests ───────────────────────────────
+        page_p = max(1, int(request.GET.get('page_p', 1)))
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS total
+            FROM   appointments a
+            WHERE  a.professional_id = %s AND a.status = 'pending'
+            """,
+            (user_id,)
+        )
+        total_pending = cursor.fetchone()['total']
+        pages_pending = max(1, (total_pending + PER_PAGE - 1) // PER_PAGE)
+        page_p        = min(page_p, pages_pending)
+
+        cursor.execute(
+            """
+            SELECT a.id        AS appt_id,
+                   u.full_name AS student_name,
+                   s.student_id,
+                   s.department,
+                   a.student_id AS student_user_id
+            FROM   appointments a
+            JOIN   users    u ON u.id      = a.student_id
+            JOIN   students s ON s.user_id = a.student_id
+            WHERE  a.professional_id = %s AND a.status = 'pending'
+            ORDER  BY a.id ASC
+            LIMIT  %s OFFSET %s
+            """,
+            (user_id, PER_PAGE, (page_p - 1) * PER_PAGE)
+        )
+        pending_rows_raw = cursor.fetchall()
+
+        # Attach 26-response data to each pending row
+        pending_rows = []
+        for row in pending_rows_raw:
+            if semester:
+                cursor.execute(
+                    "SELECT * FROM questionnaire_responses "
+                    "WHERE student_id = %s AND semester = %s",
+                    (row['student_user_id'], semester)
+                )
+                qr = cursor.fetchone()
+                row_responses = _build_responses(qr) if qr else []
+            else:
+                row_responses = []
+
+            pending_rows.append({
+                'appt_id':      row['appt_id'],
+                'student_name': row['student_name'],
+                'student_id':   row['student_id'],
+                'department':   row['department'],
+                'responses':    row_responses,
+            })
+
+        # Pagination window helper (7-page window)
+        def page_range(current, total):
+            half  = 3
+            start = max(1, current - half)
+            end   = min(total, start + 6)
+            start = max(1, end - 6)
+            return range(start, end + 1)
+
+        return render(request, 'professional/appointments.html', {
+            'full_name':      request.session.get('full_name', 'Professional'),
+            'semester':       semester,
+            # treating
+            'treating_rows':  treating_rows,
+            'page_t':         page_t,
+            'pages_treating': pages_treating,
+            'range_t':        page_range(page_t, pages_treating),
+            # pending
+            'pending_rows':   pending_rows,
+            'page_p':         page_p,
+            'pages_pending':  pages_pending,
+            'range_p':        page_range(page_p, pages_pending),
+        })
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  ACCEPT  POST /professional/appointments/accept/<id>/
+# ─────────────────────────────────────────────
+@require_http_methods(['POST'])
+def professional_appointments_accept(request, appointment_id):
+    """
+    Validates:
+      1. The appointment belongs to this professional and is pending.
+      2. Professional has fewer than 12 accepted appointments.
+      3. Proposed scheduled_at does not conflict with any existing
+         accepted appointment's scheduled_at for this professional.
+    On success: sets status='accepted', stores scheduled_at.
+    """
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'professional':
+        return redirect('landing')
+
+    scheduled_at_str = request.POST.get('scheduled_at', '').strip()
+    if not scheduled_at_str:
+        messages.error(request, 'Please provide a session date and time.')
+        return redirect('professional_appointments')
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        # Verify appointment belongs to this professional and is pending
+        cursor.execute(
+            "SELECT id FROM appointments "
+            "WHERE id = %s AND professional_id = %s AND status = 'pending'",
+            (appointment_id, user_id)
+        )
+        if not cursor.fetchone():
+            messages.error(request, 'Appointment not found or already processed.')
+            return redirect('professional_appointments')
+
+        # Check 12-student cap
+        cursor.execute(
+            "SELECT COUNT(*) AS cnt FROM appointments "
+            "WHERE professional_id = %s AND status = 'accepted'",
+            (user_id,)
+        )
+        if cursor.fetchone()['cnt'] >= 12:
+            messages.error(
+                request,
+                'You have reached the maximum of 12 active students. '
+                'Please release a student before accepting new requests.'
+            )
+            return redirect('professional_appointments')
+
+        # Parse the submitted datetime
+        from datetime import datetime
+        try:
+            # HTML datetime-local format: "YYYY-MM-DDTHH:MM"
+            scheduled_at = datetime.strptime(scheduled_at_str, '%Y-%m-%dT%H:%M')
+        except ValueError:
+            try:
+                scheduled_at = datetime.strptime(scheduled_at_str, '%Y-%m-%d %H:%M')
+            except ValueError:
+                messages.error(request, 'Invalid date/time format. Please try again.')
+                return redirect('professional_appointments')
+
+        # ── Weekly recurring conflict check ───────────────────────────
+        # Each appointment is a 2-hour weekly slot on a fixed day + time.
+        # A conflict exists if any existing accepted appointment falls on
+        # the SAME day of the week AND its start time is within 2 hours
+        # of the proposed start time (i.e. the slots would overlap).
+        #
+        # Example: existing slot = Monday 10:00 (runs until 12:00).
+        #   Proposed Monday 09:30 → conflict (10:00 - 09:30 = 30 min < 2 h).
+        #   Proposed Monday 12:00 → no conflict (exactly 2 h apart).
+        #   Proposed Tuesday 10:00 → no conflict (different day).
+        cursor.execute(
+            """
+            SELECT id, scheduled_at FROM appointments
+            WHERE  professional_id = %s
+            AND    status          = 'accepted'
+            AND    scheduled_at    IS NOT NULL
+            AND    EXTRACT(DOW FROM scheduled_at) = EXTRACT(DOW FROM %s::timestamp)
+            AND    ABS(EXTRACT(EPOCH FROM (
+                       scheduled_at::time - %s::time
+                   ))) < 7200
+            """,
+            (user_id, scheduled_at, scheduled_at)
+        )
+        conflict = cursor.fetchone()
+        if conflict:
+            existing_dt = conflict['scheduled_at']
+            day_name    = existing_dt.strftime('%A')
+            time_str    = existing_dt.strftime('%I:%M %p')
+            messages.error(
+                request,
+                f'You already have a recurring session every {day_name} at '
+                f'{time_str} (2-hour slot). The proposed time conflicts with '
+                f'that slot. Please choose a different day or time.'
+            )
+            return redirect('professional_appointments')
+
+        # Accept the appointment
+        cursor.execute(
+            "UPDATE appointments SET status = 'accepted', scheduled_at = %s "
+            "WHERE id = %s AND professional_id = %s",
+            (scheduled_at, appointment_id, user_id)
+        )
+        conn.commit()
+        messages.success(request, 'Appointment accepted and session time set.')
+        return redirect('professional_appointments')
+
+    except Exception as exc:
+        conn.rollback()
+        messages.error(request, f'An error occurred: {exc}')
+        return redirect('professional_appointments')
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  DECLINE  POST /professional/appointments/decline/<id>/
+# ─────────────────────────────────────────────
+@require_http_methods(['POST'])
+def professional_appointments_decline(request, appointment_id):
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'professional':
+        return redirect('landing')
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "UPDATE appointments SET status = 'declined' "
+            "WHERE id = %s AND professional_id = %s AND status = 'pending'",
+            (appointment_id, user_id)
+        )
+        if cursor.rowcount == 0:
+            messages.error(request, 'Appointment not found or already processed.')
+        else:
+            conn.commit()
+            messages.success(request, 'Request declined.')
+        return redirect('professional_appointments')
+
+    except Exception as exc:
+        conn.rollback()
+        messages.error(request, f'An error occurred: {exc}')
+        return redirect('professional_appointments')
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  RELEASE  POST /professional/appointments/release/<id>/
+# ─────────────────────────────────────────────
+@require_http_methods(['POST'])
+def professional_appointments_release(request, appointment_id):
+    """Sets status='completed', freeing the slot toward the 12-cap."""
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'professional':
+        return redirect('landing')
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "UPDATE appointments SET status = 'completed' "
+            "WHERE id = %s AND professional_id = %s AND status = 'accepted'",
+            (appointment_id, user_id)
+        )
+        if cursor.rowcount == 0:
+            messages.error(request, 'Appointment not found or not currently active.')
+        else:
+            conn.commit()
+            messages.success(request, 'Student released. Slot is now available.')
+        return redirect('professional_appointments')
+
+    except Exception as exc:
+        conn.rollback()
+        messages.error(request, f'An error occurred: {exc}')
+        return redirect('professional_appointments')
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  VIEW STUDENT  GET /professional/appointments/view/<id>/
+# ─────────────────────────────────────────────
+@require_http_methods(['GET'])
+def professional_appointments_view(request, appointment_id):
+    """
+    Student detail page — only accessible for accepted appointments
+    belonging to this professional.
+    Shows: student info, full 26-response table with symptom labels,
+           top-5 symptoms, scheduled_at.
+    """
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'professional':
+        messages.error(request, 'Please log in as a Mental Health Professional.')
+        return redirect('landing')
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        # Verify this appointment belongs to this professional and is accepted
+        cursor.execute(
+            """
+            SELECT a.id, a.scheduled_at, a.student_id AS student_user_id,
+                   u.full_name AS student_name,
+                   s.student_id, s.department
+            FROM   appointments a
+            JOIN   users    u ON u.id      = a.student_id
+            JOIN   students s ON s.user_id = a.student_id
+            WHERE  a.id = %s AND a.professional_id = %s AND a.status = 'accepted'
+            """,
+            (appointment_id, user_id)
+        )
+        appt = cursor.fetchone()
+
+        if not appt:
+            messages.error(request, 'Appointment not found or not currently active.')
+            return redirect('professional_appointments')
+
+        semester = get_current_semester(cursor)
+
+        # Fetch the student's questionnaire responses
+        qr = None
+        if semester:
+            cursor.execute(
+                "SELECT * FROM questionnaire_responses "
+                "WHERE student_id = %s AND semester = %s",
+                (appt['student_user_id'], semester)
+            )
+            qr = cursor.fetchone()
+
+        responses    = _build_responses(qr) if qr else []
+        top_symptoms = sorted(responses, key=lambda r: r['severity'], reverse=True)[:5]
+
+        return render(request, 'professional/student_detail.html', {
+            'full_name':      request.session.get('full_name', 'Professional'),
+            'semester':       semester,
+            'appt':           appt,
+            'responses':      responses,
+            'top_symptoms':   top_symptoms,
+        })
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  PROFESSIONAL STATS  GET /professional/stats/
+# ─────────────────────────────────────────────
+@require_http_methods(['GET'])
+def professional_stats(request):
+    """
+    Aggregated mental health analytics page.
+    Calls AnalyticsAgent at the top of every load.
+    No individual student data — all aggregated and anonymised.
+    """
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'professional':
+        messages.error(request, 'Please log in as a Mental Health Professional.')
+        return redirect('landing')
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        semester = get_current_semester(cursor)
+        if not semester:
+            messages.error(request, 'No active semester configured.')
+            return redirect('professional_dashboard')
+
+        # ── Run Analytics Agent ───────────────────────────────────────
+        from core.agents.analytics_agent import AnalyticsAgent
+        alerts = AnalyticsAgent().run(semester)
+
+        # ── Overall status distribution ───────────────────────────────
+        cursor.execute(
+            """
+            SELECT final_status, COUNT(*) AS cnt
+            FROM   questionnaire_responses
+            WHERE  semester        = %s
+            AND    final_status    IS NOT NULL
+            AND    responses_reset = FALSE
+            GROUP  BY final_status
+            """,
+            (semester,)
+        )
+        dist_rows = cursor.fetchall()
+        total_assessed = sum(r['cnt'] for r in dist_rows)
+        distribution   = {r['final_status']: r['cnt'] for r in dist_rows}
+        stable     = distribution.get('Stable',     0)
+        challenged = distribution.get('Challenged', 0)
+        critical   = distribution.get('Critical',   0)
+
+        def pct(n):
+            return round((n / total_assessed * 100), 1) if total_assessed else 0
+
+        # ── Per-department breakdown ──────────────────────────────────
+        cursor.execute(
+            """
+            SELECT s.department,
+                   COUNT(*)                                                        AS total,
+                   COUNT(*) FILTER (WHERE qr.final_status = 'Stable')             AS stable,
+                   COUNT(*) FILTER (WHERE qr.final_status = 'Challenged')         AS challenged,
+                   COUNT(*) FILTER (WHERE qr.final_status = 'Critical')           AS critical
+            FROM   questionnaire_responses qr
+            JOIN   students s ON s.user_id = qr.student_id
+            WHERE  qr.semester        = %s
+            AND    qr.final_status    IS NOT NULL
+            AND    qr.responses_reset = FALSE
+            GROUP  BY s.department
+            ORDER  BY s.department ASC
+            """,
+            (semester,)
+        )
+        dept_rows = cursor.fetchall()
+
+        # ── Top symptoms by frequency ─────────────────────────────────
+        # Count how many students scored > 0 on each question column
+        symptom_counts = []
+        for col, scale, text, symptom in QUESTIONS:
+            cursor.execute(
+                f"""
+                SELECT COUNT(*) AS cnt
+                FROM   questionnaire_responses
+                WHERE  semester        = %s
+                AND    final_status    IS NOT NULL
+                AND    responses_reset = FALSE
+                AND    {col} > 0
+                """,
+                (semester,)
+            )
+            row = cursor.fetchone()
+            cnt = row['cnt'] if row else 0
+            symptom_counts.append({
+                'symptom': symptom,
+                'scale':   scale.upper(),
+                'count':   cnt,
+                'col':     col,
+            })
+        symptom_counts.sort(key=lambda x: x['count'], reverse=True)
+        top_symptoms = symptom_counts[:10]
+
+        # ── Historical semester trends ────────────────────────────────
+        cursor.execute(
+            """
+            SELECT ss.semester,
+                   COUNT(qr.id)                                                     AS total,
+                   COUNT(*) FILTER (WHERE qr.final_status = 'Stable')              AS stable,
+                   COUNT(*) FILTER (WHERE qr.final_status = 'Challenged')          AS challenged,
+                   COUNT(*) FILTER (WHERE qr.final_status = 'Critical')            AS critical
+            FROM   semester_schedule ss
+            LEFT JOIN questionnaire_responses qr
+                   ON qr.semester        = ss.semester
+                   AND qr.final_status   IS NOT NULL
+                   AND qr.responses_reset = FALSE
+            GROUP  BY ss.semester
+            ORDER  BY
+                CAST(SPLIT_PART(ss.semester, ' ', 2) AS INTEGER) DESC,
+                CASE SPLIT_PART(ss.semester, ' ', 1)
+                    WHEN 'Spring' THEN 1
+                    WHEN 'Summer' THEN 2
+                    WHEN 'Fall'   THEN 3
+                    ELSE 4
+                END DESC
+            """
+        )
+        history = cursor.fetchall()
+
+        return render(request, 'professional/stats.html', {
+            'full_name':       request.session.get('full_name', 'Professional'),
+            'semester':        semester,
+            'alerts':          alerts,
+            # distribution
+            'total_assessed':  total_assessed,
+            'stable':          stable,
+            'challenged':      challenged,
+            'critical':        critical,
+            'stable_pct':      pct(stable),
+            'challenged_pct':  pct(challenged),
+            'critical_pct':    pct(critical),
+            # dept
+            'dept_rows':       dept_rows,
+            # symptoms
+            'top_symptoms':    top_symptoms,
+            # history
+            'history':         history,
+        })
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  DISMISS ALERT  POST /alerts/dismiss/<id>/
+#  Shared by Professional and Authority stats pages.
+# ─────────────────────────────────────────────
+@require_http_methods(['POST'])
+def alerts_dismiss(request, alert_id):
+    user_id, role = get_session_user(request)
+    if not user_id or role not in ('professional', 'authority'):
+        return redirect('landing')
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "UPDATE analytics_alerts SET dismissed = TRUE WHERE id = %s",
+            (alert_id,)
+        )
+        conn.commit()
+
+        # Redirect back to the correct stats page
+        if role == 'professional':
+            return redirect('professional_stats')
+        return redirect('authority_stats')
+
+    except Exception as exc:
+        conn.rollback()
+        messages.error(request, f'An error occurred: {exc}')
+        if role == 'professional':
+            return redirect('professional_stats')
+        return redirect('authority_stats')
+
     finally:
         cursor.close()
         conn.close()

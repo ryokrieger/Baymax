@@ -66,9 +66,10 @@
                 You are currently assigned to
                 <strong>{{ active_appt.professional_name }}</strong>.
                 {% if active_appt.scheduled_at %}
-                    Your session is scheduled for
-                    <strong>{{ active_appt.scheduled_at|date:"N j, Y" }}
-                    at {{ active_appt.scheduled_at|time:"g:i A" }}</strong>.
+                    Your weekly session is every
+                    <strong>{{ active_appt.scheduled_at|date:"l" }}
+                    at {{ active_appt.scheduled_at|time:"g:i A" }}</strong>
+                    (2 hours).
                 {% endif %}
             </p>
         </div>
