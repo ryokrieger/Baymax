@@ -1,0 +1,820 @@
+/*
+ * tables.css — Baymax Management & List Pages
+ * Shared by:
+ *   professional/appointments.html
+ *   professional/student_detail.html
+ *   professional/stats.html
+ *   authority/stats.html
+ *   authority/events.html
+ *   admin/students.html
+ *   admin/professionals.html
+ *   admin/authority.html
+ *   admin/it.html
+ *   admin/appointments.html
+ *   admin/events.html
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Fjalla+One&family=Poppins:wght@400;500;600;700&display=swap');
+
+/* ═══════════════════════════════════════════════════════════
+   DESIGN TOKENS
+   ═══════════════════════════════════════════════════════════ */
+:root {
+    --yellow        : #F5C518;
+    --yellow-hover  : #e6b800;
+    --yellow-light  : #fffbe6;
+    --teal          : #0EA5E9;
+    --teal-hover    : #0284c7;
+    --teal-light    : #e0f2fe;
+    --green         : #22C55E;
+    --green-light   : #dcfce7;
+    --amber         : #F59E0B;
+    --amber-light   : #fef9c3;
+    --red           : #EF4444;
+    --red-light     : #fee2e2;
+    --blue          : #3399ff;
+    --purple        : #8b5cf6;
+    --black         : #000000;
+    --white         : #ffffff;
+    --cream         : #fffae5;
+    --grey-light    : #f0ece0;
+    --grey-mid      : #d1c9b0;
+    --grey-text     : #555555;
+    --shadow-hard   : 6px 6px 0px var(--black);
+    --shadow-medium : 4px 4px 0px var(--black);
+    --shadow-small  : 3px 3px 0px var(--black);
+    --border        : 4px solid var(--black);
+    --border-thin   : 2px solid var(--black);
+    --radius        : 4px;
+    --font-body     : 'Poppins', 'Segoe UI', sans-serif;
+    --font-heading  : 'Fjalla One', 'Arial Black', sans-serif;
+    --transition    : 0.15s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESET & BASE
+   ═══════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+
+body {
+    font-family      : var(--font-body);
+    color            : var(--black);
+    min-height       : 100vh;
+    background-color : #ffe066;
+    background-image :
+        radial-gradient(circle at 50% 40%, #ffe066 20%, #fffae5 80%),
+        radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px);
+    background-size  : 100% 100%, 24px 24px;
+    display          : flex;
+    flex-direction   : column;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TOPBAR
+   ═══════════════════════════════════════════════════════════ */
+.topbar {
+    background     : var(--yellow);
+    border-bottom  : var(--border);
+    box-shadow     : 0 4px 0px var(--black);
+    padding        : 0 28px;
+    height         : 60px;
+    display        : flex;
+    align-items    : center;
+    justify-content: space-between;
+    gap            : 16px;
+    position       : sticky;
+    top            : 0;
+    z-index        : 100;
+}
+
+.topbar__brand {
+    font-family    : var(--font-heading);
+    font-size      : 1.4rem;
+    letter-spacing : 2px;
+    text-decoration: none;
+    color          : var(--black);
+    display        : flex;
+    align-items    : center;
+    gap            : 8px;
+    white-space    : nowrap;
+}
+
+.topbar__brand:hover { opacity: 0.85; }
+
+.topbar__right {
+    display    : flex;
+    align-items: center;
+    gap        : 12px;
+}
+
+.topbar__role {
+    font-size      : 0.75rem;
+    font-weight    : 700;
+    letter-spacing : 0.5px;
+    text-transform : uppercase;
+    background     : var(--black);
+    color          : var(--yellow);
+    padding        : 3px 10px;
+    border-radius  : var(--radius);
+    white-space    : nowrap;
+}
+
+.topbar__name {
+    font-size    : 0.85rem;
+    font-weight  : 600;
+    white-space  : nowrap;
+    max-width    : 200px;
+    overflow     : hidden;
+    text-overflow: ellipsis;
+}
+
+.topbar__logout {
+    font-size      : 0.82rem;
+    font-weight    : 700;
+    text-decoration: none;
+    color          : var(--black);
+    background     : var(--white);
+    border         : var(--border-thin);
+    border-radius  : var(--radius);
+    box-shadow     : var(--shadow-small);
+    padding        : 4px 14px;
+    transition     : transform var(--transition), box-shadow var(--transition),
+                     background var(--transition);
+    white-space    : nowrap;
+}
+
+.topbar__logout:hover {
+    background : var(--red);
+    color      : var(--white);
+    transform  : translateY(-2px);
+    box-shadow : 5px 5px 0px var(--black);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SUB-PAGE LAYOUT
+   ═══════════════════════════════════════════════════════════ */
+.subpage {
+    flex           : 1;
+    padding        : 36px 28px 60px;
+    display        : flex;
+    flex-direction : column;
+    align-items    : center;
+}
+
+.subpage__inner {
+    width    : 100%;
+    max-width: 1100px;
+}
+
+.back-link {
+    display        : inline-flex;
+    align-items    : center;
+    gap            : 6px;
+    font-size      : 0.85rem;
+    font-weight    : 700;
+    color          : var(--black);
+    text-decoration: none;
+    margin-bottom  : 20px;
+    padding        : 4px 12px;
+    background     : var(--yellow-light);
+    border         : var(--border-thin);
+    border-radius  : var(--radius);
+    box-shadow     : var(--shadow-small);
+    transition     : transform var(--transition), box-shadow var(--transition),
+                     background var(--transition);
+}
+
+.back-link:hover {
+    background : var(--yellow);
+    transform  : translateX(-3px);
+    box-shadow : 4px 4px 0px var(--black);
+}
+
+.subpage__heading {
+    font-family    : var(--font-heading);
+    font-size      : clamp(1.4rem, 3vw, 1.9rem);
+    letter-spacing : 1px;
+    text-transform : uppercase;
+    margin-bottom  : 4px;
+}
+
+.subpage__meta {
+    font-size    : 0.85rem;
+    color        : var(--grey-text);
+    font-weight  : 500;
+    margin-bottom: 20px;
+}
+
+.section-title {
+    font-family    : var(--font-heading);
+    font-size      : 1rem;
+    letter-spacing : 1px;
+    text-transform : uppercase;
+    margin-bottom  : 12px;
+    padding-bottom : 8px;
+    border-bottom  : var(--border-thin);
+}
+
+.section-gap { margin-top: 36px; }
+
+/* ═══════════════════════════════════════════════════════════
+   FLASH MESSAGES
+   ═══════════════════════════════════════════════════════════ */
+.flash-list { list-style: none; margin-bottom: 20px; }
+
+.flash {
+    padding      : 10px 16px;
+    border       : var(--border-thin);
+    border-radius: var(--radius);
+    font-size    : 0.875rem;
+    font-weight  : 500;
+    margin-bottom: 8px;
+    box-shadow   : var(--shadow-small);
+}
+
+.flash--success { background: var(--green-light);  border-color: var(--green);  color: #166534; }
+.flash--error   { background: var(--red-light);    border-color: var(--red);    color: #991b1b; }
+.flash--info    { background: #dbeafe;              border-color: var(--teal);   color: #1e40af; }
+.flash--warning { background: var(--amber-light);  border-color: var(--amber);  color: #854d0e; }
+
+/* ═══════════════════════════════════════════════════════════
+   ALERT BANNERS  (dismissible — Analytics Agent output)
+   ═══════════════════════════════════════════════════════════ */
+.alert-banner {
+    display        : flex;
+    align-items    : flex-start;
+    justify-content: space-between;
+    gap            : 12px;
+    padding        : 14px 18px;
+    border         : var(--border-thin);
+    border-radius  : var(--radius);
+    box-shadow     : var(--shadow-small);
+    margin-bottom  : 10px;
+    font-size      : 0.88rem;
+    line-height    : 1.55;
+}
+
+.alert-banner--critical_surge    {
+    background  : var(--red-light);
+    border-color: var(--red);
+    color       : #991b1b;
+}
+.alert-banner--symptom_spike     {
+    background  : var(--amber-light);
+    border-color: var(--amber);
+    color       : #92400e;
+}
+.alert-banner--department_at_risk {
+    background  : #fde8d8;
+    border-color: #ea580c;
+    color       : #9a3412;
+}
+
+.alert-banner__icon  { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+.alert-banner__text  { flex: 1; }
+.alert-banner__title {
+    font-weight    : 700;
+    font-size      : 0.8rem;
+    text-transform : uppercase;
+    letter-spacing : 0.5px;
+    margin-bottom  : 3px;
+}
+
+/* Dismiss button */
+.alert-banner__dismiss {
+    padding       : 4px 10px;
+    font-family   : var(--font-body);
+    font-size     : 0.75rem;
+    font-weight   : 700;
+    background    : var(--white);
+    color         : var(--black);
+    border        : 1px solid var(--black);
+    border-radius : var(--radius);
+    cursor        : pointer;
+    white-space   : nowrap;
+    flex-shrink   : 0;
+    transition    : background var(--transition), color var(--transition);
+}
+
+.alert-banner__dismiss:hover {
+    background: var(--black);
+    color     : var(--white);
+}
+
+.alerts-section { margin-bottom: 24px; }
+
+/* ═══════════════════════════════════════════════════════════
+   MAIN DATA TABLE
+   max-width 1100px, full-width, yellow th, row hover shifts right
+   ═══════════════════════════════════════════════════════════ */
+.table-wrap {
+    overflow-x   : auto;
+    border       : var(--border);
+    box-shadow   : var(--shadow-hard);
+    border-radius: var(--radius);
+    margin-bottom: 20px;
+}
+
+.data-table {
+    width          : 100%;
+    border-collapse: collapse;
+    background     : var(--white);
+    font-size      : 0.85rem;
+    min-width      : 600px;
+}
+
+.data-table thead th {
+    background     : var(--yellow);
+    border-bottom  : var(--border);
+    padding        : 11px 14px;
+    text-align     : left;
+    font-family    : var(--font-heading);
+    font-size      : 0.78rem;
+    letter-spacing : 0.5px;
+    text-transform : uppercase;
+    white-space    : nowrap;
+}
+
+.data-table tbody tr {
+    border-bottom: 1px solid var(--grey-light);
+    transition   : transform var(--transition), background var(--transition);
+}
+
+.data-table tbody tr:last-child { border-bottom: none; }
+
+.data-table tbody tr:hover {
+    background: var(--yellow-light);
+    transform : translateX(5px);
+}
+
+.data-table tbody td {
+    padding       : 11px 14px;
+    vertical-align: middle;
+}
+
+/* Centred cell (e.g. row numbers, scores) */
+.td-center { text-align: center; }
+
+/* Actions cell — flex row of buttons */
+.actions-cell {
+    display    : flex;
+    align-items: center;
+    gap        : 6px;
+    flex-wrap  : wrap;
+}
+
+/* Muted empty-state row */
+.data-table .empty-row td {
+    text-align : center;
+    padding    : 28px 14px;
+    color      : var(--grey-text);
+    font-style : italic;
+    font-size  : 0.88rem;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   STATUS BADGE CLASSES  (used in tables and detail pages)
+   ═══════════════════════════════════════════════════════════ */
+.status-stable     { color: #16a34a; font-weight: 700; }
+.status-challenged { color: #d97706; font-weight: 700; }
+.status-critical   { color: #dc2626; font-weight: 700; }
+.status-completed  { color: #0284c7; font-weight: 700; }
+.status-pending    { color: #9333ea; font-weight: 700; }
+.status-accepted   { color: #16a34a; font-weight: 700; }
+.status-declined   { color: #dc2626; font-weight: 700; }
+
+/* Pill variant — used in status column of tables */
+.badge {
+    display      : inline-block;
+    padding      : 2px 10px;
+    border-radius: var(--radius);
+    font-size    : 0.75rem;
+    font-weight  : 700;
+    border       : 1px solid currentColor;
+    white-space  : nowrap;
+}
+
+.badge-stable     { background: var(--green-light);  color: #166534; }
+.badge-challenged { background: var(--amber-light);  color: #92400e; }
+.badge-critical   { background: var(--red-light);    color: #991b1b; }
+.badge-completed  { background: var(--teal-light);   color: #0369a1; }
+.badge-pending    { background: #f3e8ff;              color: #6b21a8; }
+.badge-accepted   { background: var(--green-light);  color: #166534; }
+.badge-declined   { background: var(--red-light);    color: #991b1b; }
+
+/* ═══════════════════════════════════════════════════════════
+   BUTTON CLASS SYSTEM
+   All action buttons used across management pages.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Base button — applied to all */
+.btn {
+    display       : inline-block;
+    padding       : 6px 14px;
+    font-family   : var(--font-body);
+    font-size     : 0.8rem;
+    font-weight   : 700;
+    text-align    : center;
+    text-decoration: none;
+    border        : var(--border-thin);
+    border-radius : var(--radius);
+    box-shadow    : var(--shadow-small);
+    cursor        : pointer;
+    white-space   : nowrap;
+    transition    : transform var(--transition), box-shadow var(--transition),
+                    background var(--transition), color var(--transition);
+    line-height   : 1.4;
+}
+
+.btn:hover {
+    transform  : translateY(-2px);
+    box-shadow : 4px 4px 0px var(--black);
+}
+
+.btn:active {
+    transform  : translateY(1px);
+    box-shadow : 1px 1px 0px var(--black);
+}
+
+/* Colour variants */
+.btn-primary  { background: var(--blue);        color: var(--white); }
+.btn-success  { background: var(--green);        color: var(--black); }
+.btn-danger   { background: var(--red);          color: var(--white); }
+.btn-warning  { background: var(--amber);        color: var(--black); }
+.btn-yellow   { background: var(--yellow);       color: var(--black); }
+.btn-dark     { background: var(--black);        color: var(--white); }
+.btn-view     { background: #0EA5E9;             color: var(--white); }
+.btn-release  { background: var(--green);        color: var(--black); }
+.btn-edit     { background: var(--yellow);       color: var(--black); }
+.btn-delete   { background: var(--red);          color: var(--white); }
+.btn-add      { background: var(--green);        color: var(--black); }
+.btn-accept   { background: var(--green);        color: var(--black); }
+.btn-decline  { background: var(--red);          color: var(--white); }
+.btn-reset    { background: var(--amber);        color: var(--black); }
+.btn-outline  {
+    background: transparent;
+    color     : var(--black);
+    border    : var(--border-thin);
+}
+
+/* Larger CTA button variant */
+.btn-lg {
+    padding    : 10px 24px;
+    font-size  : 0.9rem;
+}
+
+/* Full-width button */
+.btn-block {
+    display: block;
+    width  : 100%;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   INLINE ACCEPT FORM  (inside pending requests table)
+   ═══════════════════════════════════════════════════════════ */
+.accept-form {
+    display    : flex;
+    align-items: center;
+    gap        : 6px;
+    flex-wrap  : wrap;
+}
+
+.accept-form input[type="datetime-local"] {
+    padding      : 5px 10px;
+    font-family  : var(--font-body);
+    font-size    : 0.8rem;
+    background   : var(--yellow-light);
+    border       : var(--border-thin);
+    border-radius: var(--radius);
+    box-shadow   : var(--shadow-small);
+    outline      : none;
+    transition   : border-color var(--transition), box-shadow var(--transition);
+    color        : var(--black);
+}
+
+.accept-form input[type="datetime-local"]:focus {
+    border-color: var(--teal);
+    box-shadow  : 3px 3px 0px var(--teal);
+    background  : var(--white);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   STAT SUMMARY CARDS  (used on stats pages)
+   ═══════════════════════════════════════════════════════════ */
+.stat-cards {
+    display              : grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap                  : 14px;
+    margin-bottom        : 28px;
+}
+
+.stat-card {
+    background    : var(--cream);
+    border        : var(--border);
+    box-shadow    : var(--shadow-medium);
+    border-radius : var(--radius);
+    padding       : 18px 20px;
+    text-align    : center;
+    transition    : transform var(--transition), box-shadow var(--transition);
+}
+
+.stat-card:hover {
+    transform  : translateY(-2px);
+    box-shadow : var(--shadow-hard);
+}
+
+.stat-card__number {
+    font-family    : var(--font-heading);
+    font-size      : 2.2rem;
+    line-height    : 1;
+    margin-bottom  : 4px;
+}
+
+.stat-card__label {
+    font-size      : 0.75rem;
+    font-weight    : 700;
+    text-transform : uppercase;
+    letter-spacing : 1px;
+    color          : var(--grey-text);
+}
+
+.stat-card__pct {
+    font-size  : 0.82rem;
+    font-weight: 600;
+    margin-top : 4px;
+    color      : var(--grey-text);
+}
+
+/* Colour top border per card type */
+.stat-card--total     { border-top: 5px solid var(--black);  }
+.stat-card--stable    { border-top: 5px solid var(--green);  }
+.stat-card--challenged{ border-top: 5px solid var(--amber);  }
+.stat-card--critical  { border-top: 5px solid var(--red);    }
+
+/* ═══════════════════════════════════════════════════════════
+   TOP SYMPTOMS TABLE  (on stats page)
+   ═══════════════════════════════════════════════════════════ */
+.symptom-bar-cell { min-width: 140px; }
+
+.symptom-bar-track {
+    height        : 10px;
+    background    : var(--grey-light);
+    border        : 1px solid var(--grey-mid);
+    border-radius : 2px;
+    overflow      : hidden;
+    margin-top    : 4px;
+}
+
+.symptom-bar-fill {
+    height    : 100%;
+    background: var(--teal);
+    transition: width 0.4s ease;
+}
+
+/* Scale chip inside symptom table */
+.scale-chip {
+    display        : inline-block;
+    font-size      : 0.68rem;
+    font-weight    : 700;
+    letter-spacing : 1px;
+    text-transform : uppercase;
+    padding        : 2px 6px;
+    border         : 1px solid var(--black);
+    border-radius  : var(--radius);
+    white-space    : nowrap;
+}
+
+.scale-chip--PSS { background: #fde68a; }
+.scale-chip--GAD { background: #bfdbfe; }
+.scale-chip--PHQ { background: #d9f99d; }
+
+/* ═══════════════════════════════════════════════════════════
+   PAGINATION  (7-page window)
+   ═══════════════════════════════════════════════════════════ */
+.pagination {
+    display    : flex;
+    align-items: center;
+    gap        : 4px;
+    flex-wrap  : wrap;
+    margin-top : 16px;
+    font-size  : 0.85rem;
+}
+
+.pagination a,
+.pagination span,
+.pagination button {
+    display       : inline-block;
+    padding       : 5px 11px;
+    border        : var(--border-thin);
+    border-radius : var(--radius);
+    font-family   : var(--font-body);
+    font-size     : 0.82rem;
+    font-weight   : 600;
+    text-decoration: none;
+    cursor        : pointer;
+    transition    : background var(--transition), transform var(--transition);
+    background    : var(--cream);
+    color         : var(--black);
+    box-shadow    : var(--shadow-small);
+}
+
+.pagination a:hover {
+    background : var(--yellow);
+    transform  : translateY(-1px);
+}
+
+/* Current page — yellow fill, no link */
+.pagination .current-page {
+    background : var(--yellow);
+    border-color: var(--black);
+    cursor     : default;
+    font-weight: 700;
+}
+
+/* Disabled prev/next */
+.pagination .disabled {
+    background : var(--grey-light);
+    color      : var(--grey-text);
+    cursor     : not-allowed;
+    box-shadow : none;
+}
+
+.pagination .ellipsis {
+    background : transparent;
+    border     : none;
+    box-shadow : none;
+    cursor     : default;
+    padding    : 5px 4px;
+    color      : var(--grey-text);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DETAIL PAGE — STUDENT INFO CARD
+   (used in professional/student_detail.html)
+   ═══════════════════════════════════════════════════════════ */
+.student-info-card {
+    background    : var(--cream);
+    border        : var(--border);
+    box-shadow    : var(--shadow-hard);
+    border-radius : var(--radius);
+    padding       : 20px 24px;
+    margin-bottom : 24px;
+    display       : flex;
+    align-items   : center;
+    gap           : 20px;
+    flex-wrap     : wrap;
+}
+
+.student-info-card__avatar {
+    width          : 56px;
+    height         : 56px;
+    background     : var(--yellow);
+    border         : var(--border-thin);
+    border-radius  : 50%;
+    box-shadow     : var(--shadow-small);
+    display        : flex;
+    align-items    : center;
+    justify-content: center;
+    font-size      : 1.6rem;
+    flex-shrink    : 0;
+}
+
+.student-info-card__details { flex: 1; min-width: 200px; }
+
+.student-info-card__name {
+    font-family    : var(--font-heading);
+    font-size      : 1.15rem;
+    letter-spacing : 0.5px;
+    margin-bottom  : 4px;
+}
+
+.student-info-card__meta {
+    font-size  : 0.85rem;
+    color      : var(--grey-text);
+    font-weight: 500;
+    line-height: 1.7;
+}
+
+.student-info-card__meta strong {
+    color      : var(--black);
+    font-weight: 700;
+}
+
+/* Scheduled session time box */
+.session-time-box {
+    background   : var(--green-light);
+    border       : var(--border-thin);
+    border-color : var(--green);
+    border-radius: var(--radius);
+    padding      : 10px 16px;
+    font-size    : 0.88rem;
+    color        : #166534;
+    box-shadow   : var(--shadow-small);
+    flex-shrink  : 0;
+    white-space  : nowrap;
+}
+
+.session-time-box__label {
+    font-size      : 0.72rem;
+    font-weight    : 700;
+    text-transform : uppercase;
+    letter-spacing : 0.5px;
+    margin-bottom  : 2px;
+}
+
+.session-time-box__value {
+    font-family : var(--font-heading);
+    font-size   : 0.95rem;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TOP SYMPTOMS HIGHLIGHT  (student_detail + stats)
+   ═══════════════════════════════════════════════════════════ */
+.top-symptoms-row {
+    display  : flex;
+    flex-wrap: wrap;
+    gap      : 10px;
+    margin-bottom: 24px;
+}
+
+.symptom-pill {
+    display      : inline-flex;
+    align-items  : center;
+    gap          : 6px;
+    padding      : 6px 14px;
+    background   : var(--cream);
+    border       : var(--border-thin);
+    border-radius: var(--radius);
+    box-shadow   : var(--shadow-small);
+    font-size    : 0.82rem;
+    font-weight  : 600;
+    transition   : transform var(--transition), box-shadow var(--transition);
+}
+
+.symptom-pill:hover {
+    transform  : translateY(-2px);
+    box-shadow : var(--shadow-medium);
+}
+
+.symptom-pill__rank {
+    font-weight    : 700;
+    font-size      : 0.75rem;
+    text-transform : uppercase;
+}
+
+.symptom-pill--1 { border-color: var(--red);   background: var(--red-light);   }
+.symptom-pill--2 { border-color: var(--amber);  background: var(--amber-light); }
+.symptom-pill--3 { border-color: var(--teal);   background: var(--teal-light);  }
+.symptom-pill--4 { border-color: var(--purple); background: #f3e8ff;            }
+.symptom-pill--5 { border-color: var(--green);  background: var(--green-light); }
+
+/* ═══════════════════════════════════════════════════════════
+   HISTORY TABLE  (on stats page)
+   ═══════════════════════════════════════════════════════════ */
+.history-table thead th:first-child { width: 150px; }
+
+/* ═══════════════════════════════════════════════════════════
+   PAGE FOOTER
+   ═══════════════════════════════════════════════════════════ */
+.page-footer {
+    text-align : center;
+    font-size  : 0.78rem;
+    color      : var(--grey-text);
+    font-weight: 500;
+    padding    : 24px 0 12px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 800px) {
+    .topbar { padding: 0 16px; }
+    .topbar__name, .topbar__role { display: none; }
+    .subpage { padding: 24px 14px 48px; }
+
+    .stat-cards { grid-template-columns: repeat(2, 1fr); }
+
+    .student-info-card {
+        flex-direction: column;
+        align-items   : flex-start;
+    }
+
+    .accept-form {
+        flex-direction: column;
+        align-items   : flex-start;
+    }
+
+    .accept-form input[type="datetime-local"] { width: 100%; }
+
+    .top-symptoms-row { flex-direction: column; }
+}
+
+@media (max-width: 500px) {
+    .stat-cards { grid-template-columns: 1fr; }
+
+    .actions-cell {
+        flex-direction: column;
+        align-items   : flex-start;
+    }
+}
