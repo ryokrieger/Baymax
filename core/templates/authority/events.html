@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baymax — Manage Mental Health Events</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'styles/tables.css' %}">
+</head>
+<body>
+
+<nav class="topbar">
+    <a href="{% url 'authority_dashboard' %}" class="topbar__brand">🏥 BAYMAX</a>
+    <div class="topbar__right">
+        <span class="topbar__name">{{ full_name }}</span>
+        <span class="topbar__role">University Authority</span>
+        <a href="{% url 'logout' %}" class="topbar__logout">Logout</a>
+    </div>
+</nav>
+
+<main class="subpage">
+<div class="subpage__inner">
+
+    <a href="{% url 'authority_dashboard' %}" class="back-link">
+        &#8592; Back to Dashboard
+    </a>
+
+    <h1 class="subpage__heading">📅 Manage Mental Health Events</h1>
+    <p class="subpage__meta">Create, edit, and delete university mental health events.</p>
+
+    {% if messages %}
+    <ul class="flash-list">
+        {% for message in messages %}
+        <li class="flash flash--{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════════════════
+         CREATE / EDIT FORM
+         When ?edit=<id> is in the URL, edit_event is set and
+         the form switches to Edit mode with pre-filled values.
+         ══════════════════════════════════════════════════════ -->
+    <div style="background:var(--cream);border:var(--border);
+                box-shadow:var(--shadow-hard);border-radius:var(--radius);
+                overflow:hidden;margin-bottom:28px;">
+
+        <!-- Form header -->
+        <div style="background:var(--yellow);border-bottom:var(--border);
+                    padding:14px 20px;">
+            <p style="font-family:'Fjalla One',sans-serif;font-size:1rem;
+                      letter-spacing:1px;text-transform:uppercase;">
+                {% if edit_event %}
+                    ✏️ Edit Event — {{ edit_event.title }}
+                {% else %}
+                    ➕ Create New Event
+                {% endif %}
+            </p>
+        </div>
+
+        <div style="padding:20px 24px;">
+            {% if edit_event %}
+            <!-- EDIT form — POSTs to edit URL -->
+            <form method="POST"
+                  action="{% url 'authority_events_edit' edit_event.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="page" value="{{ page }}">
+            {% else %}
+            <!-- CREATE form — POSTs to create URL -->
+            <form method="POST"
+                  action="{% url 'authority_events_create' %}">
+                {% csrf_token %}
+            {% endif %}
+
+                <!-- Row 1: Title (full width) -->
+                <div style="margin-bottom:14px;">
+                    <label style="display:block;font-size:0.82rem;font-weight:700;
+                                  text-transform:uppercase;letter-spacing:0.3px;
+                                  margin-bottom:5px;">
+                        Event Title <span style="color:var(--red);">*</span>
+                    </label>
+                    <input type="text"
+                           name="title"
+                           value="{{ edit_event.title|default:'' }}"
+                           placeholder="e.g. Mental Health Awareness Workshop"
+                           required
+                           style="width:100%;padding:9px 13px;
+                                  font-family:'Poppins',sans-serif;font-size:0.9rem;
+                                  background:var(--yellow-light);border:var(--border-thin);
+                                  border-radius:var(--radius);box-shadow:var(--shadow-small);
+                                  outline:none;color:var(--black);">
+                </div>
+
+                <!-- Row 2: Date + Time side by side -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;
+                             gap:14px;margin-bottom:14px;">
+                    <div>
+                        <label style="display:block;font-size:0.82rem;font-weight:700;
+                                      text-transform:uppercase;letter-spacing:0.3px;
+                                      margin-bottom:5px;">
+                            Date <span style="color:var(--red);">*</span>
+                        </label>
+                        <input type="date"
+                               name="date"
+                               value="{{ edit_event.date|date:'Y-m-d'|default:'' }}"
+                               required
+                               style="width:100%;padding:9px 13px;
+                                      font-family:'Poppins',sans-serif;font-size:0.9rem;
+                                      background:var(--yellow-light);border:var(--border-thin);
+                                      border-radius:var(--radius);box-shadow:var(--shadow-small);
+                                      outline:none;color:var(--black);">
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:0.82rem;font-weight:700;
+                                      text-transform:uppercase;letter-spacing:0.3px;
+                                      margin-bottom:5px;">
+                            Time <span style="color:var(--red);">*</span>
+                        </label>
+                        <input type="time"
+                               name="time"
+                               value="{{ edit_event.time|time:'H:i'|default:'' }}"
+                               required
+                               style="width:100%;padding:9px 13px;
+                                      font-family:'Poppins',sans-serif;font-size:0.9rem;
+                                      background:var(--yellow-light);border:var(--border-thin);
+                                      border-radius:var(--radius);box-shadow:var(--shadow-small);
+                                      outline:none;color:var(--black);">
+                    </div>
+                </div>
+
+                <!-- Row 3: Venue (full width) -->
+                <div style="margin-bottom:14px;">
+                    <label style="display:block;font-size:0.82rem;font-weight:700;
+                                  text-transform:uppercase;letter-spacing:0.3px;
+                                  margin-bottom:5px;">
+                        Venue / Location <span style="color:var(--red);">*</span>
+                    </label>
+                    <input type="text"
+                           name="venue"
+                           value="{{ edit_event.venue|default:'' }}"
+                           placeholder="e.g. Auditorium A, Main Campus"
+                           required
+                           style="width:100%;padding:9px 13px;
+                                  font-family:'Poppins',sans-serif;font-size:0.9rem;
+                                  background:var(--yellow-light);border:var(--border-thin);
+                                  border-radius:var(--radius);box-shadow:var(--shadow-small);
+                                  outline:none;color:var(--black);">
+                </div>
+
+                <!-- Row 4: Description (textarea) -->
+                <div style="margin-bottom:18px;">
+                    <label style="display:block;font-size:0.82rem;font-weight:700;
+                                  text-transform:uppercase;letter-spacing:0.3px;
+                                  margin-bottom:5px;">
+                        Description
+                    </label>
+                    <textarea name="description"
+                              rows="3"
+                              placeholder="Brief description of the event (optional)"
+                              style="width:100%;padding:9px 13px;
+                                     font-family:'Poppins',sans-serif;font-size:0.9rem;
+                                     background:var(--yellow-light);border:var(--border-thin);
+                                     border-radius:var(--radius);box-shadow:var(--shadow-small);
+                                     outline:none;color:var(--black);
+                                     resize:vertical;min-height:80px;">{{ edit_event.description|default:'' }}</textarea>
+                </div>
+
+                <!-- Submit + Cancel buttons -->
+                <div style="display:flex;gap:10px;align-items:center;">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        {% if edit_event %}💾 Save Changes{% else %}➕ Create Event{% endif %}
+                    </button>
+                    {% if edit_event %}
+                    <a href="{% url 'authority_events' %}?page={{ page }}"
+                       class="btn btn-outline btn-lg">
+                        ✕ Cancel
+                    </a>
+                    {% endif %}
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         EVENTS TABLE
+         ══════════════════════════════════════════════════════ -->
+    <p class="section-title">📋 All Events</p>
+
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Title</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Venue</th>
+                    <th class="td-center">RSVPs</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                <tr {% if edit_event and edit_event.id == event.id %}
+                        style="background:var(--yellow-light);"
+                    {% endif %}>
+                    <td class="td-center"
+                        style="font-weight:700;color:#888;">
+                        {{ forloop.counter|add:page|add:"-1" }}
+                    </td>
+                    <td style="font-weight:600;">{{ event.title }}</td>
+                    <td style="white-space:nowrap;">
+                        {{ event.date|date:"N j, Y" }}
+                    </td>
+                    <td style="white-space:nowrap;">
+                        {{ event.time|time:"g:i A" }}
+                    </td>
+                    <td style="font-size:0.82rem;color:#555;">
+                        {{ event.venue }}
+                    </td>
+                    <td class="td-center">
+                        <span style="font-weight:700;">{{ event.rsvp_count }}</span>
+                    </td>
+                    <td>
+                        <div class="actions-cell">
+                            <!-- Edit — GET to edit URL (redirects to ?edit=<id>) -->
+                            <a href="{% url 'authority_events_edit' event.id %}?page={{ page }}"
+                               class="btn btn-edit">
+                                ✏️ Edit
+                            </a>
+                            <!-- Delete — POST -->
+                            <form method="POST"
+                                  action="{% url 'authority_events_delete' event.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="page" value="{{ page }}">
+                                <button type="submit"
+                                        class="btn btn-delete"
+                                        onclick="return confirm('Delete &quot;{{ event.title }}&quot;? This will also remove all student RSVPs.');">
+                                    🗑 Delete
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr class="empty-row">
+                    <td colspan="7">
+                        No events have been created yet. Use the form above to add one.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         PAGINATION
+         ══════════════════════════════════════════════════════ -->
+    {% if total_pages > 1 %}
+    <div class="pagination">
+
+        {% if page > 1 %}
+            <a href="?page={{ page|add:'-1' }}">&#8592; Prev</a>
+        {% else %}
+            <span class="disabled">&#8592; Prev</span>
+        {% endif %}
+
+        {% if start_page > 1 %}
+            <a href="?page=1">1</a>
+            {% if start_page > 2 %}<span class="ellipsis">…</span>{% endif %}
+        {% endif %}
+
+        {% for p in page_range %}
+            {% if p == page %}
+                <span class="current-page">{{ p }}</span>
+            {% else %}
+                <a href="?page={{ p }}">{{ p }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if end_page < total_pages %}
+            {% if end_page < total_pages|add:'-1' %}
+                <span class="ellipsis">…</span>
+            {% endif %}
+            <a href="?page={{ total_pages }}">{{ total_pages }}</a>
+        {% endif %}
+
+        {% if page < total_pages %}
+            <a href="?page={{ page|add:'1' }}">Next &#8594;</a>
+        {% else %}
+            <span class="disabled">Next &#8594;</span>
+        {% endif %}
+
+    </div>
+    {% endif %}
+
+</div>
+</main>
+
+<footer class="page-footer">
+    Baymax &mdash; University Mental Health Tracking System
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baymax — Overall Mental Health Status</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'styles/tables.css' %}">
+</head>
+<body>
+
+<nav class="topbar">
+    <a href="{% url 'authority_dashboard' %}" class="topbar__brand">🏥 BAYMAX</a>
+    <div class="topbar__right">
+        <span class="topbar__name">{{ full_name }}</span>
+        <span class="topbar__role">University Authority</span>
+        <a href="{% url 'logout' %}" class="topbar__logout">Logout</a>
+    </div>
+</nav>
+
+<main class="subpage">
+<div class="subpage__inner">
+
+    <a href="{% url 'authority_dashboard' %}" class="back-link">
+        &#8592; Back to Dashboard
+    </a>
+
+    <h1 class="subpage__heading">📈 Overall Mental Health Status</h1>
+    <p class="subpage__meta">{{ semester }} &mdash; Aggregated &amp; Anonymised</p>
+
+    {% if messages %}
+    <ul class="flash-list">
+        {% for message in messages %}
+        <li class="flash flash--{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════════════════
+         ANALYTICS AGENT ALERT BANNERS
+         ══════════════════════════════════════════════════════ -->
+    {% if alerts %}
+    <div class="alerts-section">
+        <p class="section-title">🚨 Alerts</p>
+        {% for alert in alerts %}
+        <div class="alert-banner alert-banner--{{ alert.alert_type }}">
+            <span class="alert-banner__icon">
+                {% if alert.alert_type == 'critical_surge' %}🔴
+                {% elif alert.alert_type == 'symptom_spike' %}⚠️
+                {% else %}🏫
+                {% endif %}
+            </span>
+            <div class="alert-banner__text">
+                <p class="alert-banner__title">
+                    {% if alert.alert_type == 'critical_surge' %}Critical Surge Detected
+                    {% elif alert.alert_type == 'symptom_spike' %}Persistent Symptom Spike
+                    {% else %}Department at Risk
+                    {% endif %}
+                </p>
+                <p>{{ alert.message }}</p>
+            </div>
+            <form method="POST" action="{% url 'alerts_dismiss' alert.id %}">
+                {% csrf_token %}
+                <button type="submit" class="alert-banner__dismiss">
+                    Dismiss
+                </button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════════════════
+         OVERALL STATUS DISTRIBUTION
+         ══════════════════════════════════════════════════════ -->
+    <p class="section-title">📊 Status Distribution — {{ semester }}</p>
+
+    <div class="stat-cards">
+        <div class="stat-card stat-card--total">
+            <p class="stat-card__number">{{ total_assessed }}</p>
+            <p class="stat-card__label">Total Assessed</p>
+        </div>
+        <div class="stat-card stat-card--stable">
+            <p class="stat-card__number">{{ stable }}</p>
+            <p class="stat-card__label">Stable</p>
+            <p class="stat-card__pct">{{ stable_pct }}%</p>
+        </div>
+        <div class="stat-card stat-card--challenged">
+            <p class="stat-card__number">{{ challenged }}</p>
+            <p class="stat-card__label">Challenged</p>
+            <p class="stat-card__pct">{{ challenged_pct }}%</p>
+        </div>
+        <div class="stat-card stat-card--critical">
+            <p class="stat-card__number">{{ critical }}</p>
+            <p class="stat-card__label">Critical</p>
+            <p class="stat-card__pct">{{ critical_pct }}%</p>
+        </div>
+    </div>
+
+    {% if total_assessed == 0 %}
+    <p style="color:#888;font-style:italic;font-size:0.9rem;margin-bottom:24px;">
+        No students have completed the assessment for {{ semester }} yet.
+    </p>
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════════════════
+         PER-DEPARTMENT BREAKDOWN
+         ══════════════════════════════════════════════════════ -->
+    <div class="section-gap">
+        <p class="section-title">🏫 Department Breakdown</p>
+    </div>
+
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Department</th>
+                    <th class="td-center">Total</th>
+                    <th class="td-center">Stable</th>
+                    <th class="td-center">Challenged</th>
+                    <th class="td-center">Critical</th>
+                    <th class="td-center">At-Risk %</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in dept_rows %}
+                <tr>
+                    <td style="font-weight:600;">{{ row.department }}</td>
+                    <td class="td-center">{{ row.total }}</td>
+                    <td class="td-center">
+                        <span class="status-stable">{{ row.stable }}</span>
+                    </td>
+                    <td class="td-center">
+                        <span class="status-challenged">{{ row.challenged }}</span>
+                    </td>
+                    <td class="td-center">
+                        <span class="status-critical">{{ row.critical }}</span>
+                    </td>
+                    <td class="td-center">
+                        {% if row.total > 0 %}
+                            {% widthratio row.challenged|add:row.critical row.total 100 %}%
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr class="empty-row">
+                    <td colspan="6">No department data available.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         TOP SYMPTOMS BY FREQUENCY
+         ══════════════════════════════════════════════════════ -->
+    <div class="section-gap">
+        <p class="section-title">🔍 Top Symptoms by Frequency</p>
+    </div>
+
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width:44px;">Rank</th>
+                    <th>Symptom</th>
+                    <th>Scale</th>
+                    <th class="td-center">Students Affected</th>
+                    <th class="symptom-bar-cell">Frequency</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in top_symptoms %}
+                <tr>
+                    <td class="td-center" style="font-weight:700;color:#888;">
+                        {{ forloop.counter }}
+                    </td>
+                    <td style="font-weight:600;font-size:0.88rem;">
+                        {{ item.symptom }}
+                    </td>
+                    <td>
+                        <span class="scale-chip scale-chip--{{ item.scale }}">
+                            {{ item.scale }}
+                        </span>
+                    </td>
+                    <td class="td-center" style="font-weight:700;">
+                        {{ item.count }}
+                    </td>
+                    <td class="symptom-bar-cell">
+                        {% if total_assessed > 0 %}
+                        <div class="symptom-bar-track">
+                            <div class="symptom-bar-fill"
+                                 data-count="{{ item.count }}"
+                                 data-total="{{ total_assessed }}">
+                            </div>
+                        </div>
+                        <span style="font-size:0.72rem;color:#666;">
+                            {% widthratio item.count total_assessed 100 %}%
+                        </span>
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr class="empty-row">
+                    <td colspan="5">No symptom data available.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         HISTORICAL SEMESTER TRENDS
+         ══════════════════════════════════════════════════════ -->
+    <div class="section-gap">
+        <p class="section-title">📅 Historical Semester Trends</p>
+    </div>
+
+    <div class="table-wrap">
+        <table class="data-table history-table">
+            <thead>
+                <tr>
+                    <th>Semester</th>
+                    <th class="td-center">Total</th>
+                    <th class="td-center">Stable</th>
+                    <th class="td-center">Challenged</th>
+                    <th class="td-center">Critical</th>
+                    <th class="td-center">At-Risk %</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in history %}
+                <tr {% if row.semester == semester %}
+                        style="background:var(--yellow-light);font-weight:600;"
+                    {% endif %}>
+                    <td>
+                        {{ row.semester }}
+                        {% if row.semester == semester %}
+                        <span style="font-size:0.72rem;background:#000;
+                                     color:var(--yellow);padding:1px 6px;
+                                     border-radius:3px;margin-left:6px;
+                                     font-weight:700;">Current</span>
+                        {% endif %}
+                    </td>
+                    <td class="td-center">{{ row.total }}</td>
+                    <td class="td-center">
+                        <span class="status-stable">{{ row.stable }}</span>
+                    </td>
+                    <td class="td-center">
+                        <span class="status-challenged">{{ row.challenged }}</span>
+                    </td>
+                    <td class="td-center">
+                        <span class="status-critical">{{ row.critical }}</span>
+                    </td>
+                    <td class="td-center">
+                        {% if row.total > 0 %}
+                            {% widthratio row.challenged|add:row.critical row.total 100 %}%
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr class="empty-row">
+                    <td colspan="6">No historical data available.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+</main>
+
+<footer class="page-footer">
+    Baymax &mdash; University Mental Health Tracking System
+</footer>
+
+<script>
+    document.querySelectorAll('.symptom-bar-fill[data-count]').forEach(function(el) {
+        var count = parseFloat(el.dataset.count) || 0;
+        var total = parseFloat(el.dataset.total) || 1;
+        el.style.width = Math.min((count / total) * 100, 100) + '%';
+    });
+</script>
+
+</body>
+</html>

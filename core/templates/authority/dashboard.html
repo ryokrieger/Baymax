@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baymax — Authority Dashboard</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'styles/dashboard.css' %}">
+</head>
+<body>
+
+<nav class="topbar">
+    <span class="topbar__brand">🏥 BAYMAX</span>
+    <div class="topbar__right">
+        <span class="topbar__name">{{ full_name }}</span>
+        <span class="topbar__role">University Authority</span>
+        <a href="{% url 'logout' %}" class="topbar__logout">Logout</a>
+    </div>
+</nav>
+
+<main class="dashboard-page">
+
+    {% if messages %}
+    <ul class="flash-list">
+        {% for message in messages %}
+        <li class="flash flash--{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <div class="dashboard-welcome">
+        <h1 class="dashboard-welcome__title">
+            <span>🏛️ Welcome, {{ full_name }}</span>
+        </h1>
+        <p class="dashboard-welcome__sub">
+            University Authority Portal
+        </p>
+    </div>
+
+    <div class="card-grid">
+
+        <a href="{% url 'authority_stats' %}" class="dash-card dash-card--stats">
+            <span class="dash-card__icon">📈</span>
+            <span class="dash-card__title">Overall Mental Health Status</span>
+            <span class="dash-card__desc">
+                Campus-wide mental health analytics, department breakdowns,
+                symptom trends, and automated alert detection.
+            </span>
+        </a>
+
+        <a href="{% url 'authority_events' %}" class="dash-card dash-card--events">
+            <span class="dash-card__icon">📅</span>
+            <span class="dash-card__title">Manage Mental Health Events</span>
+            <span class="dash-card__desc">
+                Create, edit, and delete university mental health workshops
+                and events. View RSVP counts from students.
+            </span>
+        </a>
+
+    </div>
+
+</main>
+
+<footer class="page-footer">
+    Baymax &mdash; University Mental Health Tracking System
+</footer>
+
+</body>
+</html>

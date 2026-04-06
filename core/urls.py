@@ -104,4 +104,29 @@ urlpatterns = [
          views.alerts_dismiss,
          name='alerts_dismiss'),
 
+    # Authority Portal
+    path('authority/dashboard/',
+         views.authority_dashboard,
+         name='authority_dashboard'),
+
+    path('authority/stats/',
+         views.authority_stats,
+         name='authority_stats'),
+
+    path('authority/events/',
+         views.authority_events,
+         name='authority_events'),
+
+    path('authority/events/create/',
+         views.authority_events_create,
+         name='authority_events_create'),
+
+    path('authority/events/edit/<int:event_id>/',
+         views.authority_events_edit,
+         name='authority_events_edit'),
+
+    path('authority/events/delete/<int:event_id>/',
+         views.authority_events_delete,
+         name='authority_events_delete'),
+
 ]

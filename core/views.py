@@ -301,10 +301,10 @@ def register_google(request):
                 'google_email': google_email, 'google_full_name': google_full_name,
             })
 
-        student_id = request.POST.get('student_id', '').strip()
-        department = request.POST.get('department', '').strip()
-        password   = request.POST.get('password',   '').strip()
-        confirm    = request.POST.get('confirm',     '').strip()
+        student_id  = request.POST.get('student_id', '').strip()
+        department  = request.POST.get('department', '').strip()
+        password    = request.POST.get('password',   '').strip()
+        confirm     = request.POST.get('confirm',     '').strip()
         valid_depts = {'CSE', 'EEE', 'ENG', 'ECO', 'BBA'}
 
         form_data = {
@@ -1702,6 +1702,389 @@ def alerts_dismiss(request, alert_id):
         if role == 'professional':
             return redirect('professional_stats')
         return redirect('authority_stats')
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  AUTHORITY DASHBOARD  GET /authority/dashboard/
+# ─────────────────────────────────────────────
+@require_http_methods(['GET'])
+def authority_dashboard(request):
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'authority':
+        messages.error(request, 'Please log in as a University Authority.')
+        return redirect('landing')
+
+    return render(request, 'authority/dashboard.html', {
+        'full_name': request.session.get('full_name', 'Authority'),
+    })
+
+# ─────────────────────────────────────────────
+#  AUTHORITY STATS  GET /authority/stats/
+#  Identical content to professional_stats.
+#  Reuses the shared alerts_dismiss view.
+# ─────────────────────────────────────────────
+@require_http_methods(['GET'])
+def authority_stats(request):
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'authority':
+        messages.error(request, 'Please log in as a University Authority.')
+        return redirect('landing')
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        semester = get_current_semester(cursor)
+        if not semester:
+            messages.error(request, 'No active semester configured.')
+            return redirect('authority_dashboard')
+
+        # Run Analytics Agent
+        from core.agents.analytics_agent import AnalyticsAgent
+        alerts = AnalyticsAgent().run(semester)
+
+        # Overall status distribution
+        cursor.execute(
+            """
+            SELECT final_status, COUNT(*) AS cnt
+            FROM   questionnaire_responses
+            WHERE  semester        = %s
+            AND    final_status    IS NOT NULL
+            AND    responses_reset = FALSE
+            GROUP  BY final_status
+            """,
+            (semester,)
+        )
+        dist_rows      = cursor.fetchall()
+        total_assessed = sum(r['cnt'] for r in dist_rows)
+        distribution   = {r['final_status']: r['cnt'] for r in dist_rows}
+        stable         = distribution.get('Stable',     0)
+        challenged     = distribution.get('Challenged', 0)
+        critical       = distribution.get('Critical',   0)
+
+        def pct(n):
+            return round((n / total_assessed * 100), 1) if total_assessed else 0
+
+        # Per-department breakdown
+        cursor.execute(
+            """
+            SELECT s.department,
+                   COUNT(*)                                                        AS total,
+                   COUNT(*) FILTER (WHERE qr.final_status = 'Stable')             AS stable,
+                   COUNT(*) FILTER (WHERE qr.final_status = 'Challenged')         AS challenged,
+                   COUNT(*) FILTER (WHERE qr.final_status = 'Critical')           AS critical
+            FROM   questionnaire_responses qr
+            JOIN   students s ON s.user_id = qr.student_id
+            WHERE  qr.semester        = %s
+            AND    qr.final_status    IS NOT NULL
+            AND    qr.responses_reset = FALSE
+            GROUP  BY s.department
+            ORDER  BY s.department ASC
+            """,
+            (semester,)
+        )
+        dept_rows = cursor.fetchall()
+
+        # Top symptoms by frequency
+        symptom_counts = []
+        for col, scale, text, symptom in QUESTIONS:
+            cursor.execute(
+                f"""
+                SELECT COUNT(*) AS cnt
+                FROM   questionnaire_responses
+                WHERE  semester        = %s
+                AND    final_status    IS NOT NULL
+                AND    responses_reset = FALSE
+                AND    {col} > 0
+                """,
+                (semester,)
+            )
+            row = cursor.fetchone()
+            cnt = row['cnt'] if row else 0
+            symptom_counts.append({
+                'symptom': symptom,
+                'scale':   scale.upper(),
+                'count':   cnt,
+                'col':     col,
+            })
+        symptom_counts.sort(key=lambda x: x['count'], reverse=True)
+        top_symptoms = symptom_counts[:10]
+
+        # Historical semester trends (descending — current first)
+        cursor.execute(
+            """
+            SELECT ss.semester,
+                   COUNT(qr.id)                                                    AS total,
+                   COUNT(*) FILTER (WHERE qr.final_status = 'Stable')             AS stable,
+                   COUNT(*) FILTER (WHERE qr.final_status = 'Challenged')         AS challenged,
+                   COUNT(*) FILTER (WHERE qr.final_status = 'Critical')           AS critical
+            FROM   semester_schedule ss
+            LEFT JOIN questionnaire_responses qr
+                   ON qr.semester        = ss.semester
+                   AND qr.final_status   IS NOT NULL
+                   AND qr.responses_reset = FALSE
+            GROUP  BY ss.semester
+            ORDER  BY
+                CAST(SPLIT_PART(ss.semester, ' ', 2) AS INTEGER) DESC,
+                CASE SPLIT_PART(ss.semester, ' ', 1)
+                    WHEN 'Spring' THEN 1
+                    WHEN 'Summer' THEN 2
+                    WHEN 'Fall'   THEN 3
+                    ELSE 4
+                END DESC
+            """
+        )
+        history = cursor.fetchall()
+
+        return render(request, 'authority/stats.html', {
+            'full_name':      request.session.get('full_name', 'Authority'),
+            'semester':       semester,
+            'alerts':         alerts,
+            'total_assessed': total_assessed,
+            'stable':         stable,
+            'challenged':     challenged,
+            'critical':       critical,
+            'stable_pct':     pct(stable),
+            'challenged_pct': pct(challenged),
+            'critical_pct':   pct(critical),
+            'dept_rows':      dept_rows,
+            'top_symptoms':   top_symptoms,
+            'history':        history,
+        })
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  AUTHORITY EVENTS  GET /authority/events/
+#  Lists all events + create form at the top.
+#  When editing, the same page re-renders with
+#  the form pre-filled via ?edit=<event_id>.
+# ─────────────────────────────────────────────
+@require_http_methods(['GET'])
+def authority_events(request):
+    """
+    Paginated event list (10 per page) with a create/edit form at the top.
+
+    URL parameters:
+      ?page=<n>       — which page of events to show
+      ?edit=<id>      — pre-fill the form for editing this event
+    """
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'authority':
+        messages.error(request, 'Please log in as a University Authority.')
+        return redirect('landing')
+
+    PER_PAGE = 10
+    page     = max(1, int(request.GET.get('page', 1)))
+    edit_id  = request.GET.get('edit')
+    edit_event = None
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        # Total count for pagination
+        cursor.execute("SELECT COUNT(*) AS total FROM events")
+        total       = cursor.fetchone()['total']
+        total_pages = max(1, (total + PER_PAGE - 1) // PER_PAGE)
+        page        = min(page, total_pages)
+
+        # Paginated event list ordered by date ascending
+        cursor.execute(
+            """
+            SELECT id, title, date, time, venue, description, rsvp_count
+            FROM   events
+            ORDER  BY date ASC, time ASC
+            LIMIT  %s OFFSET %s
+            """,
+            (PER_PAGE, (page - 1) * PER_PAGE)
+        )
+        events = cursor.fetchall()
+
+        # If ?edit=<id> is in the URL, fetch that event for the form
+        if edit_id:
+            cursor.execute(
+                "SELECT id, title, date, time, venue, description "
+                "FROM events WHERE id = %s AND created_by = %s",
+                (edit_id, user_id)
+            )
+            edit_event = cursor.fetchone()
+
+        # Pagination window (7-page)
+        half       = 3
+        start_page = max(1, page - half)
+        end_page   = min(total_pages, start_page + 6)
+        start_page = max(1, end_page - 6)
+        page_range = range(start_page, end_page + 1)
+
+        return render(request, 'authority/events.html', {
+            'full_name':   request.session.get('full_name', 'Authority'),
+            'events':      events,
+            'edit_event':  edit_event,
+            'page':        page,
+            'total_pages': total_pages,
+            'page_range':  page_range,
+            'start_page':  start_page,
+            'end_page':    end_page,
+        })
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  CREATE EVENT  POST /authority/events/create/
+# ─────────────────────────────────────────────
+@require_http_methods(['POST'])
+def authority_events_create(request):
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'authority':
+        return redirect('landing')
+
+    title       = request.POST.get('title',       '').strip()
+    date        = request.POST.get('date',         '').strip()
+    time        = request.POST.get('time',         '').strip()
+    venue       = request.POST.get('venue',        '').strip()
+    description = request.POST.get('description', '').strip()
+
+    if not all([title, date, time, venue]):
+        messages.error(request, 'Title, date, time, and venue are required.')
+        return redirect('authority_events')
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            INSERT INTO events (title, date, time, venue, description,
+                                rsvp_count, created_by)
+            VALUES (%s, %s, %s, %s, %s, 0, %s)
+            """,
+            (title, date, time, venue, description, user_id)
+        )
+        conn.commit()
+        messages.success(request, f'Event "{title}" created successfully.')
+        return redirect('authority_events')
+
+    except Exception as exc:
+        conn.rollback()
+        messages.error(request, f'An error occurred: {exc}')
+        return redirect('authority_events')
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  EDIT EVENT  GET/POST /authority/events/edit/<event_id>/
+# ─────────────────────────────────────────────
+@require_http_methods(['GET', 'POST'])
+def authority_events_edit(request, event_id):
+    """
+    GET  — Redirect to the events list with ?edit=<id> so the form
+           at the top is pre-filled. This keeps the list visible
+           while editing, matching the CityConnect single-page pattern.
+    POST — Validate and update the event row.
+    """
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'authority':
+        return redirect('landing')
+
+    # GET — redirect to list with edit mode active
+    if request.method == 'GET':
+        page = request.GET.get('page', 1)
+        return redirect(f'/authority/events/?edit={event_id}&page={page}')
+
+    # POST — update the event
+    title       = request.POST.get('title',       '').strip()
+    date        = request.POST.get('date',         '').strip()
+    time        = request.POST.get('time',         '').strip()
+    venue       = request.POST.get('venue',        '').strip()
+    description = request.POST.get('description', '').strip()
+    page        = request.POST.get('page', 1)
+
+    if not all([title, date, time, venue]):
+        messages.error(request, 'Title, date, time, and venue are required.')
+        return redirect(f'/authority/events/?edit={event_id}&page={page}')
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        # Only the authority who created the event can edit it
+        cursor.execute(
+            """
+            UPDATE events
+            SET    title       = %s,
+                   date        = %s,
+                   time        = %s,
+                   venue       = %s,
+                   description = %s
+            WHERE  id         = %s
+            AND    created_by  = %s
+            """,
+            (title, date, time, venue, description, event_id, user_id)
+        )
+        if cursor.rowcount == 0:
+            messages.error(request, 'Event not found or you do not have permission to edit it.')
+        else:
+            conn.commit()
+            messages.success(request, f'Event "{title}" updated successfully.')
+        return redirect(f'/authority/events/?page={page}')
+
+    except Exception as exc:
+        conn.rollback()
+        messages.error(request, f'An error occurred: {exc}')
+        return redirect('authority_events')
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+# ─────────────────────────────────────────────
+#  DELETE EVENT  POST /authority/events/delete/<event_id>/
+# ─────────────────────────────────────────────
+@require_http_methods(['POST'])
+def authority_events_delete(request, event_id):
+    """
+    Hard-deletes the event. ON DELETE CASCADE in the schema
+    automatically removes all related event_rsvps rows.
+    Redirects back to the same page number after deletion.
+    """
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'authority':
+        return redirect('landing')
+
+    page = request.POST.get('page', 1)
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        # Fetch title before deletion for the success message
+        cursor.execute(
+            "SELECT title FROM events WHERE id = %s AND created_by = %s",
+            (event_id, user_id)
+        )
+        event = cursor.fetchone()
+        if not event:
+            messages.error(request, 'Event not found or you do not have permission to delete it.')
+            return redirect(f'/authority/events/?page={page}')
+
+        cursor.execute(
+            "DELETE FROM events WHERE id = %s AND created_by = %s",
+            (event_id, user_id)
+        )
+        conn.commit()
+        messages.success(request, f'Event "{event["title"]}" deleted successfully.')
+        return redirect(f'/authority/events/?page={page}')
+
+    except Exception as exc:
+        conn.rollback()
+        messages.error(request, f'An error occurred: {exc}')
+        return redirect('authority_events')
 
     finally:
         cursor.close()
