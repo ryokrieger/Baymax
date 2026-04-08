@@ -628,8 +628,7 @@ def chatbot_result(request):
             # Assessment incomplete — go back to chatbot
             return redirect('chatbot')
 
-        final_status = row['final_status']
-
+        final_status        = row['final_status']
         # Consume triage outcome from session (set by request-professional view)
         triage_done         = request.session.pop('triage_done',         False)
         triage_assigned     = request.session.pop('triage_assigned',     False)
@@ -2043,7 +2042,6 @@ def authority_events_edit(request, event_id):
         cursor.close()
         conn.close()
 
-
 # ─────────────────────────────────────────────
 #  DELETE EVENT  POST /authority/events/delete/<event_id>/
 # ─────────────────────────────────────────────
@@ -2085,6 +2083,987 @@ def authority_events_delete(request, event_id):
         conn.rollback()
         messages.error(request, f'An error occurred: {exc}')
         return redirect('authority_events')
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  ADMIN DASHBOARD  GET /admin/dashboard/
+# ─────────────────────────────────────────────
+@require_http_methods(['GET'])
+def admin_dashboard(request):
+    """
+    Six-card hub. Checks notification_pending on the current semester —
+    if TRUE, flashes the auto-reset message once then clears the flag.
+    """
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'admin_it':
+        messages.error(request, 'Please log in as Admin IT.')
+        return redirect('landing')
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT semester, notification_pending "
+            "FROM semester_schedule WHERE is_current = TRUE LIMIT 1"
+        )
+        row = cursor.fetchone()
+        if row and row['notification_pending']:
+            messages.info(
+                request,
+                f'Automatic mid-semester reset was performed for '
+                f'{row["semester"]}.'
+            )
+            cursor.execute(
+                "UPDATE semester_schedule SET notification_pending = FALSE "
+                "WHERE is_current = TRUE"
+            )
+            conn.commit()
+
+        return render(request, 'admin/dashboard.html', {
+            'full_name': request.session.get('full_name', 'Admin IT'),
+        })
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  MANAGE STUDENTS  GET /admin/students/
+# ─────────────────────────────────────────────
+@require_http_methods(['GET'])
+def admin_students(request):
+    """
+    Paginated list of all students with their current-semester status.
+    Also renders:
+      - Set Current Semester form
+      - Set Reset Date form (hidden if auto-reset already performed)
+      - Bulk Reset button
+    """
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'admin_it':
+        messages.error(request, 'Please log in as Admin IT.')
+        return redirect('landing')
+
+    PER_PAGE = 10
+    page     = max(1, int(request.GET.get('page', 1)))
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        # Current semester info
+        cursor.execute(
+            """
+            SELECT semester, reset_date, bulk_reset_performed, is_current
+            FROM   semester_schedule
+            WHERE  is_current = TRUE
+            LIMIT  1
+            """
+        )
+        current_sem = cursor.fetchone()
+
+        # Total student count
+        cursor.execute("SELECT COUNT(*) AS total FROM users WHERE role = 'student'")
+        total       = cursor.fetchone()['total']
+        total_pages = max(1, (total + PER_PAGE - 1) // PER_PAGE)
+        page        = min(page, total_pages)
+
+        # Paginated student list with current-semester status
+        semester_label = current_sem['semester'] if current_sem else None
+        cursor.execute(
+            """
+            SELECT u.id, u.full_name, u.email,
+                   s.student_id, s.department,
+                   qr.final_status, qr.responses_reset
+            FROM   users u
+            JOIN   students s ON s.user_id = u.id
+            LEFT JOIN questionnaire_responses qr
+                   ON qr.student_id = u.id
+                   AND qr.semester  = %s
+            WHERE  u.role = 'student'
+            ORDER  BY u.full_name ASC
+            LIMIT  %s OFFSET %s
+            """,
+            (semester_label, PER_PAGE, (page - 1) * PER_PAGE)
+        )
+        students = cursor.fetchall()
+
+        # Derive display status for each student
+        student_rows = []
+        for s in students:
+            if s['responses_reset'] or not s['final_status']:
+                display_status = 'Not Assessed'
+            else:
+                display_status = s['final_status']
+            student_rows.append({
+                'id':           s['id'],
+                'full_name':    s['full_name'],
+                'email':        s['email'],
+                'student_id':   s['student_id'],
+                'department':   s['department'],
+                'status':       display_status,
+            })
+
+        # Pagination window
+        half       = 3
+        start_page = max(1, page - half)
+        end_page   = min(total_pages, start_page + 6)
+        start_page = max(1, end_page - 6)
+        page_range = range(start_page, end_page + 1)
+
+        return render(request, 'admin/students.html', {
+            'full_name':    request.session.get('full_name', 'Admin IT'),
+            'students':     student_rows,
+            'current_sem':  current_sem,
+            'page':         page,
+            'total_pages':  total_pages,
+            'page_range':   page_range,
+            'start_page':   start_page,
+            'end_page':     end_page,
+        })
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  RESET ONE STUDENT  POST /admin/students/reset/<id>/
+# ─────────────────────────────────────────────
+@require_http_methods(['POST'])
+def admin_students_reset(request, student_id):
+    """
+    Upserts the student's questionnaire_responses row for the current
+    semester to responses_reset=TRUE. Inserts with final_status=NULL
+    if no row exists yet.
+    """
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'admin_it':
+        return redirect('landing')
+
+    page = request.POST.get('page', 1)
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT semester FROM semester_schedule WHERE is_current = TRUE LIMIT 1"
+        )
+        row = cursor.fetchone()
+        if not row:
+            messages.error(request, 'No active semester configured.')
+            return redirect(f'/admin/students/?page={page}')
+
+        semester = row['semester']
+        cursor.execute(
+            """
+            INSERT INTO questionnaire_responses
+                (student_id, semester, responses_reset, final_status)
+            VALUES (%s, %s, TRUE, NULL)
+            ON CONFLICT (student_id, semester)
+            DO UPDATE SET responses_reset = TRUE
+            """,
+            (student_id, semester)
+        )
+        conn.commit()
+        messages.success(request, 'Student responses reset. Chatbot will launch on next login.')
+        return redirect(f'/admin/students/?page={page}')
+
+    except Exception as exc:
+        conn.rollback()
+        messages.error(request, f'An error occurred: {exc}')
+        return redirect(f'/admin/students/?page={page}')
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  DELETE STUDENT  POST /admin/students/delete/<id>/
+# ─────────────────────────────────────────────
+@require_http_methods(['POST'])
+def admin_students_delete(request, student_id):
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'admin_it':
+        return redirect('landing')
+
+    page = request.POST.get('page', 1)
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT full_name FROM users WHERE id = %s AND role = 'student'",
+            (student_id,)
+        )
+        student = cursor.fetchone()
+        if not student:
+            messages.error(request, 'Student not found.')
+            return redirect(f'/admin/students/?page={page}')
+
+        cursor.execute("DELETE FROM users WHERE id = %s", (student_id,))
+        conn.commit()
+        messages.success(request, f'Student "{student["full_name"]}" deleted.')
+        return redirect(f'/admin/students/?page={page}')
+
+    except Exception as exc:
+        conn.rollback()
+        messages.error(request, f'An error occurred: {exc}')
+        return redirect(f'/admin/students/?page={page}')
+    
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  BULK RESET  POST /admin/students/reset-all/
+# ─────────────────────────────────────────────
+@require_http_methods(['POST'])
+def admin_students_reset_all(request):
+    """
+    Upserts every student's questionnaire_responses row for the current
+    semester to responses_reset=TRUE in a single INSERT … ON CONFLICT.
+    """
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'admin_it':
+        return redirect('landing')
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT semester FROM semester_schedule WHERE is_current = TRUE LIMIT 1"
+        )
+        row = cursor.fetchone()
+        if not row:
+            messages.error(request, 'No active semester configured.')
+            return redirect('admin_students')
+
+        semester = row['semester']
+        cursor.execute(
+            """
+            INSERT INTO questionnaire_responses
+                (student_id, semester, responses_reset, final_status)
+            SELECT user_id, %s, TRUE, NULL
+            FROM   students
+            ON CONFLICT (student_id, semester)
+            DO UPDATE SET responses_reset = TRUE
+            """,
+            (semester,)
+        )
+        conn.commit()
+        messages.success(
+            request,
+            f'All student responses reset for {semester}. '
+            f'Chatbot will launch for every student on their next login.'
+        )
+        return redirect('admin_students')
+
+    except Exception as exc:
+        conn.rollback()
+        messages.error(request, f'An error occurred: {exc}')
+        return redirect('admin_students')
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  SET CURRENT SEMESTER  POST /admin/students/set-semester/
+# ─────────────────────────────────────────────
+@require_http_methods(['POST'])
+def admin_students_set_semester(request):
+    """
+    Upserts semester_schedule: sets one row is_current=TRUE,
+    all others is_current=FALSE.
+    Format expected: "Spring 2026" / "Fall 2026" / "Summer 2026"
+    """
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'admin_it':
+        return redirect('landing')
+
+    semester = request.POST.get('semester', '').strip()
+    if not semester:
+        messages.error(request, 'Please enter a semester label.')
+        return redirect('admin_students')
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        # Set all existing rows to not current
+        cursor.execute(
+            "UPDATE semester_schedule SET is_current = FALSE"
+        )
+        # Upsert the chosen semester
+        cursor.execute(
+            """
+            INSERT INTO semester_schedule
+                (semester, is_current, bulk_reset_performed, notification_pending)
+            VALUES (%s, TRUE, FALSE, FALSE)
+            ON CONFLICT (semester)
+            DO UPDATE SET is_current = TRUE
+            """,
+            (semester,)
+        )
+        conn.commit()
+        messages.success(request, f'Current semester set to "{semester}".')
+        return redirect('admin_students')
+
+    except Exception as exc:
+        conn.rollback()
+        messages.error(request, f'An error occurred: {exc}')
+        return redirect('admin_students')
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  SET RESET DATE  POST /admin/students/set-reset-date/
+# ─────────────────────────────────────────────
+@require_http_methods(['POST'])
+def admin_students_set_reset_date(request):
+    """
+    Updates reset_date on the current semester's semester_schedule row.
+    If bulk_reset_performed is already TRUE, the form is hidden in the
+    template — this view still guards against it.
+    """
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'admin_it':
+        return redirect('landing')
+
+    reset_date = request.POST.get('reset_date', '').strip()
+    if not reset_date:
+        messages.error(request, 'Please choose a reset date.')
+        return redirect('admin_students')
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT bulk_reset_performed FROM semester_schedule "
+            "WHERE is_current = TRUE LIMIT 1"
+        )
+        row = cursor.fetchone()
+        if row and row['bulk_reset_performed']:
+            messages.warning(
+                request,
+                'Auto-reset has already been performed this semester. '
+                'The reset date cannot be changed.'
+            )
+            return redirect('admin_students')
+
+        cursor.execute(
+            "UPDATE semester_schedule SET reset_date = %s WHERE is_current = TRUE",
+            (reset_date,)
+        )
+        conn.commit()
+        messages.success(request, f'Reset date set to {reset_date}.')
+        return redirect('admin_students')
+
+    except Exception as exc:
+        conn.rollback()
+        messages.error(request, f'An error occurred: {exc}')
+        return redirect('admin_students')
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  MANAGE PROFESSIONALS  GET /admin/professionals/
+# ─────────────────────────────────────────────
+@require_http_methods(['GET'])
+def admin_professionals(request):
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'admin_it':
+        messages.error(request, 'Please log in as Admin IT.')
+        return redirect('landing')
+
+    PER_PAGE = 10
+    page     = max(1, int(request.GET.get('page', 1)))
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT COUNT(*) AS total FROM users WHERE role = 'professional'"
+        )
+        total       = cursor.fetchone()['total']
+        total_pages = max(1, (total + PER_PAGE - 1) // PER_PAGE)
+        page        = min(page, total_pages)
+
+        cursor.execute(
+            """
+            SELECT u.id, u.full_name, u.email,
+                   COUNT(a.id) AS active_count
+            FROM   users u
+            LEFT JOIN appointments a
+                   ON a.professional_id = u.id AND a.status = 'accepted'
+            WHERE  u.role = 'professional'
+            GROUP  BY u.id, u.full_name, u.email
+            ORDER  BY u.full_name ASC
+            LIMIT  %s OFFSET %s
+            """,
+            (PER_PAGE, (page - 1) * PER_PAGE)
+        )
+        professionals = cursor.fetchall()
+
+        half       = 3
+        start_page = max(1, page - half)
+        end_page   = min(total_pages, start_page + 6)
+        start_page = max(1, end_page - 6)
+
+        return render(request, 'admin/professionals.html', {
+            'full_name':    request.session.get('full_name', 'Admin IT'),
+            'professionals': professionals,
+            'page':         page,
+            'total_pages':  total_pages,
+            'page_range':   range(start_page, end_page + 1),
+            'start_page':   start_page,
+            'end_page':     end_page,
+        })
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  REGISTER PROFESSIONAL  POST /admin/professionals/register/
+# ─────────────────────────────────────────────
+@require_http_methods(['POST'])
+def admin_professionals_register(request):
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'admin_it':
+        return redirect('landing')
+
+    full_name = request.POST.get('full_name', '').strip()
+    email     = request.POST.get('email',     '').strip().lower()
+    password  = request.POST.get('password',  '').strip()
+
+    if not all([full_name, email, password]):
+        messages.error(request, 'All fields are required.')
+        return redirect('admin_professionals')
+    if len(password) < 8:
+        messages.error(request, 'Password must be at least 8 characters.')
+        return redirect('admin_professionals')
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+        if cursor.fetchone():
+            messages.error(request, 'An account with that email already exists.')
+            return redirect('admin_professionals')
+
+        hashed = make_password(password)
+        cursor.execute(
+            "INSERT INTO users (role, full_name, email, password) "
+            "VALUES ('professional', %s, %s, %s)",
+            (full_name, email, hashed)
+        )
+        conn.commit()
+        messages.success(request, f'Professional "{full_name}" registered successfully.')
+        return redirect('admin_professionals')
+
+    except Exception as exc:
+        conn.rollback()
+        messages.error(request, f'An error occurred: {exc}')
+        return redirect('admin_professionals')
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  DELETE PROFESSIONAL  POST /admin/professionals/delete/<id>/
+# ─────────────────────────────────────────────
+@require_http_methods(['POST'])
+def admin_professionals_delete(request, prof_id):
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'admin_it':
+        return redirect('landing')
+
+    page = request.POST.get('page', 1)
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT full_name FROM users WHERE id = %s AND role = 'professional'",
+            (prof_id,)
+        )
+        prof = cursor.fetchone()
+        if not prof:
+            messages.error(request, 'Professional not found.')
+            return redirect(f'/admin/professionals/?page={page}')
+
+        cursor.execute("DELETE FROM users WHERE id = %s", (prof_id,))
+        conn.commit()
+        messages.success(request, f'Professional "{prof["full_name"]}" deleted.')
+        return redirect(f'/admin/professionals/?page={page}')
+
+    except Exception as exc:
+        conn.rollback()
+        messages.error(request, f'An error occurred: {exc}')
+        return redirect(f'/admin/professionals/?page={page}')
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  MANAGE AUTHORITY  GET /admin/authority/
+# ─────────────────────────────────────────────
+@require_http_methods(['GET'])
+def admin_authority(request):
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'admin_it':
+        messages.error(request, 'Please log in as Admin IT.')
+        return redirect('landing')
+
+    PER_PAGE = 10
+    page     = max(1, int(request.GET.get('page', 1)))
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT COUNT(*) AS total FROM users WHERE role = 'authority'"
+        )
+        total       = cursor.fetchone()['total']
+        total_pages = max(1, (total + PER_PAGE - 1) // PER_PAGE)
+        page        = min(page, total_pages)
+
+        cursor.execute(
+            "SELECT id, full_name, email FROM users "
+            "WHERE role = 'authority' "
+            "ORDER BY full_name ASC LIMIT %s OFFSET %s",
+            (PER_PAGE, (page - 1) * PER_PAGE)
+        )
+        authority_users = cursor.fetchall()
+
+        half       = 3
+        start_page = max(1, page - half)
+        end_page   = min(total_pages, start_page + 6)
+        start_page = max(1, end_page - 6)
+
+        return render(request, 'admin/authority.html', {
+            'full_name':       request.session.get('full_name', 'Admin IT'),
+            'authority_users': authority_users,
+            'page':            page,
+            'total_pages':     total_pages,
+            'page_range':      range(start_page, end_page + 1),
+            'start_page':      start_page,
+            'end_page':        end_page,
+        })
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  REGISTER AUTHORITY  POST /admin/authority/register/
+# ─────────────────────────────────────────────
+@require_http_methods(['POST'])
+def admin_authority_register(request):
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'admin_it':
+        return redirect('landing')
+
+    full_name = request.POST.get('full_name', '').strip()
+    email     = request.POST.get('email',     '').strip().lower()
+    password  = request.POST.get('password',  '').strip()
+
+    if not all([full_name, email, password]):
+        messages.error(request, 'All fields are required.')
+        return redirect('admin_authority')
+    if len(password) < 8:
+        messages.error(request, 'Password must be at least 8 characters.')
+        return redirect('admin_authority')
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+        if cursor.fetchone():
+            messages.error(request, 'An account with that email already exists.')
+            return redirect('admin_authority')
+
+        hashed = make_password(password)
+        cursor.execute(
+            "INSERT INTO users (role, full_name, email, password) "
+            "VALUES ('authority', %s, %s, %s)",
+            (full_name, email, hashed)
+        )
+        conn.commit()
+        messages.success(request, f'Authority "{full_name}" registered successfully.')
+        return redirect('admin_authority')
+
+    except Exception as exc:
+        conn.rollback()
+        messages.error(request, f'An error occurred: {exc}')
+        return redirect('admin_authority')
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  DELETE AUTHORITY  POST /admin/authority/delete/<id>/
+# ─────────────────────────────────────────────
+@require_http_methods(['POST'])
+def admin_authority_delete(request, authority_id):
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'admin_it':
+        return redirect('landing')
+
+    page = request.POST.get('page', 1)
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT full_name FROM users WHERE id = %s AND role = 'authority'",
+            (authority_id,)
+        )
+        auth = cursor.fetchone()
+        if not auth:
+            messages.error(request, 'Authority not found.')
+            return redirect(f'/admin/authority/?page={page}')
+
+        cursor.execute("DELETE FROM users WHERE id = %s", (authority_id,))
+        conn.commit()
+        messages.success(request, f'Authority "{auth["full_name"]}" deleted.')
+        return redirect(f'/admin/authority/?page={page}')
+
+    except Exception as exc:
+        conn.rollback()
+        messages.error(request, f'An error occurred: {exc}')
+        return redirect(f'/admin/authority/?page={page}')
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  MANAGE ADMIN IT  GET /admin/it/
+# ─────────────────────────────────────────────
+@require_http_methods(['GET'])
+def admin_it(request):
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'admin_it':
+        messages.error(request, 'Please log in as Admin IT.')
+        return redirect('landing')
+
+    PER_PAGE = 10
+    page     = max(1, int(request.GET.get('page', 1)))
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT COUNT(*) AS total FROM users WHERE role = 'admin_it'"
+        )
+        total       = cursor.fetchone()['total']
+        total_pages = max(1, (total + PER_PAGE - 1) // PER_PAGE)
+        page        = min(page, total_pages)
+
+        cursor.execute(
+            "SELECT id, full_name, email FROM users "
+            "WHERE role = 'admin_it' "
+            "ORDER BY full_name ASC LIMIT %s OFFSET %s",
+            (PER_PAGE, (page - 1) * PER_PAGE)
+        )
+        admins = cursor.fetchall()
+
+        half       = 3
+        start_page = max(1, page - half)
+        end_page   = min(total_pages, start_page + 6)
+        start_page = max(1, end_page - 6)
+
+        return render(request, 'admin/it.html', {
+            'full_name':    request.session.get('full_name', 'Admin IT'),
+            'admins':       admins,
+            'current_id':   user_id,   # used in template for self-protect
+            'page':         page,
+            'total_pages':  total_pages,
+            'page_range':   range(start_page, end_page + 1),
+            'start_page':   start_page,
+            'end_page':     end_page,
+        })
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  REGISTER ADMIN IT  POST /admin/it/register/
+# ─────────────────────────────────────────────
+@require_http_methods(['POST'])
+def admin_it_register(request):
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'admin_it':
+        return redirect('landing')
+
+    full_name = request.POST.get('full_name', '').strip()
+    email     = request.POST.get('email',     '').strip().lower()
+    password  = request.POST.get('password',  '').strip()
+
+    if not all([full_name, email, password]):
+        messages.error(request, 'All fields are required.')
+        return redirect('admin_it')
+    if len(password) < 8:
+        messages.error(request, 'Password must be at least 8 characters.')
+        return redirect('admin_it')
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+        if cursor.fetchone():
+            messages.error(request, 'An account with that email already exists.')
+            return redirect('admin_it')
+
+        hashed = make_password(password)
+        cursor.execute(
+            "INSERT INTO users (role, full_name, email, password) "
+            "VALUES ('admin_it', %s, %s, %s)",
+            (full_name, email, hashed)
+        )
+        conn.commit()
+        messages.success(request, f'Admin IT "{full_name}" registered successfully.')
+        return redirect('admin_it')
+
+    except Exception as exc:
+        conn.rollback()
+        messages.error(request, f'An error occurred: {exc}')
+        return redirect('admin_it')
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  DELETE ADMIN IT  POST /admin/it/delete/<id>/
+# ─────────────────────────────────────────────
+@require_http_methods(['POST'])
+def admin_it_delete(request, admin_user_id):
+    """Self-protect: cannot delete your own account."""
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'admin_it':
+        return redirect('landing')
+
+    page = request.POST.get('page', 1)
+
+    # Self-protect check
+    if admin_user_id == user_id:
+        messages.error(request, 'You cannot delete your own Admin IT account.')
+        return redirect(f'/admin/it/?page={page}')
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT full_name FROM users WHERE id = %s AND role = 'admin_it'",
+            (admin_user_id,)
+        )
+        admin = cursor.fetchone()
+        if not admin:
+            messages.error(request, 'Admin IT account not found.')
+            return redirect(f'/admin/it/?page={page}')
+
+        cursor.execute("DELETE FROM users WHERE id = %s", (admin_user_id,))
+        conn.commit()
+        messages.success(request, f'Admin IT "{admin["full_name"]}" deleted.')
+        return redirect(f'/admin/it/?page={page}')
+
+    except Exception as exc:
+        conn.rollback()
+        messages.error(request, f'An error occurred: {exc}')
+        return redirect(f'/admin/it/?page={page}')
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  MANAGE APPOINTMENTS  GET /admin/appointments/
+# ─────────────────────────────────────────────
+@require_http_methods(['GET'])
+def admin_appointments(request):
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'admin_it':
+        messages.error(request, 'Please log in as Admin IT.')
+        return redirect('landing')
+
+    PER_PAGE = 10
+    page     = max(1, int(request.GET.get('page', 1)))
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT COUNT(*) AS total FROM appointments")
+        total       = cursor.fetchone()['total']
+        total_pages = max(1, (total + PER_PAGE - 1) // PER_PAGE)
+        page        = min(page, total_pages)
+
+        cursor.execute(
+            """
+            SELECT a.id,
+                   a.status,
+                   a.scheduled_at,
+                   su.full_name  AS student_name,
+                   s.student_id,
+                   pu.full_name  AS professional_name
+            FROM   appointments a
+            JOIN   users    su ON su.id      = a.student_id
+            JOIN   students s  ON s.user_id  = a.student_id
+            JOIN   users    pu ON pu.id      = a.professional_id
+            ORDER  BY a.id DESC
+            LIMIT  %s OFFSET %s
+            """,
+            (PER_PAGE, (page - 1) * PER_PAGE)
+        )
+        appointments = cursor.fetchall()
+
+        half       = 3
+        start_page = max(1, page - half)
+        end_page   = min(total_pages, start_page + 6)
+        start_page = max(1, end_page - 6)
+
+        return render(request, 'admin/appointments.html', {
+            'full_name':    request.session.get('full_name', 'Admin IT'),
+            'appointments': appointments,
+            'page':         page,
+            'total_pages':  total_pages,
+            'page_range':   range(start_page, end_page + 1),
+            'start_page':   start_page,
+            'end_page':     end_page,
+        })
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  DELETE APPOINTMENT  POST /admin/appointments/delete/<id>/
+# ─────────────────────────────────────────────
+@require_http_methods(['POST'])
+def admin_appointments_delete(request, appointment_id):
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'admin_it':
+        return redirect('landing')
+
+    page = request.POST.get('page', 1)
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT id FROM appointments WHERE id = %s", (appointment_id,)
+        )
+        if not cursor.fetchone():
+            messages.error(request, 'Appointment not found.')
+            return redirect(f'/admin/appointments/?page={page}')
+
+        cursor.execute("DELETE FROM appointments WHERE id = %s", (appointment_id,))
+        conn.commit()
+        messages.success(request, 'Appointment deleted.')
+        return redirect(f'/admin/appointments/?page={page}')
+
+    except Exception as exc:
+        conn.rollback()
+        messages.error(request, f'An error occurred: {exc}')
+        return redirect(f'/admin/appointments/?page={page}')
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  MANAGE EVENTS  GET /admin/events/
+# ─────────────────────────────────────────────
+@require_http_methods(['GET'])
+def admin_events(request):
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'admin_it':
+        messages.error(request, 'Please log in as Admin IT.')
+        return redirect('landing')
+
+    PER_PAGE = 10
+    page     = max(1, int(request.GET.get('page', 1)))
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT COUNT(*) AS total FROM events")
+        total       = cursor.fetchone()['total']
+        total_pages = max(1, (total + PER_PAGE - 1) // PER_PAGE)
+        page        = min(page, total_pages)
+
+        cursor.execute(
+            """
+            SELECT e.id, e.title, e.date, e.time, e.venue,
+                   e.rsvp_count, u.full_name AS created_by_name
+            FROM   events e
+            JOIN   users  u ON u.id = e.created_by
+            ORDER  BY e.date ASC, e.time ASC
+            LIMIT  %s OFFSET %s
+            """,
+            (PER_PAGE, (page - 1) * PER_PAGE)
+        )
+        events = cursor.fetchall()
+
+        half       = 3
+        start_page = max(1, page - half)
+        end_page   = min(total_pages, start_page + 6)
+        start_page = max(1, end_page - 6)
+
+        return render(request, 'admin/events.html', {
+            'full_name':   request.session.get('full_name', 'Admin IT'),
+            'events':      events,
+            'page':        page,
+            'total_pages': total_pages,
+            'page_range':  range(start_page, end_page + 1),
+            'start_page':  start_page,
+            'end_page':    end_page,
+        })
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  DELETE EVENT  POST /admin/events/delete/<id>/
+# ─────────────────────────────────────────────
+@require_http_methods(['POST'])
+def admin_events_delete(request, event_id):
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'admin_it':
+        return redirect('landing')
+
+    page = request.POST.get('page', 1)
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT title FROM events WHERE id = %s", (event_id,))
+        event = cursor.fetchone()
+        if not event:
+            messages.error(request, 'Event not found.')
+            return redirect(f'/admin/events/?page={page}')
+
+        cursor.execute("DELETE FROM events WHERE id = %s", (event_id,))
+        conn.commit()
+        messages.success(request, f'Event "{event["title"]}" deleted.')
+        return redirect(f'/admin/events/?page={page}')
+
+    except Exception as exc:
+        conn.rollback()
+        messages.error(request, f'An error occurred: {exc}')
+        return redirect(f'/admin/events/?page={page}')
 
     finally:
         cursor.close()

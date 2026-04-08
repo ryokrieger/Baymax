@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baymax — Manage Events</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'styles/tables.css' %}">
+</head>
+<body>
+
+<nav class="topbar">
+    <a href="{% url 'admin_dashboard' %}" class="topbar__brand">🏥 BAYMAX</a>
+    <div class="topbar__right">
+        <span class="topbar__name">{{ full_name }}</span>
+        <span class="topbar__role">Admin IT</span>
+        <a href="{% url 'logout' %}" class="topbar__logout">Logout</a>
+    </div>
+</nav>
+
+<main class="subpage">
+<div class="subpage__inner">
+
+    <a href="{% url 'admin_dashboard' %}" class="back-link">
+        &#8592; Back to Dashboard
+    </a>
+
+    <h1 class="subpage__heading">📅 Manage Events</h1>
+    <p class="subpage__meta">
+        All mental health events in the system. Deleting an event also
+        removes all student RSVPs for that event.
+    </p>
+
+    {% if messages %}
+    <ul class="flash-list">
+        {% for message in messages %}
+        <li class="flash flash--{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════════════════
+         EVENTS TABLE
+         ══════════════════════════════════════════════════════ -->
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Title</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Venue</th>
+                    <th class="td-center">RSVPs</th>
+                    <th>Created By</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                <tr>
+                    <td class="td-center"
+                        style="font-weight:700;color:#888;font-size:0.8rem;">
+                        {{ forloop.counter|add:page|add:"-1" }}
+                    </td>
+                    <td style="font-weight:600;max-width:200px;">
+                        {{ event.title }}
+                    </td>
+                    <td style="white-space:nowrap;font-size:0.85rem;">
+                        {{ event.date|date:"N j, Y" }}
+                    </td>
+                    <td style="white-space:nowrap;font-size:0.85rem;">
+                        {{ event.time|time:"g:i A" }}
+                    </td>
+                    <td style="font-size:0.82rem;color:#555;max-width:160px;">
+                        {{ event.venue }}
+                    </td>
+                    <td class="td-center">
+                        <span style="font-weight:700;">
+                            {{ event.rsvp_count }}
+                        </span>
+                        {% if event.rsvp_count > 0 %}
+                        <span style="font-size:0.72rem;color:#555;">
+                            going
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:0.82rem;">
+                        {{ event.created_by_name }}
+                    </td>
+                    <td>
+                        <div class="actions-cell">
+                            <form method="POST"
+                                  action="{% url 'admin_events_delete' event.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="page" value="{{ page }}">
+                                <button type="submit"
+                                        class="btn btn-delete"
+                                        onclick="return confirm('Delete &quot;{{ event.title }}&quot;? This will also remove all {{ event.rsvp_count }} RSVP(s).');">
+                                    🗑 Delete
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr class="empty-row">
+                    <td colspan="8">No events found in the system.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div class="pagination">
+        {% if page > 1 %}
+            <a href="?page={{ page|add:'-1' }}">&#8592; Prev</a>
+        {% else %}
+            <span class="disabled">&#8592; Prev</span>
+        {% endif %}
+
+        {% if start_page > 1 %}
+            <a href="?page=1">1</a>
+            {% if start_page > 2 %}<span class="ellipsis">…</span>{% endif %}
+        {% endif %}
+
+        {% for p in page_range %}
+            {% if p == page %}
+                <span class="current-page">{{ p }}</span>
+            {% else %}
+                <a href="?page={{ p }}">{{ p }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if end_page < total_pages %}
+            {% if end_page < total_pages|add:'-1' %}
+                <span class="ellipsis">…</span>
+            {% endif %}
+            <a href="?page={{ total_pages }}">{{ total_pages }}</a>
+        {% endif %}
+
+        {% if page < total_pages %}
+            <a href="?page={{ page|add:'1' }}">Next &#8594;</a>
+        {% else %}
+            <span class="disabled">Next &#8594;</span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+</div>
+</main>
+
+<footer class="page-footer">
+    Baymax &mdash; University Mental Health Tracking System
+</footer>
+
+</body>
+</html>

@@ -129,4 +129,85 @@ urlpatterns = [
          views.authority_events_delete,
          name='authority_events_delete'),
 
+    # Admin IT Panel
+    path('admin/dashboard/',
+         views.admin_dashboard,
+         name='admin_dashboard'),
+
+    path('admin/students/',
+         views.admin_students,
+         name='admin_students'),
+     
+    path('admin/students/reset/<int:student_id>/',
+         views.admin_students_reset,
+         name='admin_students_reset'),
+     
+    path('admin/students/delete/<int:student_id>/',
+         views.admin_students_delete,
+         name='admin_students_delete'),
+     
+    path('admin/students/reset-all/',
+         views.admin_students_reset_all,
+         name='admin_students_reset_all'),
+     
+    path('admin/students/set-semester/',
+         views.admin_students_set_semester,
+         name='admin_students_set_semester'),
+     
+    path('admin/students/set-reset-date/',
+         views.admin_students_set_reset_date,
+         name='admin_students_set_reset_date'),
+
+    path('admin/professionals/',
+         views.admin_professionals,
+         name='admin_professionals'),
+     
+    path('admin/professionals/register/',
+         views.admin_professionals_register,
+         name='admin_professionals_register'),
+     
+    path('admin/professionals/delete/<int:prof_id>/',
+         views.admin_professionals_delete,
+         name='admin_professionals_delete'),
+
+    path('admin/authority/',
+         views.admin_authority,
+         name='admin_authority'),
+     
+    path('admin/authority/register/',
+         views.admin_authority_register,
+         name='admin_authority_register'),
+     
+    path('admin/authority/delete/<int:authority_id>/',
+         views.admin_authority_delete,
+         name='admin_authority_delete'),
+
+    path('admin/it/',
+         views.admin_it,
+         name='admin_it'),
+     
+    path('admin/it/register/',
+         views.admin_it_register,
+         name='admin_it_register'),
+     
+    path('admin/it/delete/<int:admin_user_id>/',
+         views.admin_it_delete,
+         name='admin_it_delete'),
+
+    path('admin/appointments/',
+         views.admin_appointments,
+         name='admin_appointments'),
+
+    path('admin/appointments/delete/<int:appointment_id>/',
+         views.admin_appointments_delete,
+         name='admin_appointments_delete'),
+
+    path('admin/events/',
+         views.admin_events,
+         name='admin_events'),
+     
+    path('admin/events/delete/<int:event_id>/',
+         views.admin_events_delete,
+         name='admin_events_delete'),
+     
 ]

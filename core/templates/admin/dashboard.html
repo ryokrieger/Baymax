@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baymax — Admin IT Dashboard</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'styles/dashboard.css' %}">
+</head>
+<body>
+
+<nav class="topbar">
+    <span class="topbar__brand">🏥 BAYMAX</span>
+    <div class="topbar__right">
+        <span class="topbar__name">{{ full_name }}</span>
+        <span class="topbar__role">Admin IT</span>
+        <a href="{% url 'logout' %}" class="topbar__logout">Logout</a>
+    </div>
+</nav>
+
+<main class="dashboard-page">
+
+    {% if messages %}
+    <ul class="flash-list">
+        {% for message in messages %}
+        <li class="flash flash--{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <div class="dashboard-welcome">
+        <h1 class="dashboard-welcome__title">
+            <span>⚙️ Admin IT Panel</span>
+        </h1>
+        <p class="dashboard-welcome__sub">
+            Welcome, {{ full_name }}. Manage all system users, semesters, and data.
+        </p>
+    </div>
+
+    <!-- Six-card grid -->
+    <div class="card-grid card-grid--3">
+
+        <a href="{% url 'admin_students' %}" class="dash-card dash-card--students">
+            <span class="dash-card__icon">🎓</span>
+            <span class="dash-card__title">Manage Students</span>
+            <span class="dash-card__desc">
+                View all students, reset assessments,
+                set semesters and auto-reset dates.
+            </span>
+        </a>
+
+        <a href="{% url 'admin_professionals' %}" class="dash-card dash-card--profs">
+            <span class="dash-card__icon">🧠</span>
+            <span class="dash-card__title">Manage Professionals</span>
+            <span class="dash-card__desc">
+                Register and remove Mental Health
+                Professional accounts.
+            </span>
+        </a>
+
+        <a href="{% url 'admin_authority' %}" class="dash-card dash-card--authority">
+            <span class="dash-card__icon">🏛️</span>
+            <span class="dash-card__title">Manage Authority</span>
+            <span class="dash-card__desc">
+                Register and remove University
+                Authority accounts.
+            </span>
+        </a>
+
+        <a href="{% url 'admin_it' %}" class="dash-card dash-card--admin">
+            <span class="dash-card__icon">⚙️</span>
+            <span class="dash-card__title">Manage Admin IT</span>
+            <span class="dash-card__desc">
+                Register and remove Admin IT
+                accounts.
+            </span>
+        </a>
+
+        <a href="{% url 'admin_appointments' %}" class="dash-card dash-card--appts">
+            <span class="dash-card__icon">📋</span>
+            <span class="dash-card__title">Manage Appointments</span>
+            <span class="dash-card__desc">
+                View all student–professional
+                appointment records system-wide.
+            </span>
+        </a>
+
+        <a href="{% url 'admin_events' %}" class="dash-card dash-card--events">
+            <span class="dash-card__icon">📅</span>
+            <span class="dash-card__title">Manage Events</span>
+            <span class="dash-card__desc">
+                View and delete all mental health
+                events in the system.
+            </span>
+        </a>
+
+    </div>
+
+</main>
+
+<footer class="page-footer">
+    Baymax &mdash; University Mental Health Tracking System
+</footer>
+
+</body>
+</html>
