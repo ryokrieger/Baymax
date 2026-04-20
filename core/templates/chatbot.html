@@ -10,6 +10,21 @@
 <body>
 
 <!-- ── Brand Header ───────────────────────────────────────── -->
+<!-- ── Assessment Loading Overlay ─────────────────────────
+     Shown only after the 26th answer is submitted.
+     ─────────────────────────────────────────────────────── -->
+<div class="loading-overlay" id="loadingOverlay" aria-live="polite" aria-label="Assessing your responses">
+    <div class="loading-ring"></div>
+    <p class="loading-label">🧠 Analysing Responses…</p>
+    <div class="loading-dots">
+        <span></span><span></span><span></span>
+    </div>
+    <p class="loading-sublabel">
+        Please wait while Baymax assesses your mental health status.
+        This only takes a moment.
+    </p>
+</div>
+
 <header class="site-header">
     <span class="brand-logo">🏥 BAYMAX</span>
 </header>
@@ -172,7 +187,9 @@
     </div><!-- /#chatBox -->
 
     <!-- Answer buttons -->
-    <div class="answer-panel">
+    <div class="answer-panel" id="answerPanel"
+         data-q-number="{{ q_number }}"
+         data-q-total="{{ q_total }}">
         <p class="answer-panel__prompt">Choose your answer:</p>
         <div class="answer-grid">
             <!--
@@ -209,13 +226,38 @@
         fill.style.width = (fill.dataset.progress || '0') + '%';
     }
 
-    // Auto-scroll the chat box to the bottom so the latest bubble
-    // is always visible without the student having to scroll manually.
+    // ── Auto-scroll chat box ──────────────────────────────────────
     (function () {
         var box = document.getElementById('chatBox');
-        if (box) {
-            box.scrollTop = box.scrollHeight;
-        }
+        if (box) { box.scrollTop = box.scrollHeight; }
+    })();
+
+    // ── Loading overlay on last question ─────────────────────────
+    (function () {
+        var panel   = document.getElementById('answerPanel');
+        var overlay = document.getElementById('loadingOverlay');
+
+        if (!panel || !overlay) { return; }
+
+        var qNumber = parseInt(panel.dataset.qNumber, 10);
+        var qTotal  = parseInt(panel.dataset.qTotal,  10);
+
+        // Only wire up the overlay on the very last question
+        if (qNumber !== qTotal) { return; }
+
+        // Listen for any form submit inside the answer grid
+        var forms = panel.querySelectorAll('form');
+        forms.forEach(function (form) {
+            form.addEventListener('submit', function () {
+                // Disable all answer buttons immediately so the student
+                // cannot click twice while the server processes
+                panel.querySelectorAll('.answer-btn').forEach(function (btn) {
+                    btn.disabled = true;
+                });
+                // Show the loading overlay
+                overlay.classList.add('is-visible');
+            });
+        });
     })();
 </script>
 
