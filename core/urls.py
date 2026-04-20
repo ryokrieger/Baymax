@@ -91,6 +91,10 @@ urlpatterns = [
          views.professional_appointments_release,
          name='professional_appointments_release'),
 
+    path('professional/appointments/reschedule/<int:appointment_id>/',
+         views.professional_appointments_reschedule,
+         name='professional_appointments_reschedule'),
+
     path('professional/appointments/view/<int:appointment_id>/',
          views.professional_appointments_view,
          name='professional_appointments_view'),

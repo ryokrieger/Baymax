@@ -1456,6 +1456,102 @@ def professional_appointments_release(request, appointment_id):
         conn.rollback()
         messages.error(request, f'An error occurred: {exc}')
         return redirect('professional_appointments')
+    finally:
+        cursor.close()
+        conn.close()
+
+# ─────────────────────────────────────────────
+#  RESCHEDULE  POST /professional/appointments/reschedule/<id>/
+# ─────────────────────────────────────────────
+@require_http_methods(['POST'])
+def professional_appointments_reschedule(request, appointment_id):
+    """
+    Update the scheduled_at timestamp for an existing accepted appointment.
+    Applies the same weekly-recurring conflict check as the accept view —
+    checks that the proposed day-of-week + time does not overlap any other
+    accepted appointment for this professional (excluding the one being
+    rescheduled itself).
+    """
+    user_id, role = get_session_user(request)
+    if not user_id or role != 'professional':
+        return redirect('landing')
+
+    scheduled_at_str = request.POST.get('scheduled_at', '').strip()
+    if not scheduled_at_str:
+        messages.error(request, 'Please provide a new session date and time.')
+        return redirect('professional_appointments')
+
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        # Verify appointment belongs to this professional and is accepted
+        cursor.execute(
+            "SELECT id FROM appointments "
+            "WHERE id = %s AND professional_id = %s AND status = 'accepted'",
+            (appointment_id, user_id)
+        )
+        if not cursor.fetchone():
+            messages.error(request, 'Appointment not found or not currently active.')
+            return redirect('professional_appointments')
+
+        # Parse datetime
+        from datetime import datetime
+        try:
+            scheduled_at = datetime.strptime(scheduled_at_str, '%Y-%m-%dT%H:%M')
+        except ValueError:
+            try:
+                scheduled_at = datetime.strptime(scheduled_at_str, '%Y-%m-%d %H:%M')
+            except ValueError:
+                messages.error(request, 'Invalid date/time format. Please try again.')
+                return redirect('professional_appointments')
+
+        # Weekly recurring conflict check — exclude this appointment itself
+        cursor.execute(
+            """
+            SELECT id, scheduled_at FROM appointments
+            WHERE  professional_id = %s
+            AND    status          = 'accepted'
+            AND    id             != %s
+            AND    scheduled_at    IS NOT NULL
+            AND    EXTRACT(DOW FROM scheduled_at) = EXTRACT(DOW FROM %s::timestamp)
+            AND    ABS(EXTRACT(EPOCH FROM (
+                       scheduled_at::time - %s::time
+                   ))) < 7200
+            """,
+            (user_id, appointment_id, scheduled_at, scheduled_at)
+        )
+        conflict = cursor.fetchone()
+        if conflict:
+            existing_dt = conflict['scheduled_at']
+            day_name    = existing_dt.strftime('%A')
+            time_str    = existing_dt.strftime('%I:%M %p')
+            messages.error(
+                request,
+                f'You already have a recurring session every {day_name} at '
+                f'{time_str} (2-hour slot). The proposed time conflicts. '
+                f'Please choose a different day or time.'
+            )
+            return redirect('professional_appointments')
+
+        # Update the appointment
+        cursor.execute(
+            "UPDATE appointments SET scheduled_at = %s "
+            "WHERE id = %s AND professional_id = %s",
+            (scheduled_at, appointment_id, user_id)
+        )
+        conn.commit()
+        messages.success(
+            request,
+            f'Session rescheduled to every '
+            f'{scheduled_at.strftime("%A")} at '
+            f'{scheduled_at.strftime("%I:%M %p")}.'
+        )
+        return redirect('professional_appointments')
+
+    except Exception as exc:
+        conn.rollback()
+        messages.error(request, f'An error occurred: {exc}')
+        return redirect('professional_appointments')
 
     finally:
         cursor.close()

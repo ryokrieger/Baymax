@@ -6,6 +6,60 @@
     <title>Baymax — Appointments</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'styles/tables.css' %}">
+    <style>
+        /* ── Inline reschedule form ────────────────────────────── */
+        .reschedule-row {
+            display   : none;
+            background: #fffbe6;
+            border-top: 2px dashed #d1c9b0;
+        }
+
+        .reschedule-row.is-open {
+            display: table-row;
+        }
+
+        .reschedule-row td {
+            padding: 14px 18px;
+        }
+
+        .reschedule-form {
+            display    : flex;
+            align-items: center;
+            gap        : 10px;
+            flex-wrap  : wrap;
+        }
+
+        .reschedule-form label {
+            font-size  : 0.8rem;
+            font-weight: 700;
+            color      : #555;
+            white-space: nowrap;
+        }
+
+        .reschedule-form input[type="datetime-local"] {
+            padding      : 6px 11px;
+            font-family  : 'Poppins', sans-serif;
+            font-size    : 0.82rem;
+            background   : #fff;
+            border       : 2px solid #000;
+            border-radius: 4px;
+            box-shadow   : 3px 3px 0 #000;
+            outline      : none;
+            color        : #000;
+            transition   : border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .reschedule-form input[type="datetime-local"]:focus {
+            border-color: #0EA5E9;
+            box-shadow  : 3px 3px 0 #0EA5E9;
+        }
+
+        .reschedule-hint {
+            font-size : 0.74rem;
+            color     : #888;
+            margin-top: 4px;
+        }
+    </style>
 </head>
 <body>
 
@@ -54,15 +108,17 @@
                     <th>Student Name</th>
                     <th>Student ID</th>
                     <th>Department</th>
-                    <th>Scheduled Session</th>
+                    <th>Weekly Session</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for row in treating_rows %}
+                <!-- ── Main data row ── -->
                 <tr>
-                    <td class="td-center">
-                        {{ forloop.counter|add:treating_rows|add:"-1" }}
+                    <td class="td-center"
+                        style="font-weight:700;color:#888;font-size:0.8rem;">
+                        {{ forloop.counter }}
                     </td>
                     <td style="font-weight:600;">{{ row.student_name }}</td>
                     <td>{{ row.student_id }}</td>
@@ -90,11 +146,18 @@
                                class="btn btn-view">
                                 👁 View
                             </a>
+                            <!-- Reschedule toggle -->
+                            <button type="button"
+                                    class="btn btn-warning"
+                                    onclick="toggleReschedule('reschedule-{{ row.appt_id }}', this)">
+                                ✏️ Edit Time
+                            </button>
                             <!-- Release student -->
                             <form method="POST"
                                   action="{% url 'professional_appointments_release' row.appt_id %}">
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-release"
+                                <button type="submit"
+                                        class="btn btn-release"
                                         onclick="return confirm('Release this student? The appointment will be marked as completed.');">
                                     ✓ Release
                                 </button>
@@ -102,6 +165,41 @@
                         </div>
                     </td>
                 </tr>
+
+                <!-- ── Inline reschedule row (hidden by default) ── -->
+                <tr class="reschedule-row" id="reschedule-{{ row.appt_id }}">
+                    <td colspan="6">
+                        <form method="POST"
+                              action="{% url 'professional_appointments_reschedule' row.appt_id %}"
+                              class="reschedule-form">
+                            {% csrf_token %}
+                            <div>
+                                <label for="dt-{{ row.appt_id }}">
+                                    New Session Date &amp; Time
+                                </label>
+                                <br>
+                                <input type="datetime-local"
+                                       id="dt-{{ row.appt_id }}"
+                                       name="scheduled_at"
+                                       value="{% if row.scheduled_at %}{{ row.scheduled_at|date:'Y-m-d' }}T{{ row.scheduled_at|time:'H:i' }}{% endif %}"
+                                       required
+                                       title="Pick any date on the desired weekday — session repeats every week on that day for 2 hours.">
+                                <p class="reschedule-hint">
+                                    The weekday of the date you pick becomes the new recurring day.
+                                </p>
+                            </div>
+                            <button type="submit" class="btn btn-success">
+                                💾 Save New Time
+                            </button>
+                            <button type="button"
+                                    class="btn btn-outline"
+                                    onclick="toggleReschedule('reschedule-{{ row.appt_id }}', null)">
+                                ✕ Cancel
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+
                 {% empty %}
                 <tr class="empty-row">
                     <td colspan="6">
@@ -192,7 +290,7 @@
                         <input type="datetime-local"
                                name="scheduled_at"
                                required
-                               title="Pick any date that falls on the desired weekday — the session repeats every week on that day at this time for 2 hours.">
+                               title="Pick any date on the desired weekday — session repeats every week on that day for 2 hours.">
                         <button type="submit" class="btn btn-accept">
                             ✓ Accept
                         </button>
@@ -201,7 +299,8 @@
                     <form method="POST"
                           action="{% url 'professional_appointments_decline' row.appt_id %}">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-decline"
+                        <button type="submit"
+                                class="btn btn-decline"
                                 onclick="return confirm('Decline this request?');">
                             ✕ Decline
                         </button>
@@ -316,12 +415,46 @@
     </div>
     {% endif %}
 
-</div><!-- /.subpage__inner -->
+</div>
 </main>
 
 <footer class="page-footer">
     Baymax &mdash; University Mental Health Tracking System
 </footer>
+
+<script>
+    /**
+     * Toggle the inline reschedule form row open/closed.
+     * @param {string} rowId   — id of the <tr class="reschedule-row">
+     * @param {HTMLElement|null} btn — the "Edit Time" button (null when cancelling)
+     */
+    function toggleReschedule(rowId, btn) {
+        var row = document.getElementById(rowId);
+        if (!row) { return; }
+
+        var isOpen = row.classList.contains('is-open');
+
+        // Close all other open reschedule rows first
+        document.querySelectorAll('.reschedule-row.is-open').forEach(function (r) {
+            r.classList.remove('is-open');
+        });
+        // Reset all "Edit Time" button labels
+        document.querySelectorAll('.btn-warning').forEach(function (b) {
+            if (b.textContent.trim().startsWith('✕')) {
+                b.textContent = '✏️ Edit Time';
+            }
+        });
+
+        // Toggle this row
+        if (!isOpen) {
+            row.classList.add('is-open');
+            if (btn) { btn.textContent = '✕ Close'; }
+            // Focus the datetime input
+            var input = row.querySelector('input[type="datetime-local"]');
+            if (input) { setTimeout(function () { input.focus(); }, 50); }
+        }
+    }
+</script>
 
 </body>
 </html>
