@@ -6,6 +6,44 @@
     <title>Baymax — Overall Mental Health Status</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'styles/tables.css' %}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+        .chart-card {
+            background: var(--cream);
+            border: var(--border);
+            box-shadow: var(--shadow-hard);
+            border-radius: var(--radius);
+            padding: 20px;
+        }
+        .chart-card__title {
+            font-family: var(--font-heading);
+            font-size: 0.88rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: var(--border-thin);
+        }
+        .chart-card--full {
+            grid-column: 1 / -1;
+        }
+        .chart-wrap {
+            position: relative;
+        }
+        .chart-wrap--sm { height: 260px; }
+        .chart-wrap--md { height: 320px; }
+        .chart-wrap--lg { height: 360px; }
+        @media (max-width: 700px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            .chart-card--full { grid-column: 1; }
+        }
+    </style>
 </head>
 <body>
 
@@ -38,9 +76,6 @@
 
     <!-- ══════════════════════════════════════════════════════
          ANALYTICS AGENT ALERT BANNERS
-         Inserted automatically by AnalyticsAgent.run().
-         Dismissed via POST /alerts/dismiss/<id>/ — sets
-         dismissed=TRUE without deleting the DB row.
          ══════════════════════════════════════════════════════ -->
     {% if alerts %}
     <div class="alerts-section">
@@ -100,15 +135,44 @@
         </div>
     </div>
 
-    {% if total_assessed == 0 %}
-    <p style="color:#888;font-style:italic;font-size:0.9rem;margin-bottom:24px;">
-        No students have completed the assessment for {{ semester }} yet.
-    </p>
-    {% endif %}
+    <!-- ── Charts Row 1: Doughnut + Department Bar ────────────── -->
+    <div class="charts-grid">
 
-    <!-- ══════════════════════════════════════════════════════
-         PER-DEPARTMENT BREAKDOWN
-         ══════════════════════════════════════════════════════ -->
+        <!-- Doughnut — status distribution -->
+        <div class="chart-card">
+            <p class="chart-card__title">🍩 Status Breakdown</p>
+            <div class="chart-wrap chart-wrap--sm">
+                <canvas id="doughnutChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Grouped Bar — per-department -->
+        <div class="chart-card">
+            <p class="chart-card__title">🏫 Department Breakdown</p>
+            <div class="chart-wrap chart-wrap--sm">
+                <canvas id="deptChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Horizontal Bar — top symptoms -->
+        <div class="chart-card chart-card--full">
+            <p class="chart-card__title">🔍 Top 10 Symptoms by Frequency</p>
+            <div class="chart-wrap chart-wrap--md">
+                <canvas id="symptomsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Line — historical trends -->
+        <div class="chart-card chart-card--full">
+            <p class="chart-card__title">📅 Historical Semester Trends</p>
+            <div class="chart-wrap chart-wrap--md">
+                <canvas id="historyChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ── Department Table ───────────────────────────────────── -->
     <div class="section-gap">
         <p class="section-title">🏫 Department Breakdown</p>
     </div>
@@ -130,21 +194,11 @@
                 <tr>
                     <td style="font-weight:600;">{{ row.department }}</td>
                     <td class="td-center">{{ row.total }}</td>
+                    <td class="td-center"><span class="status-stable">{{ row.stable }}</span></td>
+                    <td class="td-center"><span class="status-challenged">{{ row.challenged }}</span></td>
+                    <td class="td-center"><span class="status-critical">{{ row.critical }}</span></td>
                     <td class="td-center">
-                        <span class="status-stable">{{ row.stable }}</span>
-                    </td>
-                    <td class="td-center">
-                        <span class="status-challenged">{{ row.challenged }}</span>
-                    </td>
-                    <td class="td-center">
-                        <span class="status-critical">{{ row.critical }}</span>
-                    </td>
-                    <td class="td-center">
-                        {% if row.total > 0 %}
-                            {% widthratio row.challenged|add:row.critical row.total 100 %}%
-                        {% else %}
-                            —
-                        {% endif %}
+                        {% if row.total > 0 %}{% widthratio row.challenged|add:row.critical row.total 100 %}%{% else %}—{% endif %}
                     </td>
                 </tr>
                 {% empty %}
@@ -249,21 +303,11 @@
                         {% endif %}
                     </td>
                     <td class="td-center">{{ row.total }}</td>
+                    <td class="td-center"><span class="status-stable">{{ row.stable }}</span></td>
+                    <td class="td-center"><span class="status-challenged">{{ row.challenged }}</span></td>
+                    <td class="td-center"><span class="status-critical">{{ row.critical }}</span></td>
                     <td class="td-center">
-                        <span class="status-stable">{{ row.stable }}</span>
-                    </td>
-                    <td class="td-center">
-                        <span class="status-challenged">{{ row.challenged }}</span>
-                    </td>
-                    <td class="td-center">
-                        <span class="status-critical">{{ row.critical }}</span>
-                    </td>
-                    <td class="td-center">
-                        {% if row.total > 0 %}
-                            {% widthratio row.challenged|add:row.critical row.total 100 %}%
-                        {% else %}
-                            —
-                        {% endif %}
+                        {% if row.total > 0 %}{% widthratio row.challenged|add:row.critical row.total 100 %}%{% else %}—{% endif %}
                     </td>
                 </tr>
                 {% empty %}
@@ -282,13 +326,182 @@
     Baymax &mdash; University Mental Health Tracking System
 </footer>
 
-<!-- Set symptom bar widths from data attributes -->
+<script type="application/json" id="chartData">
+{
+    "stable":      {{ stable }},
+    "challenged":  {{ challenged }},
+    "critical":    {{ critical }},
+    "dept": [
+        {% for row in dept_rows %}
+        {"label": "{{ row.department }}", "stable": {{ row.stable }}, "challenged": {{ row.challenged }}, "critical": {{ row.critical }}}{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ],
+    "symptoms": [
+        {% for item in top_symptoms %}
+        {"label": "{{ item.symptom|truncatechars:30 }}", "count": {{ item.count }}, "scale": "{{ item.scale }}"}{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ],
+    "history": [
+        {% for row in history %}
+        {"semester": "{{ row.semester }}", "stable": {{ row.stable }}, "challenged": {{ row.challenged }}, "critical": {{ row.critical }}}{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ]
+}
+</script>
+
 <script>
-    document.querySelectorAll('.symptom-bar-fill[data-count]').forEach(function(el) {
-        var count = parseFloat(el.dataset.count) || 0;
-        var total = parseFloat(el.dataset.total) || 1;
-        el.style.width = Math.min((count / total) * 100, 100) + '%';
+// ── Read chart data from JSON block ──
+var chartData = JSON.parse(document.getElementById('chartData').textContent);
+
+// ── Shared chart defaults ──────────────────────────────────────────
+Chart.defaults.font.family = "'Poppins', sans-serif";
+Chart.defaults.font.size   = 12;
+Chart.defaults.color       = '#333';
+
+var COLORS = {
+    stable    : { bg: 'rgba(34,197,94,0.85)',  border: '#16a34a' },
+    challenged: { bg: 'rgba(245,158,11,0.85)', border: '#d97706' },
+    critical  : { bg: 'rgba(239,68,68,0.85)',  border: '#dc2626' },
+};
+
+// ── 1. Doughnut — Status Distribution ─────────────────────────────
+(function () {
+    var ctx = document.getElementById('doughnutChart');
+    if (!ctx) return;
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Stable', 'Challenged', 'Critical'],
+            datasets: [{
+                data: [chartData.stable, chartData.challenged, chartData.critical],
+                backgroundColor: [COLORS.stable.bg, COLORS.challenged.bg, COLORS.critical.bg],
+                borderColor:     [COLORS.stable.border, COLORS.challenged.border, COLORS.critical.border],
+                borderWidth: 2,
+                hoverOffset: 8,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '62%',
+            plugins: {
+                legend: { position: 'bottom', labels: { padding: 16, boxWidth: 14 } },
+                tooltip: {
+                    callbacks: {
+                        label: function(c) {
+                            var total = c.dataset.data.reduce(function(a,b){return a+b;},0);
+                            var pct   = total > 0 ? ((c.raw/total)*100).toFixed(1) : 0;
+                            return ' ' + c.label + ': ' + c.raw + ' (' + pct + '%)';
+                        }
+                    }
+                }
+            }
+        }
     });
+})();
+
+// ── 2. Grouped Bar — Department Breakdown ─────────────────────────
+(function () {
+    var ctx = document.getElementById('deptChart');
+    if (!ctx) return;
+    var dept = chartData.dept;
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: dept.map(function(d){ return d.label; }),
+            datasets: [
+                { label: 'Stable',     data: dept.map(function(d){ return d.stable; }),     backgroundColor: COLORS.stable.bg,     borderColor: COLORS.stable.border,     borderWidth: 1.5, borderRadius: 3 },
+                { label: 'Challenged', data: dept.map(function(d){ return d.challenged; }), backgroundColor: COLORS.challenged.bg, borderColor: COLORS.challenged.border, borderWidth: 1.5, borderRadius: 3 },
+                { label: 'Critical',   data: dept.map(function(d){ return d.critical; }),   backgroundColor: COLORS.critical.bg,   borderColor: COLORS.critical.border,   borderWidth: 1.5, borderRadius: 3 },
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { padding: 14, boxWidth: 12 } } },
+            scales: {
+                x: { grid: { display: false } },
+                y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(0,0,0,0.06)' } }
+            }
+        }
+    });
+})();
+
+// ── 3. Horizontal Bar — Top Symptoms ──────────────────────────────
+(function () {
+    var ctx = document.getElementById('symptomsChart');
+    if (!ctx) return;
+    var sym = chartData.symptoms;
+    var scaleColors  = sym.map(function(s){ return s.scale==='PSS'?'rgba(251,191,36,0.85)':s.scale==='GAD'?'rgba(96,165,250,0.85)':'rgba(134,239,172,0.85)'; });
+    var scaleBorders = sym.map(function(s){ return s.scale==='PSS'?'#d97706':s.scale==='GAD'?'#2563eb':'#16a34a'; });
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: sym.map(function(s){ return s.label; }),
+            datasets: [{
+                label: 'Students Affected',
+                data: sym.map(function(s){ return s.count; }),
+                backgroundColor: scaleColors,
+                borderColor: scaleBorders,
+                borderWidth: 1.5,
+                borderRadius: 3,
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        afterLabel: function(c){ return 'Scale: ' + sym[c.dataIndex].scale; }
+                    }
+                }
+            },
+            scales: {
+                x: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(0,0,0,0.06)' } },
+                y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+            }
+        }
+    });
+})();
+
+// ── 4. Line — Historical Trends ───────────────────────────────────
+(function () {
+    var ctx = document.getElementById('historyChart');
+    if (!ctx) return;
+    // History arrives DESC — reverse a copy for chronological display
+    var hist = chartData.history.slice().reverse();
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: hist.map(function(h){ return h.semester; }),
+            datasets: [
+                { label: 'Stable',     data: hist.map(function(h){ return h.stable; }),     borderColor: COLORS.stable.border,     backgroundColor: 'rgba(34,197,94,0.1)',  borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: COLORS.stable.border,     tension: 0.35, fill: true },
+                { label: 'Challenged', data: hist.map(function(h){ return h.challenged; }), borderColor: COLORS.challenged.border, backgroundColor: 'rgba(245,158,11,0.1)', borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: COLORS.challenged.border, tension: 0.35, fill: true },
+                { label: 'Critical',   data: hist.map(function(h){ return h.critical; }),   borderColor: COLORS.critical.border,   backgroundColor: 'rgba(239,68,68,0.1)',  borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: COLORS.critical.border,   tension: 0.35, fill: true },
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'bottom', labels: { padding: 16, boxWidth: 14 } } },
+            scales: {
+                x: { grid: { display: false } },
+                y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(0,0,0,0.06)' } }
+            }
+        }
+    });
+})();
+
+// ── Symptom bar widths (table fallback) ───────────────────────────
+document.querySelectorAll('.symptom-bar-fill[data-count]').forEach(function(el) {
+    var count = parseFloat(el.dataset.count) || 0;
+    var total = parseFloat(el.dataset.total) || 1;
+    el.style.width = Math.min((count / total) * 100, 100) + '%';
+});
 </script>
 
 </body>
