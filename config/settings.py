@@ -26,7 +26,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites',          # Required by allauth
+    'django.contrib.sites',
 
     # Google OAuth via django-allauth
     'allauth',
@@ -52,7 +52,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # allauth account middleware (required since allauth 0.56+)
     'allauth.account.middleware.AccountMiddleware',
 ]
 
@@ -73,7 +72,7 @@ TEMPLATES = [
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
-                'django.template.context_processors.request',   # Required by allauth
+                'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
@@ -144,7 +143,6 @@ SCALER_PATH = os.environ.get('SCALER_PATH', str(BASE_DIR / 'features' / 'scaler.
 # ─────────────────────────────────────────────
 
 # Where allauth redirects after a successful OAuth login.
-# The ?next=/register/google/ in the button URL takes priority,
 # but this acts as the fallback.
 LOGIN_REDIRECT_URL = '/register/google/'
 
@@ -158,7 +156,7 @@ LOGIN_URL = '/'
 ACCOUNT_EMAIL_REQUIRED        = True
 ACCOUNT_USERNAME_REQUIRED     = False
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_VERIFICATION    = 'none'   # No email confirmation required
+ACCOUNT_EMAIL_VERIFICATION    = 'none'
 
 # Google OAuth 2.0 — APP block embeds credentials directly from .env
 # so no SocialApp database record needs to be created manually.
@@ -199,6 +197,20 @@ MESSAGE_TAGS = {
 #  DEFAULT AUTO FIELD
 # ─────────────────────────────────────────────
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ─────────────────────────────────────────────
+#  EMAIL — SMTP
+#  Used to send congratulatory emails to newly
+#  registered professionals, authority, and
+#  admin IT accounts.
+# ─────────────────────────────────────────────
+EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST          = os.environ.get('EMAIL_HOST')
+EMAIL_PORT          = int(os.environ.get('EMAIL_PORT'))
+EMAIL_USE_TLS       = os.environ.get('EMAIL_USE_TLS') == 'True'
+EMAIL_HOST_USER     = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL  = os.environ.get('DEFAULT_FROM_EMAIL')
 
 # ─────────────────────────────────────────────
 #  CSRF

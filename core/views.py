@@ -7,6 +7,43 @@ from core.agents.reset_agent import ResetAgent
 from core.ml import predict as ml_predict
 from core.agents.triage_agent import TriageAgent
 
+# ── Email helper ──────────────────────────────────────────────────────────────
+def send_welcome_email(full_name, email, password, role_label):
+    """
+    Send a congratulatory welcome email to a newly registered
+    Professional, Authority, or Admin IT account.
+    """
+    from django.core.mail import send_mail
+    from django.conf import settings as django_settings
+
+    subject = f'Welcome to Baymax — Your {role_label} Account'
+    message = (
+        f'Dear {full_name},\n\n'
+        f'Congratulations! Your {role_label} account on the Baymax '
+        f'Mental Health Tracking System has been created by the Admin IT team.\n\n'
+        f'Your login credentials are:\n'
+        f'  Email    : {email}\n'
+        f'  Password : {password}\n\n'
+        f'Please log in at your earliest convenience and consider changing '
+        f'your password after your first login.\n\n'
+        f'Best regards,\n'
+        f'Baymax Admin IT Team'
+    )
+    try:
+        send_mail(
+            subject,
+            message,
+            django_settings.DEFAULT_FROM_EMAIL,
+            [email],
+            fail_silently=False,
+        )
+    except Exception as exc:
+        # Log but do not crash — registration has already succeeded
+        import logging
+        logging.getLogger(__name__).warning(
+            f'Welcome email failed for {email}: {exc}'
+        )
+
 # ══════════════════════════════════════════════════════════════════════
 #  HELPERS
 # ══════════════════════════════════════════════════════════════════════
@@ -2627,7 +2664,8 @@ def admin_professionals_register(request):
             (full_name, email, hashed)
         )
         conn.commit()
-        messages.success(request, f'Professional "{full_name}" registered successfully.')
+        send_welcome_email(full_name, email, password, 'Mental Health Professional')
+        messages.success(request, f'Professional "{full_name}" registered. A welcome email has been sent.')
         return redirect('admin_professionals')
 
     except Exception as exc:
@@ -2761,7 +2799,8 @@ def admin_authority_register(request):
             (full_name, email, hashed)
         )
         conn.commit()
-        messages.success(request, f'Authority "{full_name}" registered successfully.')
+        send_welcome_email(full_name, email, password, 'University Authority')
+        messages.success(request, f'Authority "{full_name}" registered. A welcome email has been sent.')
         return redirect('admin_authority')
 
     except Exception as exc:
@@ -2896,7 +2935,8 @@ def admin_it_register(request):
             (full_name, email, hashed)
         )
         conn.commit()
-        messages.success(request, f'Admin IT "{full_name}" registered successfully.')
+        send_welcome_email(full_name, email, password, 'Admin IT')
+        messages.success(request, f'Admin IT "{full_name}" registered. A welcome email has been sent.')
         return redirect('admin_it')
 
     except Exception as exc:
