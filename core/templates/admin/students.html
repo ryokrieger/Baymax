@@ -31,8 +31,10 @@
         Current semester:
         {% if current_sem %}
             <strong>{{ current_sem.semester }}</strong>
+            ({{ current_sem.start_date|date:"N j, Y" }}
+            &mdash; {{ current_sem.end_date|date:"N j, Y" }})
         {% else %}
-            <span style="color:#EF4444;font-weight:700;">None configured</span>
+            <span style="color:var(--red);font-weight:700;">None configured</span>
         {% endif %}
     </p>
 
@@ -45,7 +47,7 @@
     {% endif %}
 
     <!-- ══════════════════════════════════════════════════════
-         CONTROL PANEL
+         SEMESTER CONTROL PANEL
          ══════════════════════════════════════════════════════ -->
     <div class="control-panel">
         <div class="control-panel__header">
@@ -53,96 +55,161 @@
         </div>
         <div class="control-panel__body">
 
-            <!-- Set Current Semester -->
+            <!-- ── How it works ─────────────────────────────────── -->
+            <div class="control-panel__section">
+                <p class="control-panel__section-title">ℹ️ How Automatic Semester Transitions Work</p>
+                <div class="info-box info-box--green" style="line-height:1.7;">
+                    Semesters advance <strong>automatically</strong> when their end date passes.
+                    At that moment the Reset Agent will:
+                    <strong>(1)</strong> compile final stats into the History table below,
+                    <strong>(2)</strong> reset all student responses so they retake the chatbot,
+                    <strong>(3)</strong> delete all appointments and events, and
+                    <strong>(4)</strong> switch the current semester to the next one.
+                    You will see a notification on this dashboard when a transition occurs.
+                </div>
+            </div>
+
+            <!-- ── Upcoming semester start date editor ───────────── -->
             <div class="control-panel__section">
                 <p class="control-panel__section-title">
-                    📌 Set Current Semester
+                    📌 Edit Upcoming Semester Start Date
+                </p>
+                {% if next_sem %}
+                <p style="font-size:0.85rem;color:#555;margin-bottom:12px;">
+                    Next semester: <strong>{{ next_sem.semester }}</strong>
+                    (currently starts {{ next_sem.start_date|date:"N j, Y" }}).
+                    Adjusting this also shifts the end date of the current semester.
                 </p>
                 <form method="POST"
-                      action="{% url 'admin_students_set_semester' %}">
+                      action="{% url 'admin_students_set_start_date' %}">
                     {% csrf_token %}
+                    <input type="hidden" name="semester" value="{{ next_sem.semester }}">
                     <div class="form-grid form-grid--2col"
-                         style="max-width:500px;">
+                         style="max-width:480px;">
                         <div class="form-group">
-                            <label for="semester">Semester Label</label>
-                            <input type="text"
-                                   id="semester"
-                                   name="semester"
-                                   placeholder="e.g. Fall 2026"
-                                   value="{% if current_sem %}{{ current_sem.semester }}{% endif %}"
+                            <label for="start_date">
+                                New Start Date for {{ next_sem.semester }}
+                            </label>
+                            <input type="date"
+                                   id="start_date"
+                                   name="start_date"
+                                   value="{{ next_sem.start_date|date:'Y-m-d' }}"
+                                   min="{{ tomorrow }}"
                                    required>
                         </div>
                         <div class="form-group" style="justify-content:flex-end;">
                             <button type="submit" class="btn btn-dark btn-lg">
-                                📌 Set Semester
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Set Reset Date -->
-            <div class="control-panel__section">
-                <p class="control-panel__section-title">
-                    🗓 Mid-Semester Auto-Reset Date
-                </p>
-                {% if current_sem and current_sem.bulk_reset_performed %}
-                <div class="info-box info-box--green">
-                    ✅ Auto-reset has already been performed for
-                    <strong>{{ current_sem.semester }}</strong>.
-                    The reset date cannot be changed until a new semester is set.
-                </div>
-                {% elif current_sem %}
-                <form method="POST"
-                      action="{% url 'admin_students_set_reset_date' %}">
-                    {% csrf_token %}
-                    <div class="form-grid form-grid--2col"
-                         style="max-width:500px;">
-                        <div class="form-group">
-                            <label for="reset_date">Reset Date</label>
-                            <input type="date"
-                                   id="reset_date"
-                                   name="reset_date"
-                                   value="{% if current_sem.reset_date %}{{ current_sem.reset_date|date:'Y-m-d' }}{% endif %}"
-                                   required>
-                        </div>
-                        <div class="form-group" style="justify-content:flex-end;">
-                            <button type="submit" class="btn btn-warning btn-lg">
-                                🗓 Set Reset Date
+                                📌 Update Start Date
                             </button>
                         </div>
                     </div>
                 </form>
                 {% else %}
                 <div class="info-box">
-                    No active semester. Set a current semester first.
+                    No upcoming semester found. Add more semesters to
+                    <code>semester_schedule</code> in the database.
                 </div>
                 {% endif %}
             </div>
 
-            <!-- Bulk Reset -->
+            <!-- ── All upcoming semesters ─────────────────────────── -->
             <div class="control-panel__section">
-                <p class="control-panel__section-title">
-                    🔄 Bulk Reset All Students
-                </p>
-                <p style="font-size:0.85rem;color:#555;margin-bottom:10px;">
-                    Resets every student's questionnaire responses for the current
-                    semester. Each student will retake the chatbot on their next login.
-                    Historical data is never deleted.
-                </p>
-                <form method="POST"
-                      action="{% url 'admin_students_reset_all' %}">
-                    {% csrf_token %}
-                    <button type="submit"
-                            class="btn btn-danger btn-lg"
-                            onclick="return confirm('Reset ALL students\' responses for {{ current_sem.semester }}? This cannot be undone.');">
-                        🔄 Reset All Students' Responses
-                    </button>
-                </form>
+                <p class="control-panel__section-title">📅 Semester Schedule</p>
+                <div style="overflow-x:auto;">
+                    <table class="data-table" style="min-width:500px;">
+                        <thead>
+                            <tr>
+                                <th>Semester</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th class="td-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if current_sem %}
+                            <tr style="background:var(--yellow-light);font-weight:600;">
+                                <td>
+                                    {{ current_sem.semester }}
+                                    <span style="font-size:0.72rem;background:#000;
+                                                 color:var(--yellow);padding:1px 6px;
+                                                 border-radius:3px;margin-left:6px;
+                                                 font-weight:700;">Current</span>
+                                </td>
+                                <td>{{ current_sem.start_date|date:"N j, Y" }}</td>
+                                <td>{{ current_sem.end_date|date:"N j, Y" }}</td>
+                                <td class="td-center">
+                                    {% if current_sem.stats_compiled %}
+                                        <span class="badge badge-completed">Compiled</span>
+                                    {% else %}
+                                        <span class="badge badge-accepted">Active</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% if next_sem %}
+                            <tr>
+                                <td>{{ next_sem.semester }}</td>
+                                <td>{{ next_sem.start_date|date:"N j, Y" }}</td>
+                                <td>{{ next_sem.end_date|date:"N j, Y" }}</td>
+                                <td class="td-center">
+                                    <span class="badge badge-pending">Upcoming</span>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
         </div>
     </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         COMPILED SEMESTER STATS HISTORY
+         ══════════════════════════════════════════════════════ -->
+    {% if semester_stats_rows %}
+    <div class="section-gap">
+        <p class="section-title">📊 Compiled Semester History</p>
+    </div>
+    <div class="table-wrap" style="margin-bottom:28px;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Semester</th>
+                    <th class="td-center">Total</th>
+                    <th class="td-center">Stable</th>
+                    <th class="td-center">Challenged</th>
+                    <th class="td-center">Critical</th>
+                    <th class="td-center">At-Risk %</th>
+                    <th>Compiled</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in semester_stats_rows %}
+                <tr>
+                    <td style="font-weight:600;">{{ row.semester }}</td>
+                    <td class="td-center">{{ row.total }}</td>
+                    <td class="td-center">
+                        <span class="status-stable">{{ row.stable }}</span>
+                    </td>
+                    <td class="td-center">
+                        <span class="status-challenged">{{ row.challenged }}</span>
+                    </td>
+                    <td class="td-center">
+                        <span class="status-critical">{{ row.critical }}</span>
+                    </td>
+                    <td class="td-center" style="font-weight:700;">
+                        {{ row.at_risk_pct }}%
+                    </td>
+                    <td style="font-size:0.8rem;color:#888;">
+                        {{ row.compiled_at|date:"N j, Y" }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
 
     <!-- ══════════════════════════════════════════════════════
          STUDENT TABLE
@@ -169,12 +236,8 @@
                         style="font-weight:700;color:#888;font-size:0.8rem;">
                         {{ forloop.counter|add:page|add:"-1" }}
                     </td>
-                    <td style="font-weight:600;">
-                        {{ student.full_name }}
-                    </td>
-                    <td style="font-size:0.82rem;">
-                        {{ student.student_id }}
-                    </td>
+                    <td style="font-weight:600;">{{ student.full_name }}</td>
+                    <td style="font-size:0.82rem;">{{ student.student_id }}</td>
                     <td>
                         <span style="font-size:0.78rem;font-weight:700;
                                      background:var(--yellow-light);
@@ -183,9 +246,7 @@
                             {{ student.department }}
                         </span>
                     </td>
-                    <td style="font-size:0.8rem;color:#555;">
-                        {{ student.email }}
-                    </td>
+                    <td style="font-size:0.8rem;color:#555;">{{ student.email }}</td>
                     <td class="td-center">
                         {% if student.status == 'Stable' %}
                             <span class="badge badge-stable">Stable</span>
@@ -202,7 +263,6 @@
                     </td>
                     <td>
                         <div class="actions-cell">
-                            <!-- Reset responses -->
                             <form method="POST"
                                   action="{% url 'admin_students_reset' student.id %}">
                                 {% csrf_token %}
@@ -213,14 +273,13 @@
                                     🔄 Reset
                                 </button>
                             </form>
-                            <!-- Delete student -->
                             <form method="POST"
                                   action="{% url 'admin_students_delete' student.id %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="page" value="{{ page }}">
                                 <button type="submit"
                                         class="btn btn-delete"
-                                        onclick="return confirm('Permanently delete {{ student.full_name }}? All their data will be removed.');">
+                                        onclick="return confirm('Permanently delete {{ student.full_name }}?');">
                                     🗑 Delete
                                 </button>
                             </form>

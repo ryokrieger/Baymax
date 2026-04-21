@@ -149,18 +149,9 @@ urlpatterns = [
     path('admin/students/delete/<int:student_id>/',
          views.admin_students_delete,
          name='admin_students_delete'),
-     
-    path('admin/students/reset-all/',
-         views.admin_students_reset_all,
-         name='admin_students_reset_all'),
-     
-    path('admin/students/set-semester/',
-         views.admin_students_set_semester,
-         name='admin_students_set_semester'),
-     
-    path('admin/students/set-reset-date/',
-         views.admin_students_set_reset_date,
-         name='admin_students_set_reset_date'),
+    path('admin/students/set-start-date/',
+         views.admin_students_set_start_date,
+         name='admin_students_set_start_date'),
 
     path('admin/professionals/',
          views.admin_professionals,

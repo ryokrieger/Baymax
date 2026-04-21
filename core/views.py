@@ -145,13 +145,13 @@ def login_view(request):
             return redirect('landing')
 
         cursor.execute(
-            "SELECT responses_reset, final_status FROM questionnaire_responses "
+            "SELECT final_status FROM questionnaire_responses "
             "WHERE student_id = %s AND semester = %s",
             (user['id'], semester),
         )
         qr = cursor.fetchone()
 
-        if qr and not qr['responses_reset'] and qr['final_status']:
+        if qr and qr['final_status']:
             return redirect('student_dashboard')
         else:
             return redirect('chatbot')
@@ -279,13 +279,13 @@ def register_google(request):
                 return redirect('landing')
 
             cursor.execute(
-                "SELECT responses_reset, final_status FROM questionnaire_responses "
+                "SELECT final_status FROM questionnaire_responses "
                 "WHERE student_id = %s AND semester = %s",
                 (existing_user['id'], semester),
             )
             qr = cursor.fetchone()
 
-            if qr and not qr['responses_reset'] and qr['final_status']:
+            if qr and qr['final_status']:
                 return redirect('student_dashboard')
             else:
                 return redirect('chatbot')
@@ -420,6 +420,7 @@ SCALE_LABELS = {
 # Maximum valid answer per scale (inclusive)
 SCALE_MAX = {'pss': 4, 'gad': 3, 'phq': 3}
 
+
 def _next_unanswered(qr_row):
     """
     Return the index (0–25) of the first NULL column in a
@@ -494,7 +495,7 @@ def chatbot(request):
             qr = cursor.fetchone()
 
             # If already fully answered, go straight to result
-            if qr and qr['final_status'] and not qr['responses_reset']:
+            if qr and qr['final_status']:
                 return redirect('chatbot_result')
 
             idx = _next_unanswered(qr)
@@ -558,8 +559,8 @@ def chatbot(request):
             # First answer — insert the row; all other columns stay NULL
             cursor.execute(
                 f"INSERT INTO questionnaire_responses "
-                f"    (student_id, semester, {col}, responses_reset) "
-                f"VALUES (%s, %s, %s, FALSE)",
+                f"    (student_id, semester, {col}) "
+                f"VALUES (%s, %s, %s)",
                 (user_id, semester, answer),
             )
         conn.commit()
@@ -584,7 +585,7 @@ def chatbot(request):
 
         status = ml_predict(answers)
         cursor.execute(
-            "UPDATE questionnaire_responses SET final_status = %s, responses_reset = FALSE "
+            "UPDATE questionnaire_responses SET final_status = %s "
             "WHERE student_id = %s AND semester = %s",
             (status, user_id, semester),
         )
@@ -693,13 +694,13 @@ def student_dashboard(request):
 
         # Guard: if assessment not complete or was reset, send to chatbot
         cursor.execute(
-            "SELECT responses_reset, final_status FROM questionnaire_responses "
+            "SELECT final_status FROM questionnaire_responses "
             "WHERE student_id = %s AND semester = %s",
             (user_id, semester),
         )
         qr = cursor.fetchone()
 
-        if not qr or qr['responses_reset'] or not qr['final_status']:
+        if not qr or not qr['final_status']:
             return redirect('chatbot')
 
         return render(request, 'student/dashboard.html', {
@@ -743,7 +744,7 @@ def student_status(request):
         qr = cursor.fetchone()
 
         # No complete assessment → redirect to chatbot
-        if not qr or not qr['final_status'] or qr['responses_reset']:
+        if not qr or not qr['final_status']:
             return redirect('chatbot')
 
         final_status = qr['final_status']
@@ -798,13 +799,13 @@ def student_help(request):
 
         # Student's classification for this semester
         cursor.execute(
-            "SELECT final_status, responses_reset FROM questionnaire_responses "
+            "SELECT final_status FROM questionnaire_responses "
             "WHERE student_id = %s AND semester = %s",
             (user_id, semester),
         )
         qr = cursor.fetchone()
 
-        if not qr or not qr['final_status'] or qr['responses_reset']:
+        if not qr or not qr['final_status']:
             return redirect('chatbot')
 
         final_status = qr['final_status']
@@ -1656,7 +1657,6 @@ def professional_stats(request):
             FROM   questionnaire_responses
             WHERE  semester        = %s
             AND    final_status    IS NOT NULL
-            AND    responses_reset = FALSE
             GROUP  BY final_status
             """,
             (semester,)
@@ -1683,7 +1683,6 @@ def professional_stats(request):
             JOIN   students s ON s.user_id = qr.student_id
             WHERE  qr.semester        = %s
             AND    qr.final_status    IS NOT NULL
-            AND    qr.responses_reset = FALSE
             GROUP  BY s.department
             ORDER  BY s.department ASC
             """,
@@ -1701,7 +1700,6 @@ def professional_stats(request):
                 FROM   questionnaire_responses
                 WHERE  semester        = %s
                 AND    final_status    IS NOT NULL
-                AND    responses_reset = FALSE
                 AND    {col} > 0
                 """,
                 (semester,)
@@ -1717,29 +1715,32 @@ def professional_stats(request):
         symptom_counts.sort(key=lambda x: x['count'], reverse=True)
         top_symptoms = symptom_counts[:10]
 
-        # ── Historical semester trends ────────────────────────────────
+        # ── Historical semester trends ─────────────────────────────────
+        # Past semesters: read from semester_stats (compiled by Reset Agent).
+        # Current semester: read live from questionnaire_responses.
         cursor.execute(
             """
-            SELECT ss.semester,
-                   COUNT(qr.id)                                                     AS total,
-                   COUNT(*) FILTER (WHERE qr.final_status = 'Stable')              AS stable,
-                   COUNT(*) FILTER (WHERE qr.final_status = 'Challenged')          AS challenged,
-                   COUNT(*) FILTER (WHERE qr.final_status = 'Critical')            AS critical
-            FROM   semester_schedule ss
-            LEFT JOIN questionnaire_responses qr
-                   ON qr.semester        = ss.semester
-                   AND qr.final_status   IS NOT NULL
-                   AND qr.responses_reset = FALSE
-            GROUP  BY ss.semester
+            SELECT semester, total, stable, challenged, critical
+            FROM   semester_stats
+            UNION ALL
+            SELECT %s                                                               AS semester,
+                   COUNT(*)                                                         AS total,
+                   COUNT(*) FILTER (WHERE final_status = 'Stable')                 AS stable,
+                   COUNT(*) FILTER (WHERE final_status = 'Challenged')              AS challenged,
+                   COUNT(*) FILTER (WHERE final_status = 'Critical')               AS critical
+            FROM   questionnaire_responses
+            WHERE  semester        = %s
+            AND    final_status    IS NOT NULL
             ORDER  BY
-                CAST(SPLIT_PART(ss.semester, ' ', 2) AS INTEGER) DESC,
-                CASE SPLIT_PART(ss.semester, ' ', 1)
+                CAST(SPLIT_PART(semester, ' ', 2) AS INTEGER) DESC,
+                CASE SPLIT_PART(semester, ' ', 1)
                     WHEN 'Spring' THEN 1
                     WHEN 'Summer' THEN 2
                     WHEN 'Fall'   THEN 3
                     ELSE 4
                 END DESC
-            """
+            """,
+            (semester, semester)
         )
         history = cursor.fetchall()
 
@@ -1847,7 +1848,6 @@ def authority_stats(request):
             FROM   questionnaire_responses
             WHERE  semester        = %s
             AND    final_status    IS NOT NULL
-            AND    responses_reset = FALSE
             GROUP  BY final_status
             """,
             (semester,)
@@ -1874,7 +1874,6 @@ def authority_stats(request):
             JOIN   students s ON s.user_id = qr.student_id
             WHERE  qr.semester        = %s
             AND    qr.final_status    IS NOT NULL
-            AND    qr.responses_reset = FALSE
             GROUP  BY s.department
             ORDER  BY s.department ASC
             """,
@@ -1891,7 +1890,6 @@ def authority_stats(request):
                 FROM   questionnaire_responses
                 WHERE  semester        = %s
                 AND    final_status    IS NOT NULL
-                AND    responses_reset = FALSE
                 AND    {col} > 0
                 """,
                 (semester,)
@@ -1910,26 +1908,27 @@ def authority_stats(request):
         # Historical semester trends (descending — current first)
         cursor.execute(
             """
-            SELECT ss.semester,
-                   COUNT(qr.id)                                                    AS total,
-                   COUNT(*) FILTER (WHERE qr.final_status = 'Stable')             AS stable,
-                   COUNT(*) FILTER (WHERE qr.final_status = 'Challenged')         AS challenged,
-                   COUNT(*) FILTER (WHERE qr.final_status = 'Critical')           AS critical
-            FROM   semester_schedule ss
-            LEFT JOIN questionnaire_responses qr
-                   ON qr.semester        = ss.semester
-                   AND qr.final_status   IS NOT NULL
-                   AND qr.responses_reset = FALSE
-            GROUP  BY ss.semester
+            SELECT semester, total, stable, challenged, critical
+            FROM   semester_stats
+            UNION ALL
+            SELECT %s                                                               AS semester,
+                   COUNT(*)                                                         AS total,
+                   COUNT(*) FILTER (WHERE final_status = 'Stable')                 AS stable,
+                   COUNT(*) FILTER (WHERE final_status = 'Challenged')              AS challenged,
+                   COUNT(*) FILTER (WHERE final_status = 'Critical')               AS critical
+            FROM   questionnaire_responses
+            WHERE  semester        = %s
+            AND    final_status    IS NOT NULL
             ORDER  BY
-                CAST(SPLIT_PART(ss.semester, ' ', 2) AS INTEGER) DESC,
-                CASE SPLIT_PART(ss.semester, ' ', 1)
+                CAST(SPLIT_PART(semester, ' ', 2) AS INTEGER) DESC,
+                CASE SPLIT_PART(semester, ' ', 1)
                     WHEN 'Spring' THEN 1
                     WHEN 'Summer' THEN 2
                     WHEN 'Fall'   THEN 3
                     ELSE 4
                 END DESC
-            """
+            """,
+            (semester, semester)
         )
         history = cursor.fetchall()
 
@@ -2233,10 +2232,10 @@ def admin_dashboard(request):
 def admin_students(request):
     """
     Paginated list of all students with their current-semester status.
-    Also renders:
-      - Set Current Semester form
-      - Set Reset Date form (hidden if auto-reset already performed)
-      - Bulk Reset button
+    Control panel shows:
+      - Current semester name + dates
+      - Next upcoming semester with editable start date
+      - Historical compiled stats from semester_stats table
     """
     user_id, role = get_session_user(request)
     if not user_id or role != 'admin_it':
@@ -2249,16 +2248,43 @@ def admin_students(request):
     conn   = connect_db()
     cursor = conn.cursor()
     try:
-        # Current semester info
+        from datetime import date as _date
+        today = _date.today()
+
+        # Current semester
         cursor.execute(
             """
-            SELECT semester, reset_date, bulk_reset_performed, is_current
+            SELECT semester, start_date, end_date, stats_compiled
             FROM   semester_schedule
             WHERE  is_current = TRUE
             LIMIT  1
             """
         )
         current_sem = cursor.fetchone()
+
+        # Next upcoming semester (first one that starts after today)
+        cursor.execute(
+            """
+            SELECT semester, start_date, end_date
+            FROM   semester_schedule
+            WHERE  start_date > %s
+            AND    is_current = FALSE
+            ORDER  BY start_date ASC
+            LIMIT  1
+            """,
+            (today,)
+        )
+        next_sem = cursor.fetchone()
+
+        # Compiled semester stats history
+        cursor.execute(
+            """
+            SELECT semester, total, stable, challenged, critical, at_risk_pct, compiled_at
+            FROM   semester_stats
+            ORDER  BY compiled_at DESC
+            """
+        )
+        semester_stats_rows = cursor.fetchall()
 
         # Total student count
         cursor.execute("SELECT COUNT(*) AS total FROM users WHERE role = 'student'")
@@ -2272,7 +2298,7 @@ def admin_students(request):
             """
             SELECT u.id, u.full_name, u.email,
                    s.student_id, s.department,
-                   qr.final_status, qr.responses_reset
+                   qr.final_status
             FROM   users u
             JOIN   students s ON s.user_id = u.id
             LEFT JOIN questionnaire_responses qr
@@ -2286,38 +2312,40 @@ def admin_students(request):
         )
         students = cursor.fetchall()
 
-        # Derive display status for each student
         student_rows = []
         for s in students:
-            if s['responses_reset'] or not s['final_status']:
+            if not s['final_status']:
                 display_status = 'Not Assessed'
             else:
                 display_status = s['final_status']
             student_rows.append({
-                'id':           s['id'],
-                'full_name':    s['full_name'],
-                'email':        s['email'],
-                'student_id':   s['student_id'],
-                'department':   s['department'],
-                'status':       display_status,
+                'id':         s['id'],
+                'full_name':  s['full_name'],
+                'email':      s['email'],
+                'student_id': s['student_id'],
+                'department': s['department'],
+                'status':     display_status,
             })
 
-        # Pagination window
         half       = 3
         start_page = max(1, page - half)
         end_page   = min(total_pages, start_page + 6)
         start_page = max(1, end_page - 6)
-        page_range = range(start_page, end_page + 1)
+
+        tomorrow = (today + __import__('datetime').timedelta(days=1)).isoformat()
 
         return render(request, 'admin/students.html', {
-            'full_name':    request.session.get('full_name', 'Admin IT'),
-            'students':     student_rows,
-            'current_sem':  current_sem,
-            'page':         page,
-            'total_pages':  total_pages,
-            'page_range':   page_range,
-            'start_page':   start_page,
-            'end_page':     end_page,
+            'full_name':          request.session.get('full_name', 'Admin IT'),
+            'students':           student_rows,
+            'current_sem':        current_sem,
+            'next_sem':           next_sem,
+            'semester_stats_rows': semester_stats_rows,
+            'tomorrow':           tomorrow,
+            'page':               page,
+            'total_pages':        total_pages,
+            'page_range':         range(start_page, end_page + 1),
+            'start_page':         start_page,
+            'end_page':           end_page,
         })
 
     finally:
@@ -2331,8 +2359,8 @@ def admin_students(request):
 def admin_students_reset(request, student_id):
     """
     Upserts the student's questionnaire_responses row for the current
-    semester to responses_reset=TRUE. Inserts with final_status=NULL
-    if no row exists yet.
+    Deletes the student's questionnaire_responses row for the
+    current semester so they retake the chatbot on next login.
     """
     user_id, role = get_session_user(request)
     if not user_id or role != 'admin_it':
@@ -2353,17 +2381,12 @@ def admin_students_reset(request, student_id):
 
         semester = row['semester']
         cursor.execute(
-            """
-            INSERT INTO questionnaire_responses
-                (student_id, semester, responses_reset, final_status)
-            VALUES (%s, %s, TRUE, NULL)
-            ON CONFLICT (student_id, semester)
-            DO UPDATE SET responses_reset = TRUE
-            """,
+            "DELETE FROM questionnaire_responses "
+            "WHERE student_id = %s AND semester = %s",
             (student_id, semester)
         )
         conn.commit()
-        messages.success(request, 'Student responses reset. Chatbot will launch on next login.')
+        messages.success(request, 'Student responses deleted. They will retake the chatbot on next login.')
         return redirect(f'/admin/students/?page={page}')
 
     except Exception as exc:
@@ -2413,151 +2436,95 @@ def admin_students_delete(request, student_id):
         conn.close()
 
 # ─────────────────────────────────────────────
-#  BULK RESET  POST /admin/students/reset-all/
+#  SET UPCOMING SEMESTER START DATE
+#  POST /admin/students/set-start-date/
 # ─────────────────────────────────────────────
 @require_http_methods(['POST'])
-def admin_students_reset_all(request):
+def admin_students_set_start_date(request):
     """
-    Upserts every student's questionnaire_responses row for the current
-    semester to responses_reset=TRUE in a single INSERT … ON CONFLICT.
+    Allows Admin IT to adjust the start_date of the next upcoming semester.
+
+    Rules:
+      - Only future (non-current) semesters may be edited.
+      - The chosen date must be after today.
+      - The semester that immediately precedes the edited one has its
+        end_date automatically set to new_start - 1 day, so there are
+        never any gaps between consecutive semesters.
     """
     user_id, role = get_session_user(request)
     if not user_id or role != 'admin_it':
         return redirect('landing')
 
-    conn   = connect_db()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(
-            "SELECT semester FROM semester_schedule WHERE is_current = TRUE LIMIT 1"
-        )
-        row = cursor.fetchone()
-        if not row:
-            messages.error(request, 'No active semester configured.')
-            return redirect('admin_students')
+    semester   = request.POST.get('semester',   '').strip()
+    start_date = request.POST.get('start_date', '').strip()
 
-        semester = row['semester']
-        cursor.execute(
-            """
-            INSERT INTO questionnaire_responses
-                (student_id, semester, responses_reset, final_status)
-            SELECT user_id, %s, TRUE, NULL
-            FROM   students
-            ON CONFLICT (student_id, semester)
-            DO UPDATE SET responses_reset = TRUE
-            """,
-            (semester,)
-        )
-        conn.commit()
-        messages.success(
-            request,
-            f'All student responses reset for {semester}. '
-            f'Chatbot will launch for every student on their next login.'
-        )
-        return redirect('admin_students')
-
-    except Exception as exc:
-        conn.rollback()
-        messages.error(request, f'An error occurred: {exc}')
-        return redirect('admin_students')
-
-    finally:
-        cursor.close()
-        conn.close()
-
-# ─────────────────────────────────────────────
-#  SET CURRENT SEMESTER  POST /admin/students/set-semester/
-# ─────────────────────────────────────────────
-@require_http_methods(['POST'])
-def admin_students_set_semester(request):
-    """
-    Upserts semester_schedule: sets one row is_current=TRUE,
-    all others is_current=FALSE.
-    Format expected: "Spring 2026" / "Fall 2026" / "Summer 2026"
-    """
-    user_id, role = get_session_user(request)
-    if not user_id or role != 'admin_it':
-        return redirect('landing')
-
-    semester = request.POST.get('semester', '').strip()
-    if not semester:
-        messages.error(request, 'Please enter a semester label.')
+    if not semester or not start_date:
+        messages.error(request, 'Semester and start date are required.')
         return redirect('admin_students')
 
     conn   = connect_db()
     cursor = conn.cursor()
     try:
-        # Set all existing rows to not current
-        cursor.execute(
-            "UPDATE semester_schedule SET is_current = FALSE"
-        )
-        # Upsert the chosen semester
-        cursor.execute(
-            """
-            INSERT INTO semester_schedule
-                (semester, is_current, bulk_reset_performed, notification_pending)
-            VALUES (%s, TRUE, FALSE, FALSE)
-            ON CONFLICT (semester)
-            DO UPDATE SET is_current = TRUE
-            """,
-            (semester,)
-        )
-        conn.commit()
-        messages.success(request, f'Current semester set to "{semester}".')
-        return redirect('admin_students')
+        from datetime import date as _date, timedelta
 
-    except Exception as exc:
-        conn.rollback()
-        messages.error(request, f'An error occurred: {exc}')
-        return redirect('admin_students')
+        today     = _date.today()
+        new_start = _date.fromisoformat(start_date)
 
-    finally:
-        cursor.close()
-        conn.close()
-
-# ─────────────────────────────────────────────
-#  SET RESET DATE  POST /admin/students/set-reset-date/
-# ─────────────────────────────────────────────
-@require_http_methods(['POST'])
-def admin_students_set_reset_date(request):
-    """
-    Updates reset_date on the current semester's semester_schedule row.
-    If bulk_reset_performed is already TRUE, the form is hidden in the
-    template — this view still guards against it.
-    """
-    user_id, role = get_session_user(request)
-    if not user_id or role != 'admin_it':
-        return redirect('landing')
-
-    reset_date = request.POST.get('reset_date', '').strip()
-    if not reset_date:
-        messages.error(request, 'Please choose a reset date.')
-        return redirect('admin_students')
-
-    conn   = connect_db()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(
-            "SELECT bulk_reset_performed FROM semester_schedule "
-            "WHERE is_current = TRUE LIMIT 1"
-        )
-        row = cursor.fetchone()
-        if row and row['bulk_reset_performed']:
-            messages.warning(
+        # Guard: date must be in the future
+        if new_start <= today:
+            messages.error(
                 request,
-                'Auto-reset has already been performed this semester. '
-                'The reset date cannot be changed.'
+                'The start date must be after today. Please choose a future date.'
             )
             return redirect('admin_students')
 
+        # Guard: semester must exist and must not be current
         cursor.execute(
-            "UPDATE semester_schedule SET reset_date = %s WHERE is_current = TRUE",
-            (reset_date,)
+            "SELECT semester FROM semester_schedule "
+            "WHERE semester = %s AND is_current = FALSE",
+            (semester,)
         )
+        if not cursor.fetchone():
+            messages.error(request, 'Semester not found or it is the current semester.')
+            return redirect('admin_students')
+
+        # Update the upcoming semester's start_date
+        cursor.execute(
+            "UPDATE semester_schedule SET start_date = %s WHERE semester = %s",
+            (new_start, semester)
+        )
+
+        # Update the immediately preceding semester's end_date to
+        # new_start - 1 day, ensuring no gaps in the schedule.
+        # "Preceding" = the semester with the largest start_date
+        # that is still less than new_start.
+        new_end_prev = new_start - timedelta(days=1)
+        cursor.execute(
+            """
+            UPDATE semester_schedule
+            SET    end_date = %s
+            WHERE  semester = (
+                SELECT semester
+                FROM   semester_schedule
+                WHERE  start_date < %s
+                ORDER  BY start_date DESC
+                LIMIT  1
+            )
+            """,
+            (new_end_prev, new_start)
+        )
+
         conn.commit()
-        messages.success(request, f'Reset date set to {reset_date}.')
+        messages.success(
+            request,
+            f'{semester} start date updated to {new_start.strftime("%B %d, %Y")}. '
+            f'The preceding semester now ends on {new_end_prev.strftime("%B %d, %Y")}.'
+        )
         return redirect('admin_students')
 
+    except ValueError:
+        messages.error(request, 'Invalid date format. Please try again.')
+        return redirect('admin_students')
     except Exception as exc:
         conn.rollback()
         messages.error(request, f'An error occurred: {exc}')

@@ -2,83 +2,126 @@ from datetime import date
 from core.db import connect_db
 
 class ResetAgent:
-    """
-    Automatically performs a mid-semester bulk questionnaire reset
-    when the configured reset date has been reached.
-    """
-    
-    def run(self) -> None:
-        """
-        Check the current semester's reset_date and fire the bulk
-        reset if the date has passed and it has not been done yet.
 
-        Returns:
-            None.  All side-effects are DB writes.
-        """
+    def run(self):
         conn   = connect_db()
         cursor = conn.cursor()
         try:
-            # ── Step 1: fetch the active semester row ─────────────────
+            # ── Fetch the current semester ────────────────────────────
             cursor.execute(
                 """
-                SELECT semester, reset_date, bulk_reset_performed
+                SELECT semester, end_date, stats_compiled
                 FROM   semester_schedule
                 WHERE  is_current = TRUE
                 LIMIT  1
                 """
             )
-            row = cursor.fetchone()
+            current = cursor.fetchone()
+            if not current:
+                return  # No semester configured — nothing to do
 
-            # No active semester configured — nothing to do
-            if not row:
-                return
+            # ── Check if the semester has ended ───────────────────────
+            today = date.today()
+            if today <= current['end_date']:
+                return  # Still inside the current semester
 
-            # Conditions: reset_date set, not yet performed, date reached
-            if not row['reset_date']:
-                return
-            if row['bulk_reset_performed']:
-                return
-            if date.today() < row['reset_date']:
-                return
+            if current['stats_compiled']:
+                return  # Transition already done this semester
 
-            semester = row['semester']
+            semester = current['semester']
 
-            # ── Step 2a: upsert every student's response row ──────────
-            # For students who already have a row this semester:
-            #   -> set responses_reset = TRUE
-            # For students who don't have a row yet:
-            #   -> insert one with responses_reset = TRUE, final_status = NULL
-            #   This ensures the chatbot launches for ALL students on
-            #   their next login regardless of whether they've assessed yet.
+            # ── 1. Compile semester statistics ────────────────────────
             cursor.execute(
                 """
-                INSERT INTO questionnaire_responses
-                    (student_id, semester, responses_reset, final_status)
-                SELECT user_id, %s, TRUE, NULL
-                FROM   students
-                ON CONFLICT (student_id, semester)
-                DO UPDATE SET responses_reset = TRUE
+                SELECT
+                    COUNT(*)                                                       AS total,
+                    COUNT(*) FILTER (WHERE final_status = 'Stable')               AS stable,
+                    COUNT(*) FILTER (WHERE final_status = 'Challenged')            AS challenged,
+                    COUNT(*) FILTER (WHERE final_status = 'Critical')              AS critical
+                FROM questionnaire_responses
+                WHERE semester        = %s
+                AND   final_status    IS NOT NULL
+
                 """,
                 (semester,)
             )
+            stats      = cursor.fetchone()
+            total      = stats['total']      or 0
+            stable     = stats['stable']     or 0
+            challenged = stats['challenged'] or 0
+            critical   = stats['critical']   or 0
+            at_risk_pct = (
+                round(((challenged + critical) / total) * 100, 2)
+                if total > 0 else 0
+            )
 
-            # ── Step 2b: mark reset done + set notification flag ──────
             cursor.execute(
                 """
-                UPDATE semester_schedule
-                SET    bulk_reset_performed = TRUE,
-                       notification_pending  = TRUE
-                WHERE  is_current = TRUE
-                """
+                INSERT INTO semester_stats
+                    (semester, total, stable, challenged, critical, at_risk_pct)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                ON CONFLICT (semester) DO UPDATE SET
+                    total       = EXCLUDED.total,
+                    stable      = EXCLUDED.stable,
+                    challenged  = EXCLUDED.challenged,
+                    critical    = EXCLUDED.critical,
+                    at_risk_pct = EXCLUDED.at_risk_pct,
+                    compiled_at = NOW()
+                """,
+                (semester, total, stable, challenged, critical, at_risk_pct)
             )
+
+            # ── 2. Delete all questionnaire responses ────────────────
+            # Stats have already been compiled into semester_stats above.
+            # Deleting all rows means students start completely fresh
+            # next semester — the chatbot will create new rows for them.
+            cursor.execute("DELETE FROM questionnaire_responses")
+
+            # ── 3. Delete all appointments ────────────────────────────
+            cursor.execute("DELETE FROM appointments")
+
+            # ── 4. Delete all events ──────────────────────────────────
+            cursor.execute("DELETE FROM events")
+
+            # ── 5. Mark stats compiled on outgoing semester ───────────
+            cursor.execute(
+                "UPDATE semester_schedule SET stats_compiled = TRUE "
+                "WHERE semester = %s",
+                (semester,)
+            )
+
+            # ── 6. Transition to the next semester ────────────────────
+            cursor.execute(
+                """
+                SELECT semester
+                FROM   semester_schedule
+                WHERE  start_date > %s
+                ORDER  BY start_date ASC
+                LIMIT  1
+                """,
+                (current['end_date'],)
+            )
+            next_row = cursor.fetchone()
+            if next_row:
+                cursor.execute(
+                    "UPDATE semester_schedule SET is_current = FALSE"
+                )
+                cursor.execute(
+                    """
+                    UPDATE semester_schedule
+                    SET    is_current          = TRUE,
+                           notification_pending = TRUE
+                    WHERE  semester = %s
+                    """,
+                    (next_row['semester'],)
+                )
 
             conn.commit()
 
         except Exception:
             conn.rollback()
-            # Silently swallow — a reset failure must never block a
-            # student from logging in.  Errors will surface in server logs.
             raise
+        
         finally:
             cursor.close()
             conn.close()
