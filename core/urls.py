@@ -16,6 +16,14 @@ urlpatterns = [
          views.register,
          name='register'),
 
+    path('register/verify/',
+         views.register_verify_otp,
+         name='register_verify_otp'),
+
+    path('register/resend-otp/',
+         views.register_resend_otp,
+         name='register_resend_otp'),
+
     path('register/google/',
          views.register_google,
          name='register_google'),

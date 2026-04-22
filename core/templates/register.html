@@ -3,9 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Baymax — Student Registration</title>
+    <title>Baymax — {% if show_otp %}Verify Email{% else %}Student Registration{% endif %}</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'styles/access.css' %}">
+    <style>
+        /* ── OTP input ───────────────────────────────────────── */
+        .otp-input-wrap {
+            display        : flex;
+            justify-content: center;
+            margin         : 20px 0 8px;
+        }
+
+        .otp-input {
+            width          : 200px;
+            text-align     : center;
+            font-family    : 'Fjalla One', monospace;
+            font-size      : 2rem;
+            letter-spacing : 0.5rem;
+            padding        : 12px 16px;
+            background     : var(--yellow-light, #fffbe6);
+            border         : 4px solid #000;
+            border-radius  : 4px;
+            box-shadow     : 5px 5px 0 #000;
+            outline        : none;
+            color          : #000;
+            transition     : border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .otp-input:focus {
+            border-color: #0EA5E9;
+            box-shadow  : 5px 5px 0 #0EA5E9;
+        }
+
+        .otp-input.is-error {
+            border-color: #EF4444;
+            box-shadow  : 5px 5px 0 #EF4444;
+            background  : #fee2e2;
+        }
+
+        .otp-error-msg {
+            text-align  : center;
+            color       : #991b1b;
+            font-weight : 700;
+            font-size   : 0.88rem;
+            margin-bottom: 4px;
+        }
+
+        .otp-email-hint {
+            text-align  : center;
+            font-size   : 0.85rem;
+            color       : #555;
+            margin-bottom: 20px;
+            line-height : 1.5;
+        }
+
+        .otp-email-hint strong {
+            color      : #000;
+            font-weight: 700;
+        }
+
+        .resend-row {
+            text-align : center;
+            margin-top : 16px;
+            font-size  : 0.85rem;
+            color      : #555;
+        }
+
+        .resend-row button {
+            background     : none;
+            border         : none;
+            font-family    : inherit;
+            font-size      : 0.85rem;
+            font-weight    : 700;
+            color          : #000;
+            text-decoration: underline;
+            cursor         : pointer;
+            padding        : 0;
+        }
+
+        .resend-row button:hover { color: #0EA5E9; }
+
+        /* countdown timer */
+        #resend-timer { font-weight: 700; color: #d97706; }
+    </style>
 </head>
 <body>
 
@@ -20,7 +100,78 @@
     <!-- ── Auth Card ──────────────────────────────────────── -->
     <main class="auth-card" role="main">
 
-        <!-- Back to student login -->
+        {% if show_otp %}
+        <!-- ══════════════════════════════════════════════════
+             STEP 2 — OTP VERIFICATION
+             ══════════════════════════════════════════════════ -->
+
+        <a href="{% url 'register' %}" class="back-link">
+            &#8592; Back to registration
+        </a>
+
+        <div class="auth-card__role-badge">Verify Email</div>
+        <h1 class="auth-card__title">Check your inbox.</h1>
+
+        {% if messages %}
+        <ul class="flash-list">
+            {% for message in messages %}
+            <li class="flash flash--{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <p class="otp-email-hint">
+            We sent a 6-digit verification code to<br>
+            <strong>{{ otp_email }}</strong>.<br>
+            Enter it below to complete your registration.
+        </p>
+
+        {% if otp_error %}
+        <p class="otp-error-msg">❌ Incorrect OTP. Please try again.</p>
+        {% endif %}
+
+        <!-- OTP entry form -->
+        <form method="POST" action="{% url 'register_verify_otp' %}" novalidate>
+            {% csrf_token %}
+
+            <div class="otp-input-wrap">
+                <input type="text"
+                       name="otp"
+                       id="otpInput"
+                       class="otp-input {% if otp_error %}is-error{% endif %}"
+                       maxlength="6"
+                       inputmode="numeric"
+                       pattern="[0-9]{6}"
+                       placeholder="——————"
+                       autocomplete="one-time-code"
+                       autofocus
+                       required>
+            </div>
+
+            <button type="submit" class="btn-submit">
+                ✓ Verify &amp; Create Account
+            </button>
+        </form>
+
+        <!-- Resend OTP -->
+        <div class="resend-row">
+            Didn't receive it?
+            <form method="POST"
+                  action="{% url 'register_resend_otp' %}"
+                  style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" id="resendBtn">
+                    Resend OTP
+                </button>
+            </form>
+            <span id="resend-timer" style="display:none;"></span>
+        </div>
+
+        {% else %}
+        <!-- ══════════════════════════════════════════════════
+             STEP 1 — REGISTRATION FORM
+             ══════════════════════════════════════════════════ -->
+
         <a href="{% url 'login' %}?role=student" class="back-link">
             &#8592; Back to login
         </a>
@@ -53,7 +204,6 @@
         <a href="/accounts/google/login/?process=login&next=/register/google/"
            class="btn-google"
            aria-label="Register with Google">
-            <!-- Google "G" SVG icon -->
             <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"
                  aria-hidden="true" focusable="false">
                 <path fill="#EA4335"
@@ -94,28 +244,18 @@
 
             <div class="form-group">
                 <label for="full_name">Full Name</label>
-                <input
-                    type="text"
-                    id="full_name"
-                    name="full_name"
-                    value="{{ full_name|default:'' }}"
-                    placeholder="e.g. Farhan Shahid"
-                    autocomplete="name"
-                    required
-                >
+                <input type="text" id="full_name" name="full_name"
+                       value="{{ full_name|default:'' }}"
+                       placeholder="e.g. Anika Rahman"
+                       autocomplete="name" required>
             </div>
 
             <div class="form-group">
                 <label for="student_id">Student ID</label>
-                <input
-                    type="text"
-                    id="student_id"
-                    name="student_id"
-                    value="{{ student_id|default:'' }}"
-                    placeholder="e.g. 221-1381-042"
-                    autocomplete="off"
-                    required
-                >
+                <input type="text" id="student_id" name="student_id"
+                       value="{{ student_id|default:'' }}"
+                       placeholder="e.g. 2021-1-60-123"
+                       autocomplete="off" required>
             </div>
 
             <div class="form-group">
@@ -147,44 +287,29 @@
 
             <div class="form-group">
                 <label for="email">Email Address</label>
-                <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value="{{ email|default:'' }}"
-                    placeholder="you@university.edu"
-                    autocomplete="email"
-                    required
-                >
+                <input type="email" id="email" name="email"
+                       value="{{ email|default:'' }}"
+                       placeholder="you@university.edu"
+                       autocomplete="email" required>
             </div>
 
             <div class="form-group">
                 <label for="password">Password</label>
-                <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    placeholder="Choose a strong password"
-                    autocomplete="new-password"
-                    required
-                >
+                <input type="password" id="password" name="password"
+                       placeholder="Choose a strong password"
+                       autocomplete="new-password" required>
                 <p class="password-hint">At least 8 characters.</p>
             </div>
 
             <div class="form-group">
                 <label for="confirm">Confirm Password</label>
-                <input
-                    type="password"
-                    id="confirm"
-                    name="confirm"
-                    placeholder="Repeat your password"
-                    autocomplete="new-password"
-                    required
-                >
+                <input type="password" id="confirm" name="confirm"
+                       placeholder="Repeat your password"
+                       autocomplete="new-password" required>
             </div>
 
             <button type="submit" class="btn-submit">
-                Create Account
+                Send Verification Code
             </button>
         </form>
 
@@ -194,13 +319,56 @@
             <a href="{% url 'login' %}?role=student">Sign in here</a>
         </div>
 
-    </main><!-- /.auth-card -->
+        {% endif %}
+
+    </main>
 
     <footer class="page-footer">
         Baymax &mdash; University Mental Health Tracking System
     </footer>
 
-</div><!-- /.page-wrapper -->
+</div>
+
+<script>
+/*
+ * Resend OTP cooldown timer.
+ * Reads otp_sent_at from a data attribute to avoid Django tags in JS.
+ * Shows a live countdown and disables the resend button until ready.
+ */
+(function () {
+    var sentAtRaw = "{{ otp_sent_at|default:'' }}";
+    if (!sentAtRaw) { return; }
+
+    var btn      = document.getElementById('resendBtn');
+    var timerEl  = document.getElementById('resend-timer');
+    if (!btn || !timerEl) { return; }
+
+    var COOLDOWN = 300; // seconds
+
+    function tick() {
+        var elapsed = (Date.now() - new Date(sentAtRaw).getTime()) / 1000;
+        var remaining = Math.ceil(COOLDOWN - elapsed);
+
+        if (remaining > 0) {
+            var m = Math.floor(remaining / 60);
+            var s = remaining % 60;
+            timerEl.style.display  = 'inline';
+            timerEl.textContent    = '(' + m + ':' + String(s).padStart(2,'0') + ')';
+            btn.disabled           = true;
+            btn.style.opacity      = '0.4';
+            btn.style.cursor       = 'not-allowed';
+            setTimeout(tick, 1000);
+        } else {
+            timerEl.style.display  = 'none';
+            btn.disabled           = false;
+            btn.style.opacity      = '1';
+            btn.style.cursor       = 'pointer';
+        }
+    }
+
+    tick();
+})();
+</script>
 
 </body>
 </html>

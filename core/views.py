@@ -203,8 +203,10 @@ def login_view(request):
 @require_http_methods(['GET', 'POST'])
 def register(request):
     """
-    Manual student self-registration.
-    Collects: full name, student ID, department, email, password.
+    Step 1 of student self-registration.
+    Validates the form, checks email uniqueness, generates a 6-digit OTP,
+    sends it to the student's email, stores it in the session, then
+    redirects to the OTP verification page. Account is NOT created here.
     """
     if request.method == 'GET':
         return render(request, 'register.html')
@@ -241,7 +243,6 @@ def register(request):
         messages.error(request, 'Passwords do not match.')
         return render(request, 'register.html', form_data)
 
-    hashed = make_password(password)
     conn   = connect_db()
     cursor = conn.cursor()
     try:
@@ -249,6 +250,104 @@ def register(request):
         if cursor.fetchone():
             messages.error(request, 'An account with that email already exists.')
             return render(request, 'register.html', form_data)
+    finally:
+        cursor.close()
+        conn.close()
+
+    import random, datetime as _dt
+    otp_code    = f'{random.randint(0, 999999):06d}'
+    otp_sent_at = _dt.datetime.now().isoformat()
+
+    _send_otp_email(email, full_name, otp_code)
+
+    request.session['otp_code']      = otp_code
+    request.session['otp_sent_at']   = otp_sent_at
+    request.session['otp_form_data'] = {
+        'full_name':  full_name,
+        'student_id': student_id,
+        'department': department,
+        'email':      email,
+        'password':   password,
+    }
+    return redirect('register_verify_otp')
+
+
+def _send_otp_email(email, full_name, otp_code):
+    """Send the 6-digit OTP to the student's email address."""
+    from django.core.mail import send_mail
+    from django.conf import settings as django_settings
+    import logging
+
+    subject = 'Baymax — Your Registration OTP'
+    message = (
+        f'Dear {full_name},\n\n'
+        f'Your one-time verification code for Baymax registration is:\n\n'
+        f'    {otp_code}\n\n'
+        f'This code is valid for 10 minutes. Do not share it with anyone.\n\n'
+        f'If you did not request this, please ignore this email.\n\n'
+        f'Baymax Team'
+    )
+    try:
+        send_mail(
+            subject, message,
+            django_settings.DEFAULT_FROM_EMAIL,
+            [email], fail_silently=False,
+        )
+    except Exception as exc:
+        import logging as _log
+        _log.getLogger(__name__).warning(f'OTP email failed for {email}: {exc}')
+
+
+@require_http_methods(['GET', 'POST'])
+def register_verify_otp(request):
+    """
+    Step 2 — OTP verification.
+    GET  — Show the OTP entry form.
+    POST — Check the submitted OTP.
+           Correct → create account → redirect to login.
+           Wrong   → re-render with otp_error=True.
+    """
+    if not request.session.get('otp_code'):
+        messages.error(request, 'Please complete the registration form first.')
+        return redirect('register')
+
+    form_data = request.session.get('otp_form_data', {})
+
+    if request.method == 'GET':
+        return render(request, 'register.html', {
+            'show_otp':    True,
+            'otp_email':   form_data.get('email', ''),
+            'otp_sent_at': request.session.get('otp_sent_at', ''),
+        })
+
+    submitted_otp = request.POST.get('otp', '').strip()
+
+    if submitted_otp != request.session.get('otp_code'):
+        return render(request, 'register.html', {
+            'show_otp':    True,
+            'otp_email':   form_data.get('email', ''),
+            'otp_sent_at': request.session.get('otp_sent_at', ''),
+            'otp_error':   True,
+        })
+
+    # OTP correct — create the account
+    full_name  = form_data.get('full_name',  '')
+    student_id = form_data.get('student_id', '')
+    department = form_data.get('department', '')
+    email      = form_data.get('email',      '')
+    password   = form_data.get('password',   '')
+
+    hashed = make_password(password)
+    conn   = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+        if cursor.fetchone():
+            messages.error(request, 'An account with that email was registered '
+                                    'while you were verifying. Please try again.')
+            for k in ('otp_code', 'otp_sent_at', 'otp_form_data'):
+                request.session.pop(k, None)
+            return redirect('register')
 
         cursor.execute(
             "INSERT INTO users (role, full_name, email, password) "
@@ -257,33 +356,65 @@ def register(request):
         )
         new_user_id = cursor.fetchone()['id']
         cursor.execute(
-            "INSERT INTO students (user_id, student_id, department) VALUES (%s, %s, %s)",
+            "INSERT INTO students (user_id, student_id, department) "
+            "VALUES (%s, %s, %s)",
             (new_user_id, student_id, department),
         )
         conn.commit()
-        messages.success(request, 'Registration successful! Please log in.')
+
+        for k in ('otp_code', 'otp_sent_at', 'otp_form_data'):
+            request.session.pop(k, None)
+
+        messages.success(request, 'Account created successfully! Please log in.')
         return redirect('login')
 
     except Exception as exc:
         conn.rollback()
         messages.error(request, f'An unexpected error occurred. ({exc})')
-        return render(request, 'register.html', form_data)
-
+        return redirect('register')
     finally:
         cursor.close()
         conn.close()
 
-# ─────────────────────────────────────────────
-# GOOGLE REGISTRATION COMPLETION
-# GET/POST /register/google/
-# ─────────────────────────────────────────────
+
+@require_http_methods(['POST'])
+def register_resend_otp(request):
+    """
+    Resend the OTP. Enforces a 5-minute cooldown between resends.
+    """
+    import datetime as _dt, random
+
+    otp_sent_at_str = request.session.get('otp_sent_at')
+    form_data       = request.session.get('otp_form_data', {})
+    email           = form_data.get('email',     '')
+    full_name       = form_data.get('full_name', '')
+
+    if not otp_sent_at_str or not email:
+        messages.error(request, 'Session expired. Please start registration again.')
+        return redirect('register')
+
+    otp_sent_at    = _dt.datetime.fromisoformat(otp_sent_at_str)
+    seconds_since  = (_dt.datetime.now() - otp_sent_at).total_seconds()
+
+    if seconds_since < 300:
+        remaining = max(1, int((300 - seconds_since) / 60) + 1)
+        messages.warning(
+            request,
+            f'Please wait {remaining} more minute(s) before requesting a new OTP.'
+        )
+        return redirect('register_verify_otp')
+
+    new_otp = f'{random.randint(0, 999999):06d}'
+    request.session['otp_code']    = new_otp
+    request.session['otp_sent_at'] = _dt.datetime.now().isoformat()
+
+    _send_otp_email(email, full_name, new_otp)
+
+    messages.success(request, f'A new OTP has been sent to {email}.')
+    return redirect('register_verify_otp')
+
 @require_http_methods(['GET', 'POST'])
 def register_google(request):
-    """
-    Google OAuth completion page for new students.
-    Case A — New user: collect student ID, department, password.
-    Case B — Existing user: treat as login with full post-login routing.
-    """
     if not request.user.is_authenticated:
         messages.error(request, 'Google Sign-In did not complete. Please try again.')
         return redirect('landing')
