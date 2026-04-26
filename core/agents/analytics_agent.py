@@ -1,5 +1,5 @@
 from core.db import connect_db
-from core.views import QUESTIONS, QUESTION_COLS
+from core.components import QUESTIONS, QUESTION_COLS
 
 
 class AnalyticsAgent:
@@ -60,7 +60,6 @@ class AnalyticsAgent:
         """
         Alert when Critical students exceed 40 % of all assessed students
         in the given semester.
-
         """
         cursor.execute(
             """

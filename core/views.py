@@ -6,6 +6,11 @@ from core.db import connect_db, get_current_semester
 from core.agents.reset_agent import ResetAgent
 from core.ml import predict as ml_predict
 from core.agents.triage_agent import TriageAgent
+from core.components import (
+    ROLE_DASHBOARD, ROLE_LABELS,
+    QUESTIONS, QUESTION_COLS, QUESTION_SYMPTOMS,
+    SCALE_LABELS, SCALE_MAX,
+)
 
 # ── Email helper ──────────────────────────────────────────────────────────────
 def send_welcome_email(full_name, email, password, role_label):
@@ -68,20 +73,6 @@ def login_required_role(required_role):
         return wrapper
     return decorator
 
-ROLE_DASHBOARD = {
-    'student':      'student_dashboard',
-    'professional': 'professional_dashboard',
-    'authority':    'authority_dashboard',
-    'admin_it':     'admin_dashboard',
-}
-
-ROLE_LABELS = {
-    'student':      'Student',
-    'professional': 'Mental Health Professional',
-    'authority':    'University Authority',
-    'admin_it':     'Admin IT',
-}
-
 # ─────────────────────────────────────────────
 # LANDING PAGE  GET /
 # ─────────────────────────────────────────────
@@ -113,7 +104,7 @@ def login_view(request):
     Role is passed via ?role= query param (GET) or hidden field (POST).
 
     On success:
-      - Non-student roles  → their dashboard (or landing if not built yet).
+      - Non-student roles  → their dashboard.
       - Students           → ResetAgent → semester check →
                              student_dashboard  (completed assessment)
                              chatbot            (first-time or reset)
@@ -206,7 +197,7 @@ def register(request):
     Step 1 of student self-registration.
     Validates the form, checks email uniqueness, generates a 6-digit OTP,
     sends it to the student's email, stores it in the session, then
-    redirects to the OTP verification page. Account is NOT created here.
+    redirects to the OTP verification page.
     """
     if request.method == 'GET':
         return render(request, 'register.html')
@@ -276,7 +267,6 @@ def _send_otp_email(email, full_name, otp_code):
     """Send the 6-digit OTP to the student's email address."""
     from django.core.mail import send_mail
     from django.conf import settings as django_settings
-    import logging
 
     subject = 'Baymax — Your Registration OTP'
     message = (
@@ -393,8 +383,8 @@ def register_resend_otp(request):
         messages.error(request, 'Session expired. Please start registration again.')
         return redirect('register')
 
-    otp_sent_at    = _dt.datetime.fromisoformat(otp_sent_at_str)
-    seconds_since  = (_dt.datetime.now() - otp_sent_at).total_seconds()
+    otp_sent_at   = _dt.datetime.fromisoformat(otp_sent_at_str)
+    seconds_since = (_dt.datetime.now() - otp_sent_at).total_seconds()
 
     if seconds_since < 300:
         remaining = max(1, int((300 - seconds_since) / 60) + 1)
@@ -535,59 +525,8 @@ def logout_view(request):
     return redirect('landing')
 
 # ─────────────────────────────────────────────────────────────────────
-#  QUESTION BANK
-#  Single source of truth for all 26 questions.
-#  Order MUST match scaler.pkl's fitted feature order:
-#  PSS1-10, GAD1-7, PHQ1-9.
-#  Each entry: (db_column, scale_type, question_text, symptom_label)
+#  CHATBOT HELPERS
 # ─────────────────────────────────────────────────────────────────────
-
-QUESTIONS = [
-    # PSS-10  (0=Never … 4=Very Often)
-    ('pss1',  'pss', 'During a semester, how often have you felt upset because of something that happened in your academic affairs?',                                                                                                        'Distress'),
-    ('pss2',  'pss', 'During a semester, how often have you felt unable to control important things in your academic affairs?',                                                                                                              'Loss of Control'),
-    ('pss3',  'pss', 'During a semester, how often have you felt nervous and stressed due to academic pressure?',                                                                                                                            'Stress'),
-    ('pss4',  'pss', 'During a semester, how often have you felt unable to cope with all the mandatory academic activities (e.g., assignments, quizzes, exams)?',                                                                            'Inability to Cope'),
-    ('pss5',  'pss', 'During a semester, how often have you felt confident about your ability to handle your academic or university problems?',                                                                                              'Low Self-Confidence'),
-    ('pss6',  'pss', 'During a semester, how often have you felt that things in your academic life were going your way?',                                                                                                                    'Lack of Progress'),
-    ('pss7',  'pss', 'During a semester, how often have you been able to control irritations in your academic or university affairs?',                                                                                                       'Poor Irritation Control'),
-    ('pss8',  'pss', 'During a semester, how often have you felt that your academic performance was at its best?',                                                                                                                           'Low Academic Self-Efficacy'),
-    ('pss9',  'pss', 'During a semester, how often have you felt angry due to poor performance or low grades that were beyond your control?',                                                                                                'Anger / Frustration'),
-    ('pss10', 'pss', 'During a semester, how often have you felt that academic difficulties were piling up so high that you could not overcome them?',                                                                                       'Overwhelm'),
-    # GAD-7  (0=Not at all … 3=Nearly every day)
-    ('gad1',  'gad', 'During a semester, how often have you felt nervous, anxious, or on edge due to academic pressure?',                                                                                                                   'Anxiety / Nervousness'),
-    ('gad2',  'gad', 'During a semester, how often have you been unable to stop worrying about your academic affairs?',                                                                                                                     'Uncontrollable Worry'),
-    ('gad3',  'gad', 'During a semester, how often have you had trouble relaxing due to academic pressure?',                                                                                                                                'Inability to Relax'),
-    ('gad4',  'gad', 'During a semester, how often have you been easily annoyed or irritated because of academic pressure?',                                                                                                                'Irritability'),
-    ('gad5',  'gad', 'During a semester, how often have you worried too much about academic affairs?',                                                                                                                                      'Excessive Worry'),
-    ('gad6',  'gad', 'During a semester, how often have you been so restless due to academic pressure that it is hard to sit still?',                                                                                                       'Restlessness'),
-    ('gad7',  'gad', 'During a semester, how often have you felt afraid, as if something awful might happen?',                                                                                                                              'Fear / Apprehension'),
-    # PHQ-9  (0=Not at all … 3=Nearly every day)
-    ('phq1',  'phq', 'During the semester, how often have you had little interest or pleasure in doing things?',                                                                                                                            'Anhedonia (Loss of Interest / Pleasure)'),
-    ('phq2',  'phq', 'During the semester, how often have you felt down, depressed, or hopeless?',                                                                                                                                         'Depressed Mood / Hopelessness'),
-    ('phq3',  'phq', 'During the semester, how often have you had trouble falling asleep, staying asleep, or sleeping too much?',                                                                                                           'Sleep Disturbance'),
-    ('phq4',  'phq', 'During the semester, how often have you felt tired or had little energy?',                                                                                                                                            'Fatigue / Low Energy'),
-    ('phq5',  'phq', 'During the semester, how often have you had a poor appetite or overeaten?',                                                                                                                                           'Appetite Disturbance'),
-    ('phq6',  'phq', 'During the semester, how often have you felt bad about yourself, or felt that you are a failure or have let yourself or your family down?',                                                                           'Low Self-Worth / Guilt'),
-    ('phq7',  'phq', 'During the semester, how often have you had trouble concentrating on things, such as reading books or watching television?',                                                                                          'Concentration Difficulty'),
-    ('phq8',  'phq', 'During the semester, how often have you moved or spoken so slowly that other people could notice? Or how often have you been moving much more than usual because you felt restless?',                                  'Psychomotor Agitation / Retardation'),
-    ('phq9',  'phq', 'During the semester, how often have you had thoughts that you would be better off dead or of hurting yourself?',                                                                                                      'Suicidal Ideation / Self-Harm Thoughts'),
-]
-
-# Column names in exact feature order — used for ML answer extraction
-QUESTION_COLS    = [q[0] for q in QUESTIONS]
-QUESTION_SYMPTOMS = {q[0]: q[3] for q in QUESTIONS}
-
-# Answer button labels per scale
-SCALE_LABELS = {
-    'pss': ['Never', 'Almost Never', 'Sometimes', 'Fairly Often', 'Very Often'],
-    'gad': ['Not at all', 'Several days', 'More than half the days', 'Nearly every day'],
-    'phq': ['Not at all', 'Several days', 'More than half the days', 'Nearly every day'],
-}
-
-# Maximum valid answer per scale (inclusive)
-SCALE_MAX = {'pss': 4, 'gad': 3, 'phq': 3}
-
 
 def _next_unanswered(qr_row):
     """
@@ -605,8 +544,7 @@ def _next_unanswered(qr_row):
 def _build_responses(qr_row):
     """
     Given a questionnaire_responses DB row, return a list of 26 dicts
-    suitable for display in templates.  Used by both student status and
-    professional appointment/detail views.
+    suitable for display in templates.
     """
     scale_answer_labels = {
         'pss': SCALE_LABELS['pss'],
@@ -1182,14 +1120,14 @@ def student_events(request):
         events = []
         for ev in events_raw:
             events.append({
-                'id':         ev['id'],
-                'title':      ev['title'],
-                'date':       ev['date'],
-                'time':       ev['time'],
-                'venue':      ev['venue'],
+                'id':          ev['id'],
+                'title':       ev['title'],
+                'date':        ev['date'],
+                'time':        ev['time'],
+                'venue':       ev['venue'],
                 'description': ev['description'],
-                'rsvp_count': ev['rsvp_count'],
-                'has_rsvpd':  ev['id'] in rsvped_ids,
+                'rsvp_count':  ev['rsvp_count'],
+                'has_rsvpd':   ev['id'] in rsvped_ids,
             })
 
         return render(request, 'student/events.html', {
@@ -1780,11 +1718,11 @@ def professional_appointments_view(request, appointment_id):
         top_symptoms = sorted(responses, key=lambda r: r['severity'], reverse=True)[:5]
 
         return render(request, 'professional/student_detail.html', {
-            'full_name':      request.session.get('full_name', 'Professional'),
-            'semester':       semester,
-            'appt':           appt,
-            'responses':      responses,
-            'top_symptoms':   top_symptoms,
+            'full_name':    request.session.get('full_name', 'Professional'),
+            'semester':     semester,
+            'appt':         appt,
+            'responses':    responses,
+            'top_symptoms': top_symptoms,
         })
 
     finally:
@@ -1792,15 +1730,132 @@ def professional_appointments_view(request, appointment_id):
         conn.close()
 
 # ─────────────────────────────────────────────
+#  SHARED STATS HELPER
+# ─────────────────────────────────────────────
+
+def _build_stats_context(cursor, semester):
+    """
+    Compute all data needed by both professional/stats.html and
+    authority/stats.html.  Returns a dict ready for render().
+    """
+    from core.agents.analytics_agent import AnalyticsAgent
+    alerts = AnalyticsAgent().run(semester)
+
+    # Overall distribution
+    cursor.execute(
+        """
+        SELECT final_status, COUNT(*) AS cnt
+        FROM   questionnaire_responses
+        WHERE  semester     = %s
+        AND    final_status IS NOT NULL
+        GROUP  BY final_status
+        """,
+        (semester,)
+    )
+    dist_rows      = cursor.fetchall()
+    total_assessed = sum(r['cnt'] for r in dist_rows)
+    distribution   = {r['final_status']: r['cnt'] for r in dist_rows}
+    stable         = distribution.get('Stable',     0)
+    challenged     = distribution.get('Challenged', 0)
+    critical       = distribution.get('Critical',   0)
+
+    def pct(n):
+        return round((n / total_assessed * 100), 1) if total_assessed else 0
+
+    # Per-department breakdown
+    cursor.execute(
+        """
+        SELECT s.department,
+               COUNT(*) AS total,
+               COUNT(*) FILTER (WHERE qr.final_status = 'Stable')     AS stable,
+               COUNT(*) FILTER (WHERE qr.final_status = 'Challenged') AS challenged,
+               COUNT(*) FILTER (WHERE qr.final_status = 'Critical')   AS critical
+        FROM   questionnaire_responses qr
+        JOIN   students s ON s.user_id = qr.student_id
+        WHERE  qr.semester     = %s
+        AND    qr.final_status IS NOT NULL
+        GROUP  BY s.department
+        ORDER  BY s.department ASC
+        """,
+        (semester,)
+    )
+    dept_rows = cursor.fetchall()
+
+    # Top symptoms by frequency
+    symptom_counts = []
+    for col, scale, text, symptom in QUESTIONS:
+        cursor.execute(
+            f"""
+            SELECT COUNT(*) AS cnt
+            FROM   questionnaire_responses
+            WHERE  semester     = %s
+            AND    final_status IS NOT NULL
+            AND    {col}        > 0
+            """,
+            (semester,)
+        )
+        row = cursor.fetchone()
+        cnt = row['cnt'] if row else 0
+        symptom_counts.append({
+            'symptom': symptom,
+            'scale':   scale.upper(),
+            'count':   cnt,
+            'col':     col,
+        })
+    symptom_counts.sort(key=lambda x: x['count'], reverse=True)
+    top_symptoms = symptom_counts[:10]
+
+    # Historical semester trends — wrap UNION ALL in subquery so
+    # ORDER BY expressions are legal (PostgreSQL requirement).
+    cursor.execute(
+        """
+        SELECT *
+        FROM (
+            SELECT semester, total, stable, challenged, critical
+            FROM   semester_stats
+            UNION ALL
+            SELECT %s                                                       AS semester,
+                   COUNT(*)                                                 AS total,
+                   COUNT(*) FILTER (WHERE final_status = 'Stable')         AS stable,
+                   COUNT(*) FILTER (WHERE final_status = 'Challenged')     AS challenged,
+                   COUNT(*) FILTER (WHERE final_status = 'Critical')       AS critical
+            FROM   questionnaire_responses
+            WHERE  semester     = %s
+            AND    final_status IS NOT NULL
+        ) sub
+        ORDER BY
+            CAST(SPLIT_PART(semester, ' ', 2) AS INTEGER) DESC,
+            CASE SPLIT_PART(semester, ' ', 1)
+                WHEN 'Spring' THEN 1
+                WHEN 'Summer' THEN 2
+                WHEN 'Fall'   THEN 3
+                ELSE 4
+            END DESC
+        """,
+        (semester, semester)
+    )
+    history = cursor.fetchall()
+
+    return {
+        'semester':        semester,
+        'alerts':          alerts,
+        'total_assessed':  total_assessed,
+        'stable':          stable,
+        'challenged':      challenged,
+        'critical':        critical,
+        'stable_pct':      pct(stable),
+        'challenged_pct':  pct(challenged),
+        'critical_pct':    pct(critical),
+        'dept_rows':       dept_rows,
+        'top_symptoms':    top_symptoms,
+        'history':         history,
+    }
+
+# ─────────────────────────────────────────────
 #  PROFESSIONAL STATS  GET /professional/stats/
 # ─────────────────────────────────────────────
 @require_http_methods(['GET'])
 def professional_stats(request):
-    """
-    Aggregated mental health analytics page.
-    Calls AnalyticsAgent at the top of every load.
-    No individual student data — all aggregated and anonymised.
-    """
     user_id, role = get_session_user(request)
     if not user_id or role != 'professional':
         messages.error(request, 'Please log in as a Mental Health Professional.')
@@ -1814,126 +1869,9 @@ def professional_stats(request):
             messages.error(request, 'No active semester configured.')
             return redirect('professional_dashboard')
 
-        # ── Run Analytics Agent ───────────────────────────────────────
-        from core.agents.analytics_agent import AnalyticsAgent
-        alerts = AnalyticsAgent().run(semester)
-
-        # ── Overall status distribution ───────────────────────────────
-        cursor.execute(
-            """
-            SELECT final_status, COUNT(*) AS cnt
-            FROM   questionnaire_responses
-            WHERE  semester        = %s
-            AND    final_status    IS NOT NULL
-            GROUP  BY final_status
-            """,
-            (semester,)
-        )
-        dist_rows = cursor.fetchall()
-        total_assessed = sum(r['cnt'] for r in dist_rows)
-        distribution   = {r['final_status']: r['cnt'] for r in dist_rows}
-        stable     = distribution.get('Stable',     0)
-        challenged = distribution.get('Challenged', 0)
-        critical   = distribution.get('Critical',   0)
-
-        def pct(n):
-            return round((n / total_assessed * 100), 1) if total_assessed else 0
-
-        # ── Per-department breakdown ──────────────────────────────────
-        cursor.execute(
-            """
-            SELECT s.department,
-                   COUNT(*)                                                        AS total,
-                   COUNT(*) FILTER (WHERE qr.final_status = 'Stable')             AS stable,
-                   COUNT(*) FILTER (WHERE qr.final_status = 'Challenged')         AS challenged,
-                   COUNT(*) FILTER (WHERE qr.final_status = 'Critical')           AS critical
-            FROM   questionnaire_responses qr
-            JOIN   students s ON s.user_id = qr.student_id
-            WHERE  qr.semester        = %s
-            AND    qr.final_status    IS NOT NULL
-            GROUP  BY s.department
-            ORDER  BY s.department ASC
-            """,
-            (semester,)
-        )
-        dept_rows = cursor.fetchall()
-
-        # ── Top symptoms by frequency ─────────────────────────────────
-        # Count how many students scored > 0 on each question column
-        symptom_counts = []
-        for col, scale, text, symptom in QUESTIONS:
-            cursor.execute(
-                f"""
-                SELECT COUNT(*) AS cnt
-                FROM   questionnaire_responses
-                WHERE  semester        = %s
-                AND    final_status    IS NOT NULL
-                AND    {col} > 0
-                """,
-                (semester,)
-            )
-            row = cursor.fetchone()
-            cnt = row['cnt'] if row else 0
-            symptom_counts.append({
-                'symptom': symptom,
-                'scale':   scale.upper(),
-                'count':   cnt,
-                'col':     col,
-            })
-        symptom_counts.sort(key=lambda x: x['count'], reverse=True)
-        top_symptoms = symptom_counts[:10]
-
-        # ── Historical semester trends ─────────────────────────────────
-        # Past semesters: read from semester_stats (compiled by Reset Agent).
-        # Current semester: read live from questionnaire_responses.
-        cursor.execute(
-            """
-            SELECT *
-            FROM (
-                SELECT semester, total, stable, challenged, critical
-                FROM   semester_stats
-                UNION ALL
-                SELECT %s                                                           AS semester,
-                       COUNT(*)                                                     AS total,
-                       COUNT(*) FILTER (WHERE final_status = 'Stable')             AS stable,
-                       COUNT(*) FILTER (WHERE final_status = 'Challenged')         AS challenged,
-                       COUNT(*) FILTER (WHERE final_status = 'Critical')           AS critical
-                FROM   questionnaire_responses
-                WHERE  semester     = %s
-                AND    final_status IS NOT NULL
-            ) sub
-            ORDER BY
-                CAST(SPLIT_PART(semester, ' ', 2) AS INTEGER) DESC,
-                CASE SPLIT_PART(semester, ' ', 1)
-                    WHEN 'Spring' THEN 1
-                    WHEN 'Summer' THEN 2
-                    WHEN 'Fall'   THEN 3
-                    ELSE 4
-                END DESC
-            """,
-            (semester, semester)
-        )
-        history = cursor.fetchall()
-
-        return render(request, 'professional/stats.html', {
-            'full_name':       request.session.get('full_name', 'Professional'),
-            'semester':        semester,
-            'alerts':          alerts,
-            # distribution
-            'total_assessed':  total_assessed,
-            'stable':          stable,
-            'challenged':      challenged,
-            'critical':        critical,
-            'stable_pct':      pct(stable),
-            'challenged_pct':  pct(challenged),
-            'critical_pct':    pct(critical),
-            # dept
-            'dept_rows':       dept_rows,
-            # symptoms
-            'top_symptoms':    top_symptoms,
-            # history
-            'history':         history,
-        })
+        ctx = _build_stats_context(cursor, semester)
+        ctx['full_name'] = request.session.get('full_name', 'Professional')
+        return render(request, 'professional/stats.html', ctx)
 
     finally:
         cursor.close()
@@ -1990,8 +1928,6 @@ def authority_dashboard(request):
 
 # ─────────────────────────────────────────────
 #  AUTHORITY STATS  GET /authority/stats/
-#  Identical content to professional_stats.
-#  Reuses the shared alerts_dismiss view.
 # ─────────────────────────────────────────────
 @require_http_methods(['GET'])
 def authority_stats(request):
@@ -2008,119 +1944,9 @@ def authority_stats(request):
             messages.error(request, 'No active semester configured.')
             return redirect('authority_dashboard')
 
-        # Run Analytics Agent
-        from core.agents.analytics_agent import AnalyticsAgent
-        alerts = AnalyticsAgent().run(semester)
-
-        # Overall status distribution
-        cursor.execute(
-            """
-            SELECT final_status, COUNT(*) AS cnt
-            FROM   questionnaire_responses
-            WHERE  semester        = %s
-            AND    final_status    IS NOT NULL
-            GROUP  BY final_status
-            """,
-            (semester,)
-        )
-        dist_rows      = cursor.fetchall()
-        total_assessed = sum(r['cnt'] for r in dist_rows)
-        distribution   = {r['final_status']: r['cnt'] for r in dist_rows}
-        stable         = distribution.get('Stable',     0)
-        challenged     = distribution.get('Challenged', 0)
-        critical       = distribution.get('Critical',   0)
-
-        def pct(n):
-            return round((n / total_assessed * 100), 1) if total_assessed else 0
-
-        # Per-department breakdown
-        cursor.execute(
-            """
-            SELECT s.department,
-                   COUNT(*)                                                        AS total,
-                   COUNT(*) FILTER (WHERE qr.final_status = 'Stable')             AS stable,
-                   COUNT(*) FILTER (WHERE qr.final_status = 'Challenged')         AS challenged,
-                   COUNT(*) FILTER (WHERE qr.final_status = 'Critical')           AS critical
-            FROM   questionnaire_responses qr
-            JOIN   students s ON s.user_id = qr.student_id
-            WHERE  qr.semester        = %s
-            AND    qr.final_status    IS NOT NULL
-            GROUP  BY s.department
-            ORDER  BY s.department ASC
-            """,
-            (semester,)
-        )
-        dept_rows = cursor.fetchall()
-
-        # Top symptoms by frequency
-        symptom_counts = []
-        for col, scale, text, symptom in QUESTIONS:
-            cursor.execute(
-                f"""
-                SELECT COUNT(*) AS cnt
-                FROM   questionnaire_responses
-                WHERE  semester        = %s
-                AND    final_status    IS NOT NULL
-                AND    {col} > 0
-                """,
-                (semester,)
-            )
-            row = cursor.fetchone()
-            cnt = row['cnt'] if row else 0
-            symptom_counts.append({
-                'symptom': symptom,
-                'scale':   scale.upper(),
-                'count':   cnt,
-                'col':     col,
-            })
-        symptom_counts.sort(key=lambda x: x['count'], reverse=True)
-        top_symptoms = symptom_counts[:10]
-
-        # Historical semester trends (descending — current first)
-        cursor.execute(
-            """
-            SELECT *
-            FROM (
-                SELECT semester, total, stable, challenged, critical
-                FROM   semester_stats
-                UNION ALL
-                SELECT %s                                                           AS semester,
-                       COUNT(*)                                                     AS total,
-                       COUNT(*) FILTER (WHERE final_status = 'Stable')             AS stable,
-                       COUNT(*) FILTER (WHERE final_status = 'Challenged')         AS challenged,
-                       COUNT(*) FILTER (WHERE final_status = 'Critical')           AS critical
-                FROM   questionnaire_responses
-                WHERE  semester     = %s
-                AND    final_status IS NOT NULL
-            ) sub
-            ORDER BY
-                CAST(SPLIT_PART(semester, ' ', 2) AS INTEGER) DESC,
-                CASE SPLIT_PART(semester, ' ', 1)
-                    WHEN 'Spring' THEN 1
-                    WHEN 'Summer' THEN 2
-                    WHEN 'Fall'   THEN 3
-                    ELSE 4
-                END DESC
-            """,
-            (semester, semester)
-        )
-        history = cursor.fetchall()
-
-        return render(request, 'authority/stats.html', {
-            'full_name':      request.session.get('full_name', 'Authority'),
-            'semester':       semester,
-            'alerts':         alerts,
-            'total_assessed': total_assessed,
-            'stable':         stable,
-            'challenged':     challenged,
-            'critical':       critical,
-            'stable_pct':     pct(stable),
-            'challenged_pct': pct(challenged),
-            'critical_pct':   pct(critical),
-            'dept_rows':      dept_rows,
-            'top_symptoms':   top_symptoms,
-            'history':        history,
-        })
+        ctx = _build_stats_context(cursor, semester)
+        ctx['full_name'] = request.session.get('full_name', 'Authority')
+        return render(request, 'authority/stats.html', ctx)
 
     finally:
         cursor.close()
@@ -2128,9 +1954,6 @@ def authority_stats(request):
 
 # ─────────────────────────────────────────────
 #  AUTHORITY EVENTS  GET /authority/events/
-#  Lists all events + create form at the top.
-#  When editing, the same page re-renders with
-#  the form pre-filled via ?edit=<event_id>.
 # ─────────────────────────────────────────────
 @require_http_methods(['GET'])
 def authority_events(request):
@@ -2488,17 +2311,13 @@ def admin_students(request):
 
         student_rows = []
         for s in students:
-            if not s['final_status']:
-                display_status = 'Not Assessed'
-            else:
-                display_status = s['final_status']
             student_rows.append({
                 'id':         s['id'],
                 'full_name':  s['full_name'],
                 'email':      s['email'],
                 'student_id': s['student_id'],
                 'department': s['department'],
-                'status':     display_status,
+                'status':     s['final_status'] or 'Not Assessed',
             })
 
         half       = 3
@@ -2509,17 +2328,17 @@ def admin_students(request):
         tomorrow = (today + __import__('datetime').timedelta(days=1)).isoformat()
 
         return render(request, 'admin/students.html', {
-            'full_name':          request.session.get('full_name', 'Admin IT'),
-            'students':           student_rows,
-            'current_sem':        current_sem,
-            'next_sem':           next_sem,
+            'full_name':           request.session.get('full_name', 'Admin IT'),
+            'students':            student_rows,
+            'current_sem':         current_sem,
+            'next_sem':            next_sem,
             'semester_stats_rows': semester_stats_rows,
-            'tomorrow':           tomorrow,
-            'page':               page,
-            'total_pages':        total_pages,
-            'page_range':         range(start_page, end_page + 1),
-            'start_page':         start_page,
-            'end_page':           end_page,
+            'tomorrow':            tomorrow,
+            'page':                page,
+            'total_pages':         total_pages,
+            'page_range':          range(start_page, end_page + 1),
+            'start_page':          start_page,
+            'end_page':            end_page,
         })
 
     finally:
@@ -2753,13 +2572,13 @@ def admin_professionals(request):
         start_page = max(1, end_page - 6)
 
         return render(request, 'admin/professionals.html', {
-            'full_name':    request.session.get('full_name', 'Admin IT'),
+            'full_name':     request.session.get('full_name', 'Admin IT'),
             'professionals': professionals,
-            'page':         page,
-            'total_pages':  total_pages,
-            'page_range':   range(start_page, end_page + 1),
-            'start_page':   start_page,
-            'end_page':     end_page,
+            'page':          page,
+            'total_pages':   total_pages,
+            'page_range':    range(start_page, end_page + 1),
+            'start_page':    start_page,
+            'end_page':      end_page,
         })
 
     finally:
@@ -3023,14 +2842,14 @@ def admin_it(request):
         start_page = max(1, end_page - 6)
 
         return render(request, 'admin/it.html', {
-            'full_name':    request.session.get('full_name', 'Admin IT'),
-            'admins':       admins,
-            'current_id':   user_id,   # used in template for self-protect
-            'page':         page,
-            'total_pages':  total_pages,
-            'page_range':   range(start_page, end_page + 1),
-            'start_page':   start_page,
-            'end_page':     end_page,
+            'full_name':   request.session.get('full_name', 'Admin IT'),
+            'admins':      admins,
+            'current_id':  user_id,
+            'page':        page,
+            'total_pages': total_pages,
+            'page_range':  range(start_page, end_page + 1),
+            'start_page':  start_page,
+            'end_page':    end_page,
         })
 
     finally:
