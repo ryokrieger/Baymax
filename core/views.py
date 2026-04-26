@@ -1888,18 +1888,21 @@ def professional_stats(request):
         # Current semester: read live from questionnaire_responses.
         cursor.execute(
             """
-            SELECT semester, total, stable, challenged, critical
-            FROM   semester_stats
-            UNION ALL
-            SELECT %s                                                               AS semester,
-                   COUNT(*)                                                         AS total,
-                   COUNT(*) FILTER (WHERE final_status = 'Stable')                 AS stable,
-                   COUNT(*) FILTER (WHERE final_status = 'Challenged')              AS challenged,
-                   COUNT(*) FILTER (WHERE final_status = 'Critical')               AS critical
-            FROM   questionnaire_responses
-            WHERE  semester        = %s
-            AND    final_status    IS NOT NULL
-            ORDER  BY
+            SELECT *
+            FROM (
+                SELECT semester, total, stable, challenged, critical
+                FROM   semester_stats
+                UNION ALL
+                SELECT %s                                                           AS semester,
+                       COUNT(*)                                                     AS total,
+                       COUNT(*) FILTER (WHERE final_status = 'Stable')             AS stable,
+                       COUNT(*) FILTER (WHERE final_status = 'Challenged')         AS challenged,
+                       COUNT(*) FILTER (WHERE final_status = 'Critical')           AS critical
+                FROM   questionnaire_responses
+                WHERE  semester     = %s
+                AND    final_status IS NOT NULL
+            ) sub
+            ORDER BY
                 CAST(SPLIT_PART(semester, ' ', 2) AS INTEGER) DESC,
                 CASE SPLIT_PART(semester, ' ', 1)
                     WHEN 'Spring' THEN 1
@@ -2076,18 +2079,21 @@ def authority_stats(request):
         # Historical semester trends (descending — current first)
         cursor.execute(
             """
-            SELECT semester, total, stable, challenged, critical
-            FROM   semester_stats
-            UNION ALL
-            SELECT %s                                                               AS semester,
-                   COUNT(*)                                                         AS total,
-                   COUNT(*) FILTER (WHERE final_status = 'Stable')                 AS stable,
-                   COUNT(*) FILTER (WHERE final_status = 'Challenged')              AS challenged,
-                   COUNT(*) FILTER (WHERE final_status = 'Critical')               AS critical
-            FROM   questionnaire_responses
-            WHERE  semester        = %s
-            AND    final_status    IS NOT NULL
-            ORDER  BY
+            SELECT *
+            FROM (
+                SELECT semester, total, stable, challenged, critical
+                FROM   semester_stats
+                UNION ALL
+                SELECT %s                                                           AS semester,
+                       COUNT(*)                                                     AS total,
+                       COUNT(*) FILTER (WHERE final_status = 'Stable')             AS stable,
+                       COUNT(*) FILTER (WHERE final_status = 'Challenged')         AS challenged,
+                       COUNT(*) FILTER (WHERE final_status = 'Critical')           AS critical
+                FROM   questionnaire_responses
+                WHERE  semester     = %s
+                AND    final_status IS NOT NULL
+            ) sub
+            ORDER BY
                 CAST(SPLIT_PART(semester, ' ', 2) AS INTEGER) DESC,
                 CASE SPLIT_PART(semester, ' ', 1)
                     WHEN 'Spring' THEN 1

@@ -1,6 +1,7 @@
 from core.db import connect_db
 from core.views import QUESTIONS, QUESTION_COLS
 
+
 class AnalyticsAgent:
 
     def run(self, semester: str) -> list:
@@ -47,7 +48,7 @@ class AnalyticsAgent:
         except Exception:
             conn.rollback()
             raise
-    
+
         finally:
             cursor.close()
             conn.close()
@@ -56,19 +57,23 @@ class AnalyticsAgent:
     #  CHECK 1 — Critical Surge
     # ─────────────────────────────────────────────────────────────────
     def _check_critical_surge(self, cursor, semester):
+        """
+        Alert when Critical students exceed 40 % of all assessed students
+        in the given semester.
+
+        """
         cursor.execute(
             """
             SELECT
                 COUNT(*)                                            AS total,
                 COUNT(*) FILTER (WHERE final_status = 'Critical')  AS critical_count
             FROM questionnaire_responses
-            WHERE semester        = %s
-            AND   final_status    IS NOT NULL
-            AND   responses_reset = FALSE
+            WHERE semester     = %s
+            AND   final_status IS NOT NULL
             """,
             (semester,)
         )
-        row = cursor.fetchone()
+        row      = cursor.fetchone()
         total    = row['total']         or 0
         critical = row['critical_count'] or 0
 
@@ -76,7 +81,7 @@ class AnalyticsAgent:
             return
 
         if (critical / total) > 0.40:
-            # Skip if already exists for this semester
+            # Skip if an alert already exists for this semester
             cursor.execute(
                 """
                 SELECT id FROM analytics_alerts
@@ -133,10 +138,7 @@ class AnalyticsAgent:
             return
 
         # Find overlapping symptoms
-        current_set = set(current_top3)
-        prev_set    = set(prev_top3)
-        overlap     = current_set & prev_set
-
+        overlap = set(current_top3) & set(prev_top3)
         if not overlap:
             return
 
@@ -174,19 +176,15 @@ class AnalyticsAgent:
         For each question column, count how many students scored > 0.
         Returns a list of up to 3 symptom label strings.
         """
-        # Build a CASE-based query that counts non-zero answers per column
-        # and returns the column with the highest count
-        # We run one query per symptom column and rank outside SQL for clarity.
         counts = []
         for col in QUESTION_COLS:
             cursor.execute(
                 f"""
                 SELECT COUNT(*) AS cnt
                 FROM   questionnaire_responses
-                WHERE  semester        = %s
-                AND    final_status    IS NOT NULL
-                AND    responses_reset = FALSE
-                AND    {col}           > 0
+                WHERE  semester    = %s
+                AND    final_status IS NOT NULL
+                AND    {col}       > 0
                 """,
                 (semester,)
             )
@@ -197,7 +195,6 @@ class AnalyticsAgent:
         # Sort descending by count
         counts.sort(key=lambda x: x[1], reverse=True)
 
-        # Return symptom labels for the top 3
         top3 = []
         for col, cnt in counts[:3]:
             if cnt > 0 and col in col_to_symptom:
@@ -206,15 +203,16 @@ class AnalyticsAgent:
 
     def _previous_semester(self, cursor, current_semester):
         """
-        Find the semester that immediately precedes current_semester in the
-        analytics_alerts / semester_schedule tables.
+        Find the semester that immediately precedes current_semester.
 
         Ordering: Spring < Summer < Fall within a year;
                   earlier years before later years.
         """
         SEASON_ORDER = {'Spring': 0, 'Summer': 1, 'Fall': 2}
 
-        cursor.execute("SELECT semester FROM semester_schedule ORDER BY semester")
+        cursor.execute(
+            "SELECT semester FROM semester_schedule ORDER BY semester"
+        )
         rows = cursor.fetchall()
         if not rows:
             return None
@@ -244,17 +242,22 @@ class AnalyticsAgent:
     #  CHECK 3 — Department at Risk
     # ─────────────────────────────────────────────────────────────────
     def _check_departments_at_risk(self, cursor, semester):
+        """
+        Alert when Critical + Challenged students exceed 60 % of all
+        assessed students in a single department.
+        """
         cursor.execute(
             """
             SELECT
                 s.department,
-                COUNT(*)                                                        AS total,
-                COUNT(*) FILTER (WHERE qr.final_status IN ('Critical','Challenged')) AS at_risk_count
+                COUNT(*) AS total,
+                COUNT(*) FILTER (
+                    WHERE qr.final_status IN ('Critical', 'Challenged')
+                ) AS at_risk_count
             FROM   questionnaire_responses qr
             JOIN   students s ON s.user_id = qr.student_id
-            WHERE  qr.semester        = %s
-            AND    qr.final_status    IS NOT NULL
-            AND    qr.responses_reset = FALSE
+            WHERE  qr.semester     = %s
+            AND    qr.final_status IS NOT NULL
             GROUP  BY s.department
             """,
             (semester,)
@@ -262,15 +265,15 @@ class AnalyticsAgent:
         rows = cursor.fetchall()
 
         for row in rows:
-            dept      = row['department']
-            total     = row['total']        or 0
-            at_risk   = row['at_risk_count'] or 0
+            dept    = row['department']
+            total   = row['total']         or 0
+            at_risk = row['at_risk_count'] or 0
 
             if total == 0:
                 continue
 
             if (at_risk / total) > 0.60:
-                # Skip if already exists for this semester + department
+                # Skip if an alert already exists for this semester + dept
                 cursor.execute(
                     """
                     SELECT id FROM analytics_alerts
