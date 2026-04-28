@@ -1,5 +1,4 @@
 TRUNCATE TABLE event_rsvps             RESTART IDENTITY CASCADE;
-TRUNCATE TABLE analytics_alerts        RESTART IDENTITY CASCADE;
 TRUNCATE TABLE appointments            RESTART IDENTITY CASCADE;
 TRUNCATE TABLE events                  RESTART IDENTITY CASCADE;
 TRUNCATE TABLE questionnaire_responses RESTART IDENTITY CASCADE;
@@ -247,14 +246,3 @@ INSERT INTO event_rsvps (student_id,event_id) VALUES
     (41,6),(42,6),(43,6),(44,6),(45,6),(46,6),(47,6),(48,6),(49,6),(50,6),
     (51,6),(57,6),(64,6),(69,6),(76,6),
     (33,7),(37,7),(41,7),(43,7),(51,7),(55,7),(59,7),(73,7),(79,7);
-
-INSERT INTO analytics_alerts (alert_type,message,semester,department,dismissed,created_at) VALUES
-    ('critical_surge',
-     'Critical student count reached 12 out of 40 assessed students (30.0%) in Fall 2025, exceeding the 40% threshold.',
-     'Fall 2025',NULL,TRUE,'2025-11-15 09:00:00'),
-    ('department_at_risk',
-     'CSE had 7 out of 10 assessed students (70.0%) classified as Critical or Challenged in Fall 2025, exceeding the 60% threshold.',
-     'Fall 2025','CSE',TRUE,'2025-11-15 09:05:00'),
-    ('symptom_spike',
-     'Symptom ''Overwhelm'' appeared in the top 3 most prevalent symptoms in both Summer 2025 and Fall 2025, indicating a persistent pattern.',
-     'Fall 2025',NULL,TRUE,'2025-11-20 10:00:00');
