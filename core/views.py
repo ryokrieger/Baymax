@@ -735,7 +735,19 @@ def chatbot_result(request):
             # Assessment incomplete — go back to chatbot
             return redirect('chatbot')
 
-        final_status        = row['final_status']
+        final_status = row['final_status']
+
+        # ── AI: generate (or retrieve cached) status description ──────
+        # TriageAgent.describe_student_status() is idempotent:
+        #   - First call → asks Groq LLM → stores in DB → returns text.
+        #   - Subsequent calls → reads from DB → returns stored text.
+        #   - LLM unavailable → returns deterministic fallback text.
+        # The page always receives a non-empty string.
+        status_description = TriageAgent().describe_student_status(
+            student_id = user_id,
+            semester   = semester,
+        )
+
         # Consume triage outcome from session (set by request-professional view)
         triage_done         = request.session.pop('triage_done',         False)
         triage_assigned     = request.session.pop('triage_assigned',     False)
@@ -744,6 +756,7 @@ def chatbot_result(request):
         return render(request, 'chatbot.html', {
             'show_result':         True,
             'final_status':        final_status,
+            'status_description':  status_description,
             'triage_done':         triage_done,
             'triage_assigned':     triage_assigned,
             'triage_professional': triage_professional,
@@ -880,15 +893,6 @@ def student_help(request):
     """
     Lists all Mental Health Professionals with their availability
     and the correct button state for this student.
- 
-    Button logic:
-      - Stable students         → no button shown
-      - No active appointment
-        AND (Challenged or Critical)  → Request button per professional
-      - Pending appointment     → Cancel Request button
-      - Accepted appointment    → "Currently in Treatment" status
-                                   showing professional name + scheduled_at
-      - Declined or Completed   → Request button (can request again)
     """
     user_id, role = get_session_user(request)
     if not user_id or role != 'student':
@@ -1805,20 +1809,23 @@ def _build_stats_context(cursor, semester):
     symptom_counts.sort(key=lambda x: x['count'], reverse=True)
     top_symptoms = symptom_counts[:10]
 
-    # Historical semester trends — wrap UNION ALL in subquery so
-    # ORDER BY expressions are legal (PostgreSQL requirement).
+    # ── Historical semester trends ────────────────────────────────────
+    # Includes llm_summary from semester_stats for historical semesters.
+    # The current semester row is synthesised live; its llm_summary is NULL
+    # (the ResetAgent only generates it at semester-end compilation).
     cursor.execute(
         """
         SELECT *
         FROM (
-            SELECT semester, total, stable, challenged, critical
+            SELECT semester, total, stable, challenged, critical, llm_summary
             FROM   semester_stats
             UNION ALL
             SELECT %s                                                       AS semester,
                    COUNT(*)                                                 AS total,
                    COUNT(*) FILTER (WHERE final_status = 'Stable')         AS stable,
                    COUNT(*) FILTER (WHERE final_status = 'Challenged')     AS challenged,
-                   COUNT(*) FILTER (WHERE final_status = 'Critical')       AS critical
+                   COUNT(*) FILTER (WHERE final_status = 'Critical')       AS critical,
+                   NULL::TEXT                                               AS llm_summary
             FROM   questionnaire_responses
             WHERE  semester     = %s
             AND    final_status IS NOT NULL
@@ -1879,7 +1886,6 @@ def professional_stats(request):
 
 # ─────────────────────────────────────────────
 #  DISMISS ALERT  POST /alerts/dismiss/<id>/
-#  Shared by Professional and Authority stats pages.
 # ─────────────────────────────────────────────
 @require_http_methods(['POST'])
 def alerts_dismiss(request, alert_id):
@@ -2423,14 +2429,13 @@ def admin_students_delete(request, student_id):
         conn.rollback()
         messages.error(request, f'An error occurred: {exc}')
         return redirect(f'/admin/students/?page={page}')
-    
+
     finally:
         cursor.close()
         conn.close()
 
 # ─────────────────────────────────────────────
 #  SET UPCOMING SEMESTER START DATE
-#  POST /admin/students/set-start-date/
 # ─────────────────────────────────────────────
 @require_http_methods(['POST'])
 def admin_students_set_start_date(request):

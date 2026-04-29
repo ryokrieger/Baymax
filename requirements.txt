@@ -36,3 +36,6 @@ joblib
 ipywidgets
 jupyterlab
 notebook
+
+# LLM INTEGRATION
+openai

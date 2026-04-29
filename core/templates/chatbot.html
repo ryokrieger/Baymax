@@ -31,7 +31,7 @@
 
 <!-- ── Flash Messages ─────────────────────────────────────── -->
 {% if messages %}
-<ul class="flash-list" style="width:100%;max-width:680px;">
+<ul class="flash-list">
     {% for message in messages %}
     <li class="flash flash--{{ message.tags }}">{{ message }}</li>
     {% endfor %}
@@ -74,24 +74,15 @@
                 </div>
             {% endif %}
 
-            <!-- Status description -->
-            {% if final_status == 'Stable' %}
+            <!-- ── AI-generated personalised status description ────────
+                 Written by TriageAgent.describe_student_status() via
+                 the Groq LLM. Falls back to deterministic text if the
+                 LLM is unavailable, so this block always renders.
+                 ──────────────────────────────────────────────────────── -->
+            {% if status_description %}
             <div class="result-description">
-                You are managing academic stress well this semester. Keep maintaining healthy routines,
-                and remember that support is always available if things change.
-            </div>
-            {% elif final_status == 'Challenged' %}
-            <div class="result-description">
-                You are experiencing moderate levels of academic stress and/or anxiety.
-                Consider reaching out to a Mental Health Professional through the
-                <strong>Request Mental Health Help</strong> page on your dashboard if you feel
-                you need extra support.
-            </div>
-            {% elif final_status == 'Critical' %}
-            <div class="result-description">
-                Your responses indicate high levels of distress this semester.
-                We strongly recommend connecting with a Mental Health Professional.
-                Click the button below and we will assign you to an available professional right away.
+                <span class="result-description__ai-badge">✨ Baymax AI</span>
+                {{ status_description }}
             </div>
             {% endif %}
 

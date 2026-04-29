@@ -49,6 +49,9 @@
     --font-body     : 'Poppins', 'Segoe UI', sans-serif;
     --font-heading  : 'Fjalla One', 'Arial Black', sans-serif;
     --transition    : 0.15s ease;
+    /* AI colours */
+    --ai-purple     : #7c3aed;
+    --ai-purple-light: #ede9fe;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -255,12 +258,12 @@ body {
     line-height    : 1.55;
 }
 
-.alert-banner--critical_surge    {
+.alert-banner--critical_surge {
     background  : var(--red-light);
     border-color: var(--red);
     color       : #991b1b;
 }
-.alert-banner--symptom_spike     {
+.alert-banner--symptom_spike {
     background  : var(--amber-light);
     border-color: var(--amber);
     color       : #92400e;
@@ -279,9 +282,12 @@ body {
     text-transform : uppercase;
     letter-spacing : 0.5px;
     margin-bottom  : 3px;
+    display        : flex;
+    align-items    : center;
+    gap            : 8px;
+    flex-wrap      : wrap;
 }
 
-/* Dismiss button */
 .alert-banner__dismiss {
     padding       : 4px 10px;
     font-family   : var(--font-body);
@@ -305,8 +311,143 @@ body {
 .alerts-section { margin-bottom: 24px; }
 
 /* ═══════════════════════════════════════════════════════════
+   AI PROVENANCE BADGE
+   ═══════════════════════════════════════════════════════════ */
+.ai-badge {
+    display        : inline-block;
+    font-size      : 0.65rem;
+    font-weight    : 700;
+    letter-spacing : 0.5px;
+    text-transform : uppercase;
+    background     : var(--ai-purple-light);
+    color          : var(--ai-purple);
+    border         : 1px solid var(--ai-purple);
+    border-radius  : var(--radius);
+    padding        : 1px 7px;
+    color          : var(--ai-purple) !important;
+    vertical-align : middle;
+    white-space    : nowrap;
+    flex-shrink    : 0;
+}
+
+/* Block variant — appears on its own line */
+.ai-badge--block {
+    display        : block;
+    width          : fit-content;
+    margin-bottom  : 8px;
+    font-size      : 0.7rem;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LLM SEMESTER SUMMARY
+   ═══════════════════════════════════════════════════════════ */
+
+.summary-row { background: var(--ai-purple-light) !important; }
+
+.summary-row:hover { transform: none !important; }
+
+.llm-summary-box {
+    padding       : 14px 18px;
+    background    : var(--ai-purple-light);
+    border-left   : 4px solid var(--ai-purple);
+    border-radius : var(--radius);
+    margin        : 4px 0;
+}
+
+.llm-summary-text {
+    font-size  : 0.875rem;
+    line-height: 1.7;
+    color      : #3b0764;
+    font-style : italic;
+}
+
+/* Toggle button inside the semester cell */
+.summary-toggle {
+    display        : inline-block;
+    margin-left    : 8px;
+    padding        : 2px 8px;
+    font-family    : var(--font-body);
+    font-size      : 0.68rem;
+    font-weight    : 700;
+    letter-spacing : 0.3px;
+    background     : var(--ai-purple-light);
+    color          : var(--ai-purple);
+    border         : 1px solid var(--ai-purple);
+    border-radius  : var(--radius);
+    cursor         : pointer;
+    vertical-align : middle;
+    white-space    : nowrap;
+    transition     : background var(--transition), color var(--transition),
+                     transform var(--transition);
+}
+
+.summary-toggle:hover {
+    background : var(--ai-purple);
+    color      : var(--white);
+    transform  : translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HISTORY TABLE HELPERS
+   ═══════════════════════════════════════════════════════════ */
+.history-row--current {
+    background  : var(--yellow-light) !important;
+    font-weight : 600;
+}
+
+/* "Current" chip beside the semester name */
+.current-chip {
+    display        : inline-block;
+    font-size      : 0.68rem;
+    font-weight    : 700;
+    letter-spacing : 0.5px;
+    text-transform : uppercase;
+    background     : var(--black);
+    color          : var(--yellow);
+    padding        : 1px 6px;
+    border-radius  : var(--radius);
+    margin-left    : 6px;
+    vertical-align : middle;
+    white-space    : nowrap;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CHART CARDS
+   ═══════════════════════════════════════════════════════════ */
+.charts-grid {
+    display              : grid;
+    grid-template-columns: 1fr 1fr;
+    gap                  : 20px;
+    margin-bottom        : 28px;
+}
+
+.chart-card {
+    background   : var(--cream);
+    border       : var(--border);
+    box-shadow   : var(--shadow-hard);
+    border-radius: var(--radius);
+    padding      : 20px;
+}
+
+.chart-card__title {
+    font-family    : var(--font-heading);
+    font-size      : 0.88rem;
+    letter-spacing : 1px;
+    text-transform : uppercase;
+    margin-bottom  : 16px;
+    padding-bottom : 8px;
+    border-bottom  : var(--border-thin);
+}
+
+.chart-card--full { grid-column: 1 / -1; }
+
+.chart-wrap          { position: relative; }
+.chart-wrap--sm      { height: 260px; }
+.chart-wrap--md      { height: 320px; }
+.chart-wrap--lg      { height: 360px; }
+
+/* ═══════════════════════════════════════════════════════════
    MAIN DATA TABLE
-   max-width 1100px, full-width, yellow th, row hover shifts right
    ═══════════════════════════════════════════════════════════ */
 .table-wrap {
     overflow-x   : auto;
@@ -353,10 +494,12 @@ body {
     vertical-align: middle;
 }
 
-/* Centred cell (e.g. row numbers, scores) */
-.td-center { text-align: center; }
+.td-center   { text-align: center; }
+.td-bold     { font-weight: 600; }
+.td-rank     { width: 44px; }
+.td-rank-num { font-weight: 700; color: #888; }
+.td-symptom  { font-weight: 600; font-size: 0.88rem; }
 
-/* Actions cell — flex row of buttons */
 .actions-cell {
     display    : flex;
     align-items: center;
@@ -374,7 +517,7 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   STATUS BADGE CLASSES  (used in tables and detail pages)
+   STATUS BADGE CLASSES
    ═══════════════════════════════════════════════════════════ */
 .status-stable     { color: #16a34a; font-weight: 700; }
 .status-challenged { color: #d97706; font-weight: 700; }
@@ -407,24 +550,22 @@ body {
    BUTTON CLASS SYSTEM
    All action buttons used across management pages.
    ═══════════════════════════════════════════════════════════ */
-
-/* Base button — applied to all */
 .btn {
-    display       : inline-block;
-    padding       : 6px 14px;
-    font-family   : var(--font-body);
-    font-size     : 0.8rem;
-    font-weight   : 700;
-    text-align    : center;
+    display        : inline-block;
+    padding        : 6px 14px;
+    font-family    : var(--font-body);
+    font-size      : 0.8rem;
+    font-weight    : 700;
+    text-align     : center;
     text-decoration: none;
-    border        : var(--border-thin);
-    border-radius : var(--radius);
-    box-shadow    : var(--shadow-small);
-    cursor        : pointer;
-    white-space   : nowrap;
-    transition    : transform var(--transition), box-shadow var(--transition),
-                    background var(--transition), color var(--transition);
-    line-height   : 1.4;
+    border         : var(--border-thin);
+    border-radius  : var(--radius);
+    box-shadow     : var(--shadow-small);
+    cursor         : pointer;
+    white-space    : nowrap;
+    transition     : transform var(--transition), box-shadow var(--transition),
+                     background var(--transition), color var(--transition);
+    line-height    : 1.4;
 }
 
 .btn:hover {
@@ -437,38 +578,24 @@ body {
     box-shadow : 1px 1px 0px var(--black);
 }
 
-/* Colour variants */
-.btn-primary  { background: var(--blue);        color: var(--white); }
-.btn-success  { background: var(--green);        color: var(--black); }
-.btn-danger   { background: var(--red);          color: var(--white); }
-.btn-warning  { background: var(--amber);        color: var(--black); }
-.btn-yellow   { background: var(--yellow);       color: var(--black); }
-.btn-dark     { background: var(--black);        color: var(--white); }
-.btn-view     { background: #0EA5E9;             color: var(--white); }
-.btn-release  { background: var(--green);        color: var(--black); }
-.btn-edit     { background: var(--yellow);       color: var(--black); }
-.btn-delete   { background: var(--red);          color: var(--white); }
-.btn-add      { background: var(--green);        color: var(--black); }
-.btn-accept   { background: var(--green);        color: var(--black); }
-.btn-decline  { background: var(--red);          color: var(--white); }
-.btn-reset    { background: var(--amber);        color: var(--black); }
-.btn-outline  {
-    background: transparent;
-    color     : var(--black);
-    border    : var(--border-thin);
-}
+.btn-primary  { background: var(--blue);   color: var(--white); }
+.btn-success  { background: var(--green);  color: var(--black); }
+.btn-danger   { background: var(--red);    color: var(--white); }
+.btn-warning  { background: var(--amber);  color: var(--black); }
+.btn-yellow   { background: var(--yellow); color: var(--black); }
+.btn-dark     { background: var(--black);  color: var(--white); }
+.btn-view     { background: #0EA5E9;        color: var(--white); }
+.btn-release  { background: var(--green);  color: var(--black); }
+.btn-edit     { background: var(--yellow); color: var(--black); }
+.btn-delete   { background: var(--red);    color: var(--white); }
+.btn-add      { background: var(--green);  color: var(--black); }
+.btn-accept   { background: var(--green);  color: var(--black); }
+.btn-decline  { background: var(--red);    color: var(--white); }
+.btn-reset    { background: var(--amber);  color: var(--black); }
+.btn-outline  { background: transparent;   color: var(--black); border: var(--border-thin); }
 
-/* Larger CTA button variant */
-.btn-lg {
-    padding    : 10px 24px;
-    font-size  : 0.9rem;
-}
-
-/* Full-width button */
-.btn-block {
-    display: block;
-    width  : 100%;
-}
+.btn-lg    { padding: 10px 24px; font-size: 0.9rem; }
+.btn-block { display: block; width: 100%; }
 
 /* ═══════════════════════════════════════════════════════════
    INLINE ACCEPT FORM  (inside pending requests table)
@@ -500,7 +627,7 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   STAT SUMMARY CARDS  (used on stats pages)
+   STAT SUMMARY CARDS
    ═══════════════════════════════════════════════════════════ */
 .stat-cards {
     display              : grid;
@@ -525,10 +652,10 @@ body {
 }
 
 .stat-card__number {
-    font-family    : var(--font-heading);
-    font-size      : 2.2rem;
-    line-height    : 1;
-    margin-bottom  : 4px;
+    font-family  : var(--font-heading);
+    font-size    : 2.2rem;
+    line-height  : 1;
+    margin-bottom: 4px;
 }
 
 .stat-card__label {
@@ -546,24 +673,24 @@ body {
     color      : var(--grey-text);
 }
 
-/* Colour top border per card type */
-.stat-card--total     { border-top: 5px solid var(--black);  }
-.stat-card--stable    { border-top: 5px solid var(--green);  }
-.stat-card--challenged{ border-top: 5px solid var(--amber);  }
-.stat-card--critical  { border-top: 5px solid var(--red);    }
+.stat-card--total      { border-top: 5px solid var(--black); }
+.stat-card--stable     { border-top: 5px solid var(--green); }
+.stat-card--challenged { border-top: 5px solid var(--amber); }
+.stat-card--critical   { border-top: 5px solid var(--red);   }
 
 /* ═══════════════════════════════════════════════════════════
-   TOP SYMPTOMS TABLE  (on stats page)
+   TOP SYMPTOMS TABLE
    ═══════════════════════════════════════════════════════════ */
 .symptom-bar-cell { min-width: 140px; }
+.symptom-pct      { font-size: 0.72rem; color: #666; }
 
 .symptom-bar-track {
-    height        : 10px;
-    background    : var(--grey-light);
-    border        : 1px solid var(--grey-mid);
-    border-radius : 2px;
-    overflow      : hidden;
-    margin-top    : 4px;
+    height       : 10px;
+    background   : var(--grey-light);
+    border       : 1px solid var(--grey-mid);
+    border-radius: 2px;
+    overflow     : hidden;
+    margin-top   : 4px;
 }
 
 .symptom-bar-fill {
@@ -590,7 +717,7 @@ body {
 .scale-chip--PHQ { background: #d9f99d; }
 
 /* ═══════════════════════════════════════════════════════════
-   PAGINATION  (7-page window)
+   PAGINATION
    ═══════════════════════════════════════════════════════════ */
 .pagination {
     display    : flex;
@@ -604,19 +731,19 @@ body {
 .pagination a,
 .pagination span,
 .pagination button {
-    display       : inline-block;
-    padding       : 5px 11px;
-    border        : var(--border-thin);
-    border-radius : var(--radius);
-    font-family   : var(--font-body);
-    font-size     : 0.82rem;
-    font-weight   : 600;
+    display        : inline-block;
+    padding        : 5px 11px;
+    border         : var(--border-thin);
+    border-radius  : var(--radius);
+    font-family    : var(--font-body);
+    font-size      : 0.82rem;
+    font-weight    : 600;
     text-decoration: none;
-    cursor        : pointer;
-    transition    : background var(--transition), transform var(--transition);
-    background    : var(--cream);
-    color         : var(--black);
-    box-shadow    : var(--shadow-small);
+    cursor         : pointer;
+    transition     : background var(--transition), transform var(--transition);
+    background     : var(--cream);
+    color          : var(--black);
+    box-shadow     : var(--shadow-small);
 }
 
 .pagination a:hover {
@@ -626,10 +753,10 @@ body {
 
 /* Current page — yellow fill, no link */
 .pagination .current-page {
-    background : var(--yellow);
+    background  : var(--yellow);
     border-color: var(--black);
-    cursor     : default;
-    font-weight: 700;
+    cursor      : default;
+    font-weight : 700;
 }
 
 /* Disabled prev/next */
@@ -651,7 +778,6 @@ body {
 
 /* ═══════════════════════════════════════════════════════════
    DETAIL PAGE — STUDENT INFO CARD
-   (used in professional/student_detail.html)
    ═══════════════════════════════════════════════════════════ */
 .student-info-card {
     background    : var(--cream);
@@ -683,10 +809,10 @@ body {
 .student-info-card__details { flex: 1; min-width: 200px; }
 
 .student-info-card__name {
-    font-family    : var(--font-heading);
-    font-size      : 1.15rem;
-    letter-spacing : 0.5px;
-    margin-bottom  : 4px;
+    font-family  : var(--font-heading);
+    font-size    : 1.15rem;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
 }
 
 .student-info-card__meta {
@@ -724,17 +850,17 @@ body {
 }
 
 .session-time-box__value {
-    font-family : var(--font-heading);
-    font-size   : 0.95rem;
+    font-family: var(--font-heading);
+    font-size  : 0.95rem;
 }
 
 /* ═══════════════════════════════════════════════════════════
-   TOP SYMPTOMS HIGHLIGHT  (student_detail + stats)
+   TOP SYMPTOMS HIGHLIGHT
    ═══════════════════════════════════════════════════════════ */
 .top-symptoms-row {
-    display  : flex;
-    flex-wrap: wrap;
-    gap      : 10px;
+    display      : flex;
+    flex-wrap    : wrap;
+    gap          : 10px;
     margin-bottom: 24px;
 }
 
@@ -763,16 +889,16 @@ body {
     text-transform : uppercase;
 }
 
-.symptom-pill--1 { border-color: var(--red);   background: var(--red-light);   }
-.symptom-pill--2 { border-color: var(--amber);  background: var(--amber-light); }
-.symptom-pill--3 { border-color: var(--teal);   background: var(--teal-light);  }
-.symptom-pill--4 { border-color: var(--purple); background: #f3e8ff;            }
-.symptom-pill--5 { border-color: var(--green);  background: var(--green-light); }
+.symptom-pill--1 { border-color: var(--red);    background: var(--red-light);   }
+.symptom-pill--2 { border-color: var(--amber);   background: var(--amber-light); }
+.symptom-pill--3 { border-color: var(--teal);    background: var(--teal-light);  }
+.symptom-pill--4 { border-color: var(--purple);  background: #f3e8ff;            }
+.symptom-pill--5 { border-color: var(--green);   background: var(--green-light); }
 
 /* ═══════════════════════════════════════════════════════════
-   HISTORY TABLE  (on stats page)
+   HISTORY TABLE
    ═══════════════════════════════════════════════════════════ */
-.history-table thead th:first-child { width: 150px; }
+.history-table thead th:first-child { width: 220px; }
 
 /* ═══════════════════════════════════════════════════════════
    PAGE FOOTER
@@ -788,33 +914,24 @@ body {
 /* ═══════════════════════════════════════════════════════════
    RESPONSIVE
    ═══════════════════════════════════════════════════════════ */
+@media (max-width: 700px) {
+    .charts-grid          { grid-template-columns: 1fr; }
+    .chart-card--full     { grid-column: 1; }
+}
+
 @media (max-width: 800px) {
-    .topbar { padding: 0 16px; }
-    .topbar__name, .topbar__role { display: none; }
-    .subpage { padding: 24px 14px 48px; }
-
-    .stat-cards { grid-template-columns: repeat(2, 1fr); }
-
-    .student-info-card {
-        flex-direction: column;
-        align-items   : flex-start;
-    }
-
-    .accept-form {
-        flex-direction: column;
-        align-items   : flex-start;
-    }
-
+    .topbar               { padding: 0 16px; }
+    .topbar__name,
+    .topbar__role         { display: none; }
+    .subpage              { padding: 24px 14px 48px; }
+    .stat-cards           { grid-template-columns: repeat(2, 1fr); }
+    .student-info-card    { flex-direction: column; align-items: flex-start; }
+    .accept-form          { flex-direction: column; align-items: flex-start; }
     .accept-form input[type="datetime-local"] { width: 100%; }
-
-    .top-symptoms-row { flex-direction: column; }
+    .top-symptoms-row     { flex-direction: column; }
 }
 
 @media (max-width: 500px) {
-    .stat-cards { grid-template-columns: 1fr; }
-
-    .actions-cell {
-        flex-direction: column;
-        align-items   : flex-start;
-    }
+    .stat-cards           { grid-template-columns: 1fr; }
+    .actions-cell         { flex-direction: column; align-items: flex-start; }
 }

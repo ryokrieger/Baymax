@@ -139,6 +139,17 @@ SVM_PATH    = os.environ.get('SVM_PATH',    str(BASE_DIR / 'models'   / 'svm.pkl
 SCALER_PATH = os.environ.get('SCALER_PATH', str(BASE_DIR / 'features' / 'scaler.pkl'))
 
 # ─────────────────────────────────────────────
+#  GROQ LLM
+#  Used by all three AI agents.
+#  GROQ_API_KEY  — secret key from console.groq.com
+#  GROQ_MODEL    — model string served by Groq
+#  GROQ_TIMEOUT  — per-request timeout in seconds
+# ─────────────────────────────────────────────
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
+GROQ_MODEL   = os.environ.get('GROQ_MODEL')
+GROQ_TIMEOUT = int(os.environ.get('GROQ_TIMEOUT'))
+
+# ─────────────────────────────────────────────
 #  ALLAUTH CONFIGURATION
 # ─────────────────────────────────────────────
 

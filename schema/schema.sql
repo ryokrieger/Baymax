@@ -16,12 +16,12 @@ CREATE TABLE IF NOT EXISTS students (
 );
 
 CREATE TABLE IF NOT EXISTS semester_schedule (
-    id                  SERIAL PRIMARY KEY,
-    semester            VARCHAR(20) UNIQUE NOT NULL,
-    start_date          DATE NOT NULL,
-    end_date            DATE NOT NULL,
-    is_current          BOOLEAN DEFAULT FALSE,
-    stats_compiled      BOOLEAN DEFAULT FALSE,
+    id                   SERIAL PRIMARY KEY,
+    semester             VARCHAR(20) UNIQUE NOT NULL,
+    start_date           DATE NOT NULL,
+    end_date             DATE NOT NULL,
+    is_current           BOOLEAN DEFAULT FALSE,
+    stats_compiled       BOOLEAN DEFAULT FALSE,
     notification_pending BOOLEAN DEFAULT FALSE
 );
 
@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS semester_stats (
     challenged  INT DEFAULT 0,
     critical    INT DEFAULT 0,
     at_risk_pct DECIMAL(5,2) DEFAULT 0,
+    llm_summary TEXT,
     compiled_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -48,8 +49,9 @@ CREATE TABLE IF NOT EXISTS questionnaire_responses (
     phq1  SMALLINT, phq2  SMALLINT, phq3  SMALLINT, phq4  SMALLINT,
     phq5  SMALLINT, phq6  SMALLINT, phq7  SMALLINT, phq8  SMALLINT,
     phq9  SMALLINT,
-    final_status    VARCHAR(20) CHECK (final_status IN ('Stable','Challenged','Critical')),
-    submitted_at    TIMESTAMP DEFAULT NOW(),
+    final_status       VARCHAR(20) CHECK (final_status IN ('Stable','Challenged','Critical')),
+    status_description TEXT,
+    submitted_at       TIMESTAMP DEFAULT NOW(),
     UNIQUE (student_id, semester)
 );
 
