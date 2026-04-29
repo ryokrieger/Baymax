@@ -166,7 +166,6 @@ def login_view(request):
                 return redirect('landing')
 
         # ── Student post-login flow ───────────────────────────────────
-        ResetAgent().run()
         semester = get_current_semester(cursor)
         if not semester:
             messages.error(request, 'No active semester configured. Please contact Admin IT.')
@@ -430,7 +429,6 @@ def register_google(request):
             request.session['role']      = 'student'
             request.session['full_name'] = existing_user['full_name']
 
-            ResetAgent().run()
             semester = get_current_semester(cursor)
             if not semester:
                 messages.error(request, 'No active semester configured.')
@@ -2211,7 +2209,7 @@ def admin_dashboard(request):
         if row and row['notification_pending']:
             messages.info(
                 request,
-                f'Automatic mid-semester reset was performed for '
+                f'Transition was performed for '
                 f'{row["semester"]}.'
             )
             cursor.execute(
@@ -2252,32 +2250,20 @@ def admin_students(request):
     cursor = conn.cursor()
     try:
         from datetime import date as _date
-        today = _date.today()
+        today        = _date.today()
+        current_year = today.year
+        next_year    = today.year + 1
 
         # Current semester
         cursor.execute(
             """
-            SELECT semester, start_date, end_date, stats_compiled
+            SELECT semester, start_date, stats_compiled
             FROM   semester_schedule
             WHERE  is_current = TRUE
             LIMIT  1
             """
         )
         current_sem = cursor.fetchone()
-
-        # Next upcoming semester (first one that starts after today)
-        cursor.execute(
-            """
-            SELECT semester, start_date, end_date
-            FROM   semester_schedule
-            WHERE  start_date > %s
-            AND    is_current = FALSE
-            ORDER  BY start_date ASC
-            LIMIT  1
-            """,
-            (today,)
-        )
-        next_sem = cursor.fetchone()
 
         # Compiled semester stats history
         cursor.execute(
@@ -2331,15 +2317,13 @@ def admin_students(request):
         end_page   = min(total_pages, start_page + 6)
         start_page = max(1, end_page - 6)
 
-        tomorrow = (today + __import__('datetime').timedelta(days=1)).isoformat()
-
         return render(request, 'admin/students.html', {
             'full_name':           request.session.get('full_name', 'Admin IT'),
             'students':            student_rows,
             'current_sem':         current_sem,
-            'next_sem':            next_sem,
             'semester_stats_rows': semester_stats_rows,
-            'tomorrow':            tomorrow,
+            'current_year':        current_year,
+            'next_year':           next_year,
             'page':                page,
             'total_pages':         total_pages,
             'page_range':          range(start_page, end_page + 1),
@@ -2435,102 +2419,65 @@ def admin_students_delete(request, student_id):
         conn.close()
 
 # ─────────────────────────────────────────────
-#  SET UPCOMING SEMESTER START DATE
+#  MANUAL SEMESTER TRANSITION  POST /admin/semester/transition/
 # ─────────────────────────────────────────────
 @require_http_methods(['POST'])
-def admin_students_set_start_date(request):
+def admin_semester_transition(request):
     """
-    Allows Admin IT to adjust the start_date of the next upcoming semester.
+    Manual semester transition triggered by Admin IT.
 
-    Rules:
-      - Only future (non-current) semesters may be edited.
-      - The chosen date must be after today.
-      - The semester that immediately precedes the edited one has its
-        end_date automatically set to new_start - 1 day, so there are
-        never any gaps between consecutive semesters.
+    Expects two POST fields:
+      sem_name  — one of: Spring | Summer | Fall
+      sem_year  — a four-digit year (current or next year)
+
+    These are combined into e.g. "Spring 2026" and passed to
+    ResetAgent.transition(), which:
+      1. Compiles + archives stats for the outgoing semester.
+      2. Generates an LLM narrative summary.
+      3. Deletes all questionnaire responses, appointments, and events.
+      4. Marks the outgoing semester stats_compiled = TRUE.
+      5. Upserts and activates the chosen semester as is_current = TRUE.
     """
     user_id, role = get_session_user(request)
     if not user_id or role != 'admin_it':
         return redirect('landing')
 
-    semester   = request.POST.get('semester',   '').strip()
-    start_date = request.POST.get('start_date', '').strip()
+    sem_name = request.POST.get('sem_name', '').strip()
+    sem_year = request.POST.get('sem_year', '').strip()
 
-    if not semester or not start_date:
-        messages.error(request, 'Semester and start date are required.')
+    # ── Input validation ──────────────────────────────────────────────
+    valid_names = ('Spring', 'Summer', 'Fall')
+    if sem_name not in valid_names:
+        messages.error(request, 'Please select a valid semester (Spring, Summer, or Fall).')
         return redirect('admin_students')
 
-    conn   = connect_db()
-    cursor = conn.cursor()
-    try:
-        from datetime import date as _date, timedelta
-
-        today     = _date.today()
-        new_start = _date.fromisoformat(start_date)
-
-        # Guard: date must be in the future
-        if new_start <= today:
-            messages.error(
-                request,
-                'The start date must be after today. Please choose a future date.'
-            )
-            return redirect('admin_students')
-
-        # Guard: semester must exist and must not be current
-        cursor.execute(
-            "SELECT semester FROM semester_schedule "
-            "WHERE semester = %s AND is_current = FALSE",
-            (semester,)
+    from datetime import date as _date
+    current_year = _date.today().year
+    valid_years  = (str(current_year), str(current_year + 1))
+    if sem_year not in valid_years:
+        messages.error(
+            request,
+            f'Please select a valid year ({current_year} or {current_year + 1}).'
         )
-        if not cursor.fetchone():
-            messages.error(request, 'Semester not found or it is the current semester.')
-            return redirect('admin_students')
+        return redirect('admin_students')
 
-        # Update the upcoming semester's start_date
-        cursor.execute(
-            "UPDATE semester_schedule SET start_date = %s WHERE semester = %s",
-            (new_start, semester)
-        )
+    target_semester = f'{sem_name} {sem_year}'
 
-        # Update the immediately preceding semester's end_date to
-        # new_start - 1 day, ensuring no gaps in the schedule.
-        # "Preceding" = the semester with the largest start_date
-        # that is still less than new_start.
-        new_end_prev = new_start - timedelta(days=1)
-        cursor.execute(
-            """
-            UPDATE semester_schedule
-            SET    end_date = %s
-            WHERE  semester = (
-                SELECT semester
-                FROM   semester_schedule
-                WHERE  start_date < %s
-                ORDER  BY start_date DESC
-                LIMIT  1
-            )
-            """,
-            (new_end_prev, new_start)
-        )
+    # ── Delegate to ResetAgent ────────────────────────────────────────
+    result = ResetAgent().transition(target_semester)
 
-        conn.commit()
+    if result['success']:
+        outgoing = result['outgoing'] or 'None'
         messages.success(
             request,
-            f'{semester} start date updated to {new_start.strftime("%B %d, %Y")}. '
-            f'The preceding semester now ends on {new_end_prev.strftime("%B %d, %Y")}.'
+            f'Semester transition complete. '
+            f'"{outgoing}" has been archived and "{target_semester}" is now active. '
+            f'All student responses, appointments, and events have been cleared.'
         )
-        return redirect('admin_students')
+    else:
+        messages.error(request, f'Transition failed: {result["error"]}')
 
-    except ValueError:
-        messages.error(request, 'Invalid date format. Please try again.')
-        return redirect('admin_students')
-    except Exception as exc:
-        conn.rollback()
-        messages.error(request, f'An error occurred: {exc}')
-        return redirect('admin_students')
-
-    finally:
-        cursor.close()
-        conn.close()
+    return redirect('admin_students')
 
 # ─────────────────────────────────────────────
 #  MANAGE PROFESSIONALS  GET /admin/professionals/

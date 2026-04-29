@@ -912,6 +912,111 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   META ERROR STATE
+   Used in subpage__meta when no semester is configured.
+   ═══════════════════════════════════════════════════════════ */
+.meta--error {
+    color      : var(--red);
+    font-weight: 700;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SEMESTER TRANSITION CONTROL
+   Admin-only UI for the manual semester transition form.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Hint paragraph — "Currently active: Spring 2025" */
+.transition-hint {
+    font-size    : 0.85rem;
+    color        : var(--grey-text);
+    font-weight  : 500;
+    margin-bottom: 18px;
+    line-height  : 1.6;
+}
+
+.transition-hint strong {
+    color      : var(--black);
+    font-weight: 700;
+}
+
+/* Row that holds the two selects and the submit button */
+.semester-select-row {
+    display    : flex;
+    align-items: flex-end;
+    gap        : 16px;
+    flex-wrap  : wrap;
+}
+
+/* Individual label + select pair */
+.semester-select-group {
+    display       : flex;
+    flex-direction: column;
+    gap           : 6px;
+}
+
+/* Label above each select */
+.semester-select-label {
+    font-size      : 0.78rem;
+    font-weight    : 700;
+    text-transform : uppercase;
+    letter-spacing : 0.5px;
+    color          : var(--black);
+}
+
+/* The <select> element */
+.semester-select {
+    padding      : 8px 36px 8px 12px;
+    font-family  : var(--font-body);
+    font-size    : 0.88rem;
+    font-weight  : 600;
+    color        : var(--black);
+    background   : var(--cream);
+    border       : var(--border-thin);
+    border-radius: var(--radius);
+    box-shadow   : var(--shadow-small);
+    outline      : none;
+    cursor       : pointer;
+    appearance   : none;
+    -webkit-appearance: none;
+    background-image   : url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23000' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat  : no-repeat;
+    background-position: right 12px center;
+    min-width    : 148px;
+    transition   : border-color var(--transition), box-shadow var(--transition),
+                   background-color var(--transition);
+}
+
+.semester-select:focus {
+    border-color: var(--teal);
+    box-shadow  : 3px 3px 0px var(--teal);
+    background-color: var(--white);
+}
+
+.semester-select:hover {
+    border-color: var(--teal);
+}
+
+/* Container that bottom-aligns the submit button with the selects */
+.semester-select-action {
+    display    : flex;
+    align-items: flex-end;
+    padding-bottom: 0;
+}
+
+/* Destructive action button — bright red, hard shadow */
+.btn-transition {
+    background : var(--red);
+    color      : var(--white);
+    font-size  : 0.88rem;
+    padding    : 9px 22px;
+}
+
+.btn-transition:hover {
+    background : #c53030;
+    color      : var(--white);
+}
+
+/* ═══════════════════════════════════════════════════════════
    RESPONSIVE
    ═══════════════════════════════════════════════════════════ */
 @media (max-width: 700px) {
@@ -929,6 +1034,10 @@ body {
     .accept-form          { flex-direction: column; align-items: flex-start; }
     .accept-form input[type="datetime-local"] { width: 100%; }
     .top-symptoms-row     { flex-direction: column; }
+    .semester-select-row  { flex-direction: column; align-items: flex-start; }
+    .semester-select      { min-width: 100%; }
+    .semester-select-action { width: 100%; }
+    .btn-transition       { width: 100%; text-align: center; }
 }
 
 @media (max-width: 500px) {

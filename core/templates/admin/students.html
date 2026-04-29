@@ -31,10 +31,9 @@
         Current semester:
         {% if current_sem %}
             <strong>{{ current_sem.semester }}</strong>
-            ({{ current_sem.start_date|date:"N j, Y" }}
-            &mdash; {{ current_sem.end_date|date:"N j, Y" }})
+            &mdash; activated {{ current_sem.start_date|date:"N j, Y" }}
         {% else %}
-            <span style="color:var(--red);font-weight:700;">None configured</span>
+            <span class="meta--error">None configured &mdash; perform a transition to activate a semester.</span>
         {% endif %}
     </p>
 
@@ -55,114 +54,95 @@
         </div>
         <div class="control-panel__body">
 
-            <!-- ── How it works ─────────────────────────────────── -->
+            <!-- ── What this does ───────────────────────────────────── -->
             <div class="control-panel__section">
-                <p class="control-panel__section-title">ℹ️ How Automatic Semester Transitions Work</p>
-                <div class="info-box info-box--green" style="line-height:1.7;">
-                    Semesters advance <strong>automatically</strong> when their end date passes.
-                    At that moment the Reset Agent will:
-                    <strong>(1)</strong> compile final stats into the History table below,
-                    <strong>(2)</strong> reset all student responses so they retake the chatbot,
-                    <strong>(3)</strong> delete all appointments and events, and
-                    <strong>(4)</strong> switch the current semester to the next one.
-                    You will see a notification on this dashboard when a transition occurs.
+                <p class="control-panel__section-title">ℹ️ How Manual Semester Transitions Work</p>
+                <div class="info-box info-box--green">
+                    Select the <strong>semester name</strong> and <strong>year</strong>
+                    you want to activate, then press <strong>Transition to Next Semester</strong>.
+                    The Reset Agent will:
+                    <strong>(1)</strong> compile and archive final stats for the current semester,
+                    <strong>(2)</strong> generate an AI narrative summary,
+                    <strong>(3)</strong> clear all student responses so every student retakes the chatbot,
+                    <strong>(4)</strong> delete all appointments and events, and
+                    <strong>(5)</strong> set your chosen semester as the new active semester.
+                    This action cannot be undone.
                 </div>
             </div>
 
-            <!-- ── Upcoming semester start date editor ───────────── -->
+            <!-- ── Transition form ──────────────────────────────────── -->
             <div class="control-panel__section">
-                <p class="control-panel__section-title">
-                    📌 Edit Upcoming Semester Start Date
+                <p class="control-panel__section-title">🔄 Transition to Next Semester</p>
+
+                {% if current_sem %}
+                <p class="transition-hint">
+                    Currently active: <strong>{{ current_sem.semester }}</strong>.
+                    Choose the semester below to replace it.
                 </p>
-                {% if next_sem %}
-                <p style="font-size:0.85rem;color:#555;margin-bottom:12px;">
-                    Next semester: <strong>{{ next_sem.semester }}</strong>
-                    (currently starts {{ next_sem.start_date|date:"N j, Y" }}).
-                    Adjusting this also shifts the end date of the current semester.
-                </p>
+                {% endif %}
+
                 <form method="POST"
-                      action="{% url 'admin_students_set_start_date' %}">
+                      action="{% url 'admin_semester_transition' %}"
+                      onsubmit="return confirmTransition(this);">
                     {% csrf_token %}
-                    <input type="hidden" name="semester" value="{{ next_sem.semester }}">
-                    <div class="form-grid form-grid--2col"
-                         style="max-width:480px;">
-                        <div class="form-group">
-                            <label for="start_date">
-                                New Start Date for {{ next_sem.semester }}
+
+                    <div class="semester-select-row">
+
+                        <div class="semester-select-group">
+                            <label for="sem_name" class="semester-select-label">
+                                Semester
                             </label>
-                            <input type="date"
-                                   id="start_date"
-                                   name="start_date"
-                                   value="{{ next_sem.start_date|date:'Y-m-d' }}"
-                                   min="{{ tomorrow }}"
-                                   required>
+                            <select id="sem_name" name="sem_name" class="semester-select">
+                                <option value="" disabled selected>— Select —</option>
+                                <option value="Spring">Spring</option>
+                                <option value="Summer">Summer</option>
+                                <option value="Fall">Fall</option>
+                            </select>
                         </div>
-                        <div class="form-group" style="justify-content:flex-end;">
-                            <button type="submit" class="btn btn-dark btn-lg">
-                                📌 Update Start Date
+
+                        <div class="semester-select-group">
+                            <label for="sem_year" class="semester-select-label">
+                                Year
+                            </label>
+                            <select id="sem_year" name="sem_year" class="semester-select">
+                                <option value="" disabled selected>— Select —</option>
+                                <option value="{{ current_year }}">{{ current_year }}</option>
+                                <option value="{{ next_year }}">{{ next_year }}</option>
+                            </select>
+                        </div>
+
+                        <div class="semester-select-action">
+                            <button type="submit" class="btn btn-transition">
+                                🔄 Transition to Next Semester
                             </button>
                         </div>
+
                     </div>
                 </form>
-                {% else %}
-                <div class="info-box">
-                    No upcoming semester found. Add more semesters to
-                    <code>semester_schedule</code> in the database.
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- ── All upcoming semesters ─────────────────────────── -->
-            <div class="control-panel__section">
-                <p class="control-panel__section-title">📅 Semester Schedule</p>
-                <div style="overflow-x:auto;">
-                    <table class="data-table" style="min-width:500px;">
-                        <thead>
-                            <tr>
-                                <th>Semester</th>
-                                <th>Start Date</th>
-                                <th>End Date</th>
-                                <th class="td-center">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% if current_sem %}
-                            <tr style="background:var(--yellow-light);font-weight:600;">
-                                <td>
-                                    {{ current_sem.semester }}
-                                    <span style="font-size:0.72rem;background:#000;
-                                                 color:var(--yellow);padding:1px 6px;
-                                                 border-radius:3px;margin-left:6px;
-                                                 font-weight:700;">Current</span>
-                                </td>
-                                <td>{{ current_sem.start_date|date:"N j, Y" }}</td>
-                                <td>{{ current_sem.end_date|date:"N j, Y" }}</td>
-                                <td class="td-center">
-                                    {% if current_sem.stats_compiled %}
-                                        <span class="badge badge-completed">Compiled</span>
-                                    {% else %}
-                                        <span class="badge badge-accepted">Active</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endif %}
-                            {% if next_sem %}
-                            <tr>
-                                <td>{{ next_sem.semester }}</td>
-                                <td>{{ next_sem.start_date|date:"N j, Y" }}</td>
-                                <td>{{ next_sem.end_date|date:"N j, Y" }}</td>
-                                <td class="td-center">
-                                    <span class="badge badge-pending">Upcoming</span>
-                                </td>
-                            </tr>
-                            {% endif %}
-                        </tbody>
-                    </table>
-                </div>
             </div>
 
         </div>
     </div>
+
+    <script>
+    function confirmTransition(form) {
+        var name = form.sem_name.value;
+        var year = form.sem_year.value;
+        if (!name || !year) {
+            alert('Please select both a semester and a year before proceeding.');
+            return false;
+        }
+        return confirm(
+            'Transition to ' + name + ' ' + year + '?\n\n' +
+            'This will permanently:\n' +
+            '  \u2022 Archive the current semester stats\n' +
+            '  \u2022 Delete all student responses\n' +
+            '  \u2022 Delete all appointments\n' +
+            '  \u2022 Delete all events\n\n' +
+            'This action cannot be undone. Continue?'
+        );
+    }
+    </script>
 
     <!-- ══════════════════════════════════════════════════════
          COMPILED SEMESTER STATS HISTORY
