@@ -1,0 +1,13 @@
+numpy
+scikit-learn
+django
+django-allauth
+requests
+PyJWT
+cryptography
+whitenoise
+dj-database-url
+psycopg2-binary
+python-dotenv
+joblib
+openai
