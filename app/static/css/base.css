@@ -1,0 +1,95 @@
+/* ═══════════════════════════════════════════════════════════
+   BASE — reset, typography, body
+   Requires variables.css to be loaded first.
+   ═══════════════════════════════════════════════════════════ */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-cream);
+  color: var(--black);
+  line-height: 1.6;
+}
+
+/* ── Page System ── */
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  animation: pageIn 0.4s ease-out;
+}
+
+.page.no-nav {
+  justify-content: flex-start;
+  align-items: center;
+}
+
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ── Backgrounds ── */
+.bg-gradient-hero {
+  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-mid) 40%, var(--gradient-end) 100%);
+}
+.bg-gradient-soft { background: linear-gradient(180deg, var(--bg-warm) 0%, var(--bg-cream) 100%); }
+.bg-mint { background: var(--mint-light); }
+.bg-peach { background: var(--peach-light); }
+.bg-coral { background: var(--coral-light); }
+.bg-lavender { background: var(--lavender-light); }
+.bg-cream { background: var(--bg-cream); }
+
+/* ── Typography ── */
+.display-xl {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 4.5vw, 3.8rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -1px;
+}
+.display-lg {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+}
+.display-md {
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+  font-weight: 600;
+  line-height: 1.2;
+}
+.body-lg { font-size: 1.05rem; font-weight: 500; color: var(--grey-500); }
+.body-sm { font-size: 0.85rem; color: var(--grey-500); }
+.label {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+@media (max-width: 640px) {
+  .display-xl { font-size: 2rem; }
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--bg-cream); }
+::-webkit-scrollbar-thumb { background: var(--grey-300); border: 2px solid var(--bg-cream); border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: var(--grey-400); }
+
+/* ── Shared Animations ── */
+@keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+.animate-float { animation: float 4s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+.animate-pulse { animation: pulse 2s ease-in-out infinite; }

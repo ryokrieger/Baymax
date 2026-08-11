@@ -1,0 +1,48 @@
+/* ═══════════════════════════════════════════════════════════
+   CHATBOT — assessment interface
+   ═══════════════════════════════════════════════════════════ */
+
+.chat-bubble {
+  padding: var(--space-sm) var(--space-md);
+  border: var(--border-thin);
+  border-radius: var(--radius-md);
+  max-width: 80%;
+}
+.chat-bubble-bot { background: var(--white); box-shadow: var(--shadow-small); align-self: flex-start; }
+.chat-bubble-user { background: var(--mint-light); align-self: flex-end; }
+
+.option-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-sm); }
+.option-btn {
+  padding: var(--space-md);
+  background: var(--white);
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-small);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.option-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-medium); background: var(--mint-light); }
+.option-btn.selected { background: var(--mint); border-color: var(--black); box-shadow: var(--shadow-medium); }
+
+/* ── Progress Bar ── */
+.progress-track {
+  height: 10px;
+  background: var(--grey-200);
+  border: var(--border-thin);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--mint), var(--mint-dark));
+  border-right: var(--border-thin);
+  border-radius: var(--radius-pill);
+  transition: width 0.4s ease;
+}
+
+@media (max-width: 640px) {
+  .option-grid { grid-template-columns: 1fr; }
+}

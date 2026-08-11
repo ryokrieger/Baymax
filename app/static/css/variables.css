@@ -1,0 +1,56 @@
+/* ═══════════════════════════════════════════════════════════
+   BAYMAX — DESIGN TOKENS
+   Source of truth for every color, shadow, radius, font, and
+   spacing value used across the app. Every other CSS file reads
+   from these variables — never hardcode a raw value elsewhere.
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  --bg-cream: #FFF8F0;
+  --bg-warm: #FFECD2;
+  --gradient-start: #FF9A8B;
+  --gradient-mid: #FFB085;
+  --gradient-end: #FFF5C3;
+
+  --mint: #7FD8BE;
+  --mint-dark: #5BC8A0;
+  --mint-light: #E0F7F0;
+  --peach: #FFB085;
+  --peach-dark: #E8956A;
+  --peach-light: #FFF0E6;
+  --coral: #FF6B6B;
+  --coral-dark: #E85555;
+  --coral-light: #FFE0E0;
+  --lavender: #C9B8FF;
+  --lavender-light: #F0EBFF;
+
+  --black: #1A1A1A;
+  --white: #FFFFFF;
+  --grey-100: #F5F5F5;
+  --grey-200: #E8E8E8;
+  --grey-300: #D1D1D1;
+  --grey-400: #A0A0A0;
+  --grey-500: #6B6B6B;
+
+  --shadow-hard: 6px 6px 0px var(--black);
+  --shadow-medium: 4px 4px 0px var(--black);
+  --shadow-small: 3px 3px 0px var(--black);
+  --shadow-hover: 8px 8px 0px var(--black);
+  --border-thick: 3px solid var(--black);
+  --border-thin: 2px solid var(--black);
+
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 28px;
+  --radius-pill: 999px;
+
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 20px;
+  --space-lg: 32px;
+  --space-xl: 48px;
+  --space-2xl: 64px;
+}

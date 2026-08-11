@@ -1,0 +1,94 @@
+/* ═══════════════════════════════════════════════════════════
+   DASHBOARD — stat summary cards, and other dashboard-area
+   widgets (events, filters, FAQ) that don't have a more specific
+   home among the other CSS files.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Stat Mini ── */
+.stat-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.stat-mini .stat-value { font-family: var(--font-display); font-size: 1.8rem; font-weight: 700; }
+.stat-mini .stat-label { font-family: var(--font-display); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--grey-500); }
+
+/* ── Bar Chart ── */
+.bar-chart { display: flex; align-items: flex-end; gap: var(--space-sm); height: 180px; padding: var(--space-sm) 0; }
+.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; }
+.bar { width: 100%; max-width: 48px; border: var(--border-thin); border-radius: var(--radius-sm) var(--radius-sm) 0 0; box-shadow: var(--shadow-small); transition: height 0.4s ease; position: relative; }
+.bar:hover::after { content: attr(data-val); position: absolute; top: -24px; left: 50%; transform: translateX(-50%); background: var(--black); color: var(--white); padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-family: var(--font-display); white-space: nowrap; }
+.bar-label { font-family: var(--font-display); font-size: 0.7rem; font-weight: 600; color: var(--grey-500); }
+
+/* ── Event Card ── */
+.event-card {
+  background: var(--white);
+  border: var(--border-thick);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-hard);
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+.event-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+.event-banner { height: 80px; display: flex; align-items: center; justify-content: center; font-size: 2rem; border-bottom: var(--border-thick); }
+.event-body { padding: var(--space-md); flex: 1; display: flex; flex-direction: column; gap: var(--space-xs); }
+
+/* ── Filters ── */
+.filter-bar {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  align-items: center;
+}
+.filter-chip {
+  padding: 6px 16px;
+  border: var(--border-thin);
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: var(--shadow-small);
+}
+.filter-chip:hover { transform: translateY(-1px); }
+.filter-chip.active { background: var(--black); color: var(--white); }
+
+/* ── FAQ Accordion ── (student Help page) */
+.faq-item {
+  background: var(--white);
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-small);
+  overflow: hidden;
+}
+.faq-q {
+  padding: var(--space-md);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.15s;
+}
+.faq-q:hover { background: var(--bg-warm); }
+.faq-a {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+  padding: 0 var(--space-md);
+  color: var(--grey-500);
+  font-size: 0.88rem;
+}
+.faq-item.open .faq-a { max-height: 200px; padding: 0 var(--space-md) var(--space-md); }
+.faq-item.open .faq-toggle { transform: rotate(45deg); }
+.faq-toggle { transition: transform 0.3s ease; font-size: 1.2rem; }
+
+@media (max-width: 640px) {
+  .filter-bar { justify-content: center; }
+}
