@@ -1,0 +1,58 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Baymax{% endblock %}</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="{% static 'css/variables.css' %}">
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'css/layout.css' %}">
+  <link rel="stylesheet" href="{% static 'css/components.css' %}">
+  <link rel="stylesheet" href="{% static 'css/forms.css' %}">
+  <link rel="stylesheet" href="{% static 'css/tables.css' %}">
+  <link rel="stylesheet" href="{% static 'css/chatbot.css' %}">
+  <link rel="stylesheet" href="{% static 'css/status.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <div class="page">
+
+    {% block navbar %}
+    <nav class="navbar">
+      <a href="/" class="brand">
+        <span class="brand-face">🤖</span> Baymax
+      </a>
+      <div class="nav-links">
+        {% block nav_links %}{% endblock %}
+      </div>
+    </nav>
+    {% endblock %}
+
+    <div class="page-scroll">
+      {% if messages %}
+        <div class="container">
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% block content %}{% endblock %}
+    </div>
+
+    {% block footer %}
+    <footer class="footer">
+      <span class="body-sm">&copy; {% now "Y" %} Baymax — University Mental Health Companion</span>
+    </footer>
+    {% endblock %}
+
+  </div>
+
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>
