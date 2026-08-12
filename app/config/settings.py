@@ -130,6 +130,20 @@ STORAGES = {
 }
 
 # ---------------------------------------------------------------------------
+# Cache — database-backed (via Postgres) rather than the default in-memory
+# cache, since Vercel's serverless functions don't share memory between
+# invocations. Both OTP storage (core/views/auth.py) and the @rate_limit
+# decorator depend on this being persistent.
+# ---------------------------------------------------------------------------
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'django_cache_table',
+    }
+}
+
+# ---------------------------------------------------------------------------
 # Auth / allauth (Google OAuth)
 # ---------------------------------------------------------------------------
 
@@ -143,6 +157,14 @@ SOCIALACCOUNT_PROVIDERS = {
         'SCOPE': ['profile', 'email'],
     },
 }
+
+# allauth only handles the Google handshake itself (its own internal
+# auth_user/socialaccount tables) — our own `users` table is checked
+# afterward by core/views/auth.py:google_callback_view, which this
+# redirects to.
+SOCIALACCOUNT_AUTO_SIGNUP = True
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+LOGIN_REDIRECT_URL = '/google/callback/'
 
 # ---------------------------------------------------------------------------
 # Email (core/email_utils.py handles all sending)

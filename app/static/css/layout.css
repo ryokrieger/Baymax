@@ -127,3 +127,43 @@
   .container { padding: var(--space-sm); }
   .footer { padding: var(--space-sm); justify-content: center; text-align: center; }
 }
+
+/* ── Landing Page ── */
+.landing-page-wrap {
+  position: relative;
+  min-height: calc(100vh - 90px); /* viewport minus footer, roughly */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl) var(--space-md);
+  overflow: hidden;
+}
+.landing-face { font-size: 1.2rem; margin-bottom: var(--space-md); }
+.landing-hero-title { max-width: 750px; margin: 0 auto; }
+.landing-highlight {
+  background: var(--white);
+  border: var(--border-thick);
+  border-radius: var(--radius-md);
+  padding: 2px 18px;
+  box-shadow: var(--shadow-hard);
+  display: inline-block;
+  transform: rotate(-1deg);
+}
+.landing-subtitle { max-width: 480px; margin: var(--space-md) auto 0; }
+.landing-cta-row {
+  display: flex;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: var(--space-lg);
+}
+.role-grid { max-width: 700px; margin: var(--space-xl) auto 0; }
+.role-card-mint { border-top: 6px solid var(--mint); }
+.role-card-lavender { border-top: 6px solid var(--lavender); }
+.role-card-peach { border-top: 6px solid var(--peach); }
+.role-card-coral { border-top: 6px solid var(--coral); }
+.deco-blob-1 { width: 280px; height: 280px; background: var(--mint); top: 8%; left: -6%; }
+.deco-blob-2 {
+  width: 200px; height: 200px; background: var(--peach); bottom: 8%; right: -4%;
+  border-radius: 40% 60% 60% 40% / 60% 40% 60% 40%;
+}

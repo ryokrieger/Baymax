@@ -1,8 +1,7 @@
 from django.urls import path
 
-from core import views
+from core.views import auth
 
-# Single placeholder route to verify base.html renders.
 urlpatterns = [
-    path('', views.home, name='home'),
+    path('', auth.landing_view, name='landing'),
 ]
