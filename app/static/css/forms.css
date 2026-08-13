@@ -38,6 +38,23 @@ select.input {
   margin-bottom: 6px;
 }
 
+/* ── Field Group ── (stacked form fields with consistent spacing) */
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+/* ── Inline Auth Link ── (e.g. "Register here" inside a sentence) */
+.auth-link {
+  color: var(--black);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: var(--mint-dark);
+  cursor: pointer;
+}
+
 /* ── Password Toggle ── */
 .pwd-wrap { position: relative; }
 .pwd-wrap .input { padding-right: 68px; }
@@ -60,7 +77,7 @@ select.input {
 .pwd-toggle:hover { background: var(--peach); transform: translateY(-50%) scale(1.05); }
 .pwd-toggle:active { transform: translateY(-50%) scale(0.95); }
 
-/* ── Validation ── */
+/* ── Validation ── (new — not in the mockup, built from existing tokens) */
 .input-error {
   border-color: var(--coral-dark);
   box-shadow: 3px 3px 0px var(--coral-dark);

@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Complete your account — Baymax{% endblock %}
+
+{% block navbar %}{% endblock %}
+
+{% block content %}
+<div class="bg-gradient-soft landing-page-wrap">
+  <div class="auth-wrap">
+    <div class="card card-lg">
+      <div class="text-center">
+        <div class="brand-face mb-sm">(●—●)</div>
+        <div class="badge badge-lavender mb-sm">Almost there</div>
+        <h2 class="display-md">Complete your account</h2>
+        <p class="body-sm mt-sm">Signed in as <strong>{{ full_name }}</strong> ({{ email }})</p>
+      </div>
+
+      <form method="post" class="field-group" novalidate>
+        {% csrf_token %}
+
+        <div class="grid-2 gap-sm">
+          <div>
+            <label class="field-label" for="id_student_id">Student ID</label>
+            <input type="text" id="id_student_id" name="student_id" class="input{% if errors.student_id %} input-error{% endif %}" placeholder="2026XXXXX" value="{{ form_data.student_id }}">
+            {% if errors.student_id %}<p class="error-text">{{ errors.student_id }}</p>{% endif %}
+          </div>
+          <div>
+            <label class="field-label" for="id_department">Department</label>
+            <select id="id_department" name="department" class="input{% if errors.department %} input-error{% endif %}">
+              <option value="">Select…</option>
+              {% for dept in departments %}
+                <option value="{{ dept }}" {% if form_data.department == dept %}selected{% endif %}>{{ dept }}</option>
+              {% endfor %}
+            </select>
+            {% if errors.department %}<p class="error-text">{{ errors.department }}</p>{% endif %}
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full">Complete Registration</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

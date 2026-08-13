@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Verify your email — Baymax{% endblock %}
+
+{% block navbar %}{% endblock %}
+
+{% block content %}
+<div class="bg-gradient-soft landing-page-wrap">
+  <div class="auth-wrap">
+    <div class="card card-lg">
+      <div class="text-center">
+        <div class="brand-face mb-sm">(●—●)</div>
+        <div class="badge badge-lavender mb-sm">Verify Email</div>
+        <h2 class="display-md">Enter your code</h2>
+        <p class="body-sm mt-sm">We sent a 6-digit code to <strong>{{ email }}</strong></p>
+      </div>
+
+      {% if error %}<div class="alert alert-error mt-md">{{ error }}</div>{% endif %}
+      {% if resent %}<div class="alert alert-success mt-md">A new code has been sent.</div>{% endif %}
+
+      <form method="post" class="field-group" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="email" value="{{ email }}">
+
+        <div>
+          <label class="field-label" for="id_otp_code">Verification Code</label>
+          <input type="text" id="id_otp_code" name="otp_code" class="input" placeholder="000000" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full">Verify & Create Account</button>
+      </form>
+
+      <form method="post" class="mt-sm">
+        {% csrf_token %}
+        <input type="hidden" name="email" value="{{ email }}">
+        <input type="hidden" name="resend" value="1">
+        <button type="submit" class="btn btn-ghost btn-sm btn-full">Resend code</button>
+      </form>
+
+      <p class="body-sm text-center mt-md">
+        Wrong email? <a href="/register/" class="auth-link">Start over</a>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

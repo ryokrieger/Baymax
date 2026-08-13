@@ -22,6 +22,10 @@
   padding: var(--space-md);
 }
 .card-compact { padding: var(--space-md); }
+.card-lg { padding: var(--space-lg); }
+
+.mb-sm { margin-bottom: var(--space-sm); }
+.mb-md { margin-bottom: var(--space-md); }
 
 .role-card {
   text-decoration: none;
@@ -64,6 +68,7 @@
 .btn-white { background: var(--white); color: var(--black); box-shadow: var(--shadow-medium); }
 .btn-white:hover { transform: translateY(-2px); box-shadow: var(--shadow-hard); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+.btn-full { width: 100%; }
 
 /* ── Badges ── */
 .badge {

@@ -196,6 +196,19 @@ SVM_PATH = str(BASE_DIR / env('SVM_PATH'))
 SCALER_PATH = str(BASE_DIR / env('SCALER_PATH'))
 
 # ---------------------------------------------------------------------------
+# Password validation — Django's own default for this setting is an empty
+# list; the standard 4 validators below only exist via `startproject`'s
+# template, so they have to be spelled out explicitly here.
+# ---------------------------------------------------------------------------
+
+AUTH_PASSWORD_VALIDATORS = [
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 8}},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+]
+
+# ---------------------------------------------------------------------------
 # Misc
 # ---------------------------------------------------------------------------
 
