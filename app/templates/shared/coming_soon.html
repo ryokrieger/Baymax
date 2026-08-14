@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard — Baymax{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="text-center mt-xl">
+    <div class="brand-face animate-float mb-md">(●—●)</div>
+    <h2 class="display-md">You're logged in as {{ role }}</h2>
+    <p class="body-sm mt-sm">Your dashboard is on its way</p>
+    <div class="landing-cta-row">
+      <a href="{% url 'password_change' %}" class="btn btn-ghost">Change Password</a>
+      <a href="{% url 'logout' %}" class="btn btn-coral">Log Out</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

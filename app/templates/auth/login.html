@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Log in — Baymax{% endblock %}
+
+{% block navbar %}{% endblock %}
+
+{% block content %}
+<div class="bg-gradient-soft landing-page-wrap">
+  <div class="auth-wrap">
+    <a href="{% url 'landing' %}" class="btn btn-ghost btn-sm mb-md">← Back</a>
+
+    <div class="card card-lg">
+      <div class="text-center">
+        <div class="brand-face mb-sm">(●—●)</div>
+        <h2 class="display-md">Welcome back</h2>
+        <p class="body-sm mt-sm">Log in to your Baymax account</p>
+      </div>
+
+      {% if error %}<div class="alert alert-error mt-md">{{ error }}</div>{% endif %}
+
+      <form method="post" class="field-group" novalidate>
+        {% csrf_token %}
+
+        <div>
+          <label class="field-label" for="id_email">Email Address</label>
+          <input type="email" id="id_email" name="email" class="input" placeholder="you@university.edu">
+        </div>
+
+        <div>
+          <label class="field-label" for="id_password">Password</label>
+          <div class="pwd-wrap">
+            <input type="password" id="id_password" name="password" class="input" placeholder="Your password">
+            <button type="button" class="pwd-toggle" data-toggle-target="id_password">◡—◡</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full">Log In</button>
+
+        <div class="divider">
+          <div class="divider-line"></div>
+          or
+          <div class="divider-line"></div>
+        </div>
+
+        <a href="/accounts/google/login/" class="btn btn-white btn-full">
+          <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.49h4.84a4.14 4.14 0 0 1-1.8 2.71v2.26h2.92a8.78 8.78 0 0 0 2.68-6.62z"/><path fill="#34A853" d="M9 18a8.62 8.62 0 0 0 5.96-2.18l-2.92-2.26a5.43 5.43 0 0 1-8.08-2.85H1.1v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.96 10.71a5.33 5.33 0 0 1 0-3.42V4.96H1.1a9.01 9.01 0 0 0 0 8.08l2.86-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A8.89 8.89 0 0 0 9 0a9 9 0 0 0-7.9 4.96l2.86 2.33A5.36 5.36 0 0 1 9 3.58z"/></svg>
+          Continue with Google
+        </a>
+
+        <p class="body-sm text-center">
+          New here? <a href="{% url 'register' %}" class="auth-link">Create an account</a>
+        </p>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% block extra_scripts %}
+<script>
+  document.querySelectorAll('.pwd-toggle').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var input = document.getElementById(btn.dataset.toggleTarget);
+      input.type = input.type === 'password' ? 'text' : 'password';
+    });
+  });
+</script>
+{% endblock %}
+{% endblock %}

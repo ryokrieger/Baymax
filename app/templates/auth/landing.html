@@ -23,27 +23,27 @@
     </p>
 
     <div class="landing-cta-row">
-      <a href="/register/" class="btn btn-primary">Get Started →</a>
-      <a href="/login/" class="btn btn-ghost">Log In</a>
+      <a href="{% url 'register' %}" class="btn btn-primary">Get Started →</a>
+      <a href="{% url 'login' %}" class="btn btn-ghost">Log In</a>
     </div>
 
     <div class="grid-2 role-grid">
-      <a href="/register/" class="card role-card role-card-mint">
+      <a href="{% url 'register' %}" class="card role-card role-card-mint">
         <div class="role-icon">🎓</div>
         <div class="role-title">Student</div>
         <p class="body-sm mt-sm">Take assessments & track wellbeing</p>
       </a>
-      <a href="/login/" class="card role-card role-card-lavender">
+      <a href="{% url 'login' %}" class="card role-card role-card-lavender">
         <div class="role-icon">🧠</div>
         <div class="role-title">Professional</div>
         <p class="body-sm mt-sm">Manage appointments & students</p>
       </a>
-      <a href="/login/" class="card role-card role-card-peach">
+      <a href="{% url 'login' %}" class="card role-card role-card-peach">
         <div class="role-icon">🏛️</div>
         <div class="role-title">Authority</div>
         <p class="body-sm mt-sm">View campus-wide analytics</p>
       </a>
-      <a href="/login/" class="card role-card role-card-coral">
+      <a href="{% url 'login' %}" class="card role-card role-card-coral">
         <div class="role-icon">⚙️</div>
         <div class="role-title">Admin IT</div>
         <p class="body-sm mt-sm">Manage users & semesters</p>

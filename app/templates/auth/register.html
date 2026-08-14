@@ -7,7 +7,7 @@
 {% block content %}
 <div class="bg-gradient-soft landing-page-wrap">
   <div class="auth-wrap">
-    <a href="/login/" class="btn btn-ghost btn-sm mb-md">← Back to login</a>
+    <a href="{% url 'login' %}" class="btn btn-ghost btn-sm mb-md">← Back to login</a>
 
     <div class="card card-lg">
       <div class="text-center">
@@ -82,7 +82,7 @@
         </a>
 
         <p class="body-sm text-center">
-          Already have an account? <a href="/login/" class="auth-link">Log in here</a>
+          Already have an account? <a href="{% url 'login' %}" class="auth-link">Log in here</a>
         </p>
       </form>
     </div>

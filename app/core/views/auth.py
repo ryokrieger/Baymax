@@ -2,7 +2,7 @@ import functools
 import secrets
 import time
 
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.password_validation import validate_password
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
@@ -341,3 +341,111 @@ def register_google_view(request):
         'form_data': form_data,
         'departments': VALID_DEPARTMENTS,
     })
+
+
+# ---------------------------------------------------------------------------
+# Login / Logout
+# ---------------------------------------------------------------------------
+
+@rate_limit(max_attempts=5, window=900)
+def login_view(request):
+    """Single login page for every role — role is detected from the database."""
+    error = None
+
+    if getattr(request, 'rate_limited', False):
+        return render(request, 'auth/login.html', {
+            'error': 'Too many failed attempts. Please wait 15 minutes and try again.',
+        })
+
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip().lower()
+        password = request.POST.get('password', '')
+
+        conn = connect_db()
+        try:
+            with conn.cursor() as cur:
+                cur.execute('SELECT id, role, password FROM users WHERE email = %s', [email])
+                row = cur.fetchone()
+        finally:
+            conn.close()
+
+        if row and check_password(password, row['password']):
+            request.session['user_id'] = row['id']
+            request.session['role'] = row['role']
+            request.session.cycle_key()
+            return redirect(_DASHBOARD_URL_NAMES[row['role']])
+
+        key = f'rate_limit:{email}'
+        cache.set(key, cache.get(key, 0) + 1, 900)
+        error = 'Invalid email or password.'
+
+    return render(request, 'auth/login.html', {'error': error})
+
+
+def logout_view(request):
+    """Clears the session entirely and returns to the landing page."""
+    request.session.flush()
+    return redirect('landing')
+
+
+# ---------------------------------------------------------------------------
+# Password Change (any authenticated role)
+# ---------------------------------------------------------------------------
+
+@login_required_role('student', 'professional', 'authority', 'admin_it')
+def password_change_view(request):
+    """Change password — requires the current password, works for every role."""
+    errors = {}
+    success = False
+
+    if request.method == 'POST':
+        current_password = request.POST.get('current_password', '')
+        new_password = request.POST.get('new_password', '')
+        confirm_password = request.POST.get('confirm_password', '')
+
+        conn = connect_db()
+        try:
+            with conn.cursor() as cur:
+                cur.execute('SELECT password FROM users WHERE id = %s', [request.session['user_id']])
+                row = cur.fetchone()
+
+            if not row or not check_password(current_password, row['password']):
+                errors['current_password'] = 'Current password is incorrect.'
+
+            if not new_password:
+                errors['new_password'] = 'New password is required.'
+            else:
+                try:
+                    validate_password(new_password)
+                except ValidationError as exc:
+                    errors['new_password'] = ' '.join(exc.messages)
+
+            if new_password and confirm_password != new_password:
+                errors['confirm_password'] = 'Passwords do not match.'
+
+            if not errors:
+                with conn:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            'UPDATE users SET password = %s WHERE id = %s',
+                            [make_password(new_password), request.session['user_id']],
+                        )
+                success = True
+        finally:
+            conn.close()
+
+    return render(request, 'auth/password_change.html', {'errors': errors, 'success': success})
+
+
+# ---------------------------------------------------------------------------
+# Placeholder dashboard
+# ---------------------------------------------------------------------------
+
+@login_required_role('student', 'professional', 'authority', 'admin_it')
+def role_home(request):
+    """
+    Shared temporary dashboard for every role. Gets replaced by the real
+    dashboard view+template in each role's own sprint (2/4/5/6) — routing
+    (core/urls.py) never needs to change again after this.
+    """
+    return render(request, 'shared/coming_soon.html', {'role': request.session.get('role')})
