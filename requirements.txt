@@ -1,0 +1,24 @@
+# CORE DATA SCIENCE & COMPUTING
+pandas
+numpy
+python-dateutil
+
+# VISUALIZATION
+matplotlib
+seaborn
+
+# MACHINE LEARNING
+scikit-learn
+scipy
+
+# EXPLAINABILITY
+lime
+
+# UTILITIES
+joblib
+python-dotenv
+
+# JUPYTER NOTEBOOK SUPPORT
+jupyterlab
+notebook
+ipywidgets
