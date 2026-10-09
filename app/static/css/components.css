@@ -1,0 +1,295 @@
+/* ═══════════════════════════════════════════════════════════
+   COMPONENTS — buttons, cards, badges, alerts, progress
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Cards ── */
+.card {
+  padding: var(--space-md);
+  background: var(--white);
+  border: var(--border-thick);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-hard);
+  transition: transform var(--duration-base) var(--ease), box-shadow var(--duration-base) var(--ease);
+}
+
+.card:hover {
+  transform: translateY(-3px) rotate(-0.2deg);
+  box-shadow: var(--shadow-hover);
+}
+
+/* A card that does not lift on hover (forms, tables, long text) */
+.card-static:hover {
+  transform: none;
+  box-shadow: var(--shadow-hard);
+}
+
+.card-flat {
+  padding: var(--space-md);
+  background: var(--white);
+  border: var(--border-thick);
+  border-radius: var(--radius-md);
+}
+
+.card-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Coloured edge on a card */
+.card-top-mint     { border-top: 5px solid var(--mint); }
+.card-top-peach    { border-top: 5px solid var(--peach); }
+.card-top-coral    { border-top: 5px solid var(--coral); }
+.card-top-lavender { border-top: 5px solid var(--lavender); }
+
+.card-left-mint     { border-left: 5px solid var(--mint); }
+.card-left-peach    { border-left: 5px solid var(--peach); }
+.card-left-coral    { border-left: 5px solid var(--coral); }
+.card-left-lavender { border-left: 5px solid var(--lavender); }
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: 12px 24px;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+  color: var(--black);
+  background: transparent;
+  border: var(--border-thick);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease), box-shadow var(--duration-fast) var(--ease), background var(--duration-fast);
+}
+
+.btn-primary { background: var(--black); color: var(--white); box-shadow: var(--shadow-medium); }
+.btn-accent  { background: var(--mint);  color: var(--black); box-shadow: var(--shadow-medium); }
+.btn-peach   { background: var(--peach); color: var(--black); box-shadow: var(--shadow-medium); }
+.btn-coral   { background: var(--coral); color: var(--black); box-shadow: var(--shadow-medium); }
+.btn-white   { background: var(--white); color: var(--black); box-shadow: var(--shadow-medium); }
+
+.btn-primary:hover,
+.btn-accent:hover,
+.btn-peach:hover,
+.btn-coral:hover,
+.btn-white:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hard);
+}
+
+.btn-accent:hover { background: var(--mint-dark); }
+.btn-peach:hover  { background: var(--peach-dark); }
+.btn-coral:hover  { background: var(--coral-dark); }
+
+.btn-primary:active,
+.btn-accent:active,
+.btn-peach:active,
+.btn-coral:active,
+.btn-white:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--black);
+}
+
+.btn-ghost       { border-color: transparent; }
+.btn-ghost:hover { background: var(--grey-100); }
+
+.btn-outline       { background: var(--white); }
+.btn-outline:hover { background: var(--grey-100); }
+
+.btn-sm { padding: 7px 16px; font-size: 0.78rem; }
+.btn-xs { padding: 5px 10px; font-size: var(--text-xs); border-width: 2px; }
+
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Several buttons side by side (table actions, form footers) */
+.btn-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+/* ── Badges ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--black);
+  background: var(--white);
+  border: var(--border-thin);
+  border-radius: var(--radius-pill);
+}
+
+.badge-sm { padding: 3px 10px; font-size: 0.65rem; }
+.badge-lg { padding: 6px 18px; font-size: 0.9rem; }
+
+/* Classification */
+.badge-stable     { background: var(--mint); }
+.badge-challenged { background: var(--peach); }
+.badge-critical   { background: var(--coral); }
+
+/* Appointment / record state */
+.badge-pending   { background: var(--coral-light);    color: var(--coral-text); }
+.badge-active    { background: var(--mint-light);     color: var(--mint-text); }
+.badge-completed { background: var(--grey-100);       color: var(--text-muted); border-color: var(--grey-300); }
+.badge-declined  { background: var(--peach-light);    color: var(--peach-text); }
+.badge-lavender  { background: var(--lavender);       color: var(--black); }
+.badge-muted     { background: var(--grey-100);       color: var(--text-muted); border-color: var(--grey-300); }
+
+/* ── Alerts (Django messages and inline notices) ── */
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--black);
+  background: var(--white);
+  border: var(--border-thin);
+  border-left-width: 8px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-small);
+}
+
+.alert-icon {
+  flex-shrink: 0;
+  line-height: 1.5;
+}
+
+.alert-body {
+  flex: 1;
+}
+
+.alert-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.alert-success,
+.alert-debug   { background: var(--mint-light);     border-left-color: var(--mint-dark); }
+.alert-info    { background: var(--lavender-light); border-left-color: var(--lavender); }
+.alert-warning { background: var(--peach-light);    border-left-color: var(--peach-dark); }
+.alert-error   { background: var(--coral-light);    border-left-color: var(--coral-dark); }
+
+/* ── Progress ── */
+.progress-track {
+  height: 10px;
+  overflow: hidden;
+  background: var(--grey-200);
+  border: var(--border-thin);
+  border-radius: var(--radius-pill);
+}
+
+.progress-sm { height: 8px; }
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--mint), var(--mint-dark));
+  border-right: var(--border-thin);
+  border-radius: var(--radius-pill);
+  transition: width var(--duration-slow) var(--ease);
+}
+
+.progress-fill-mint     { background: var(--mint); }
+.progress-fill-peach    { background: var(--peach); }
+.progress-fill-coral    { background: var(--coral); }
+.progress-fill-lavender { background: var(--lavender); }
+
+/* ── Dividers ── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--grey-500);
+}
+
+.divider-line {
+  flex: 1;
+  height: 2px;
+  background: var(--grey-200);
+}
+
+/* ── Empty state ── */
+.empty-state {
+  padding: var(--space-xl);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.empty-state-icon {
+  margin-bottom: var(--space-sm);
+  font-size: 3rem;
+}
+
+/* ── Role cards (landing) ── */
+.role-card {
+  display: block;
+  color: inherit;
+  text-align: center;
+  text-decoration: none;
+}
+
+.role-icon {
+  margin-bottom: var(--space-xs);
+  font-size: 2.2rem;
+}
+
+.role-title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+/* ── Icon tile (quick actions, list rows) ── */
+.icon-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  font-size: 1.4rem;
+  background: var(--mint);
+  border: var(--border-thin);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-small);
+}
+
+.icon-tile-peach    { background: var(--peach); }
+.icon-tile-coral    { background: var(--coral); }
+.icon-tile-lavender { background: var(--lavender); }
+
+@media (max-width: 640px) {
+  .btn { white-space: normal; }
+}
+
+/* ── Percentage helpers ──
+   Templates cannot use inline styles, so data-driven widths and heights
+   (progress bars, chart bars) are classes. Use w-pct-N on .progress-fill
+   and h-pct-N on .bar, where N is a whole number from 0 to 100.
+   Generated: one rule per value. */
+.w-pct-0{width:0%} .w-pct-1{width:1%} .w-pct-2{width:2%} .w-pct-3{width:3%} .w-pct-4{width:4%} .w-pct-5{width:5%} .w-pct-6{width:6%} .w-pct-7{width:7%} .w-pct-8{width:8%} .w-pct-9{width:9%} .w-pct-10{width:10%} .w-pct-11{width:11%} .w-pct-12{width:12%} .w-pct-13{width:13%} .w-pct-14{width:14%} .w-pct-15{width:15%} .w-pct-16{width:16%} .w-pct-17{width:17%} .w-pct-18{width:18%} .w-pct-19{width:19%} .w-pct-20{width:20%} .w-pct-21{width:21%} .w-pct-22{width:22%} .w-pct-23{width:23%} .w-pct-24{width:24%} .w-pct-25{width:25%} .w-pct-26{width:26%} .w-pct-27{width:27%} .w-pct-28{width:28%} .w-pct-29{width:29%} .w-pct-30{width:30%} .w-pct-31{width:31%} .w-pct-32{width:32%} .w-pct-33{width:33%} .w-pct-34{width:34%} .w-pct-35{width:35%} .w-pct-36{width:36%} .w-pct-37{width:37%} .w-pct-38{width:38%} .w-pct-39{width:39%} .w-pct-40{width:40%} .w-pct-41{width:41%} .w-pct-42{width:42%} .w-pct-43{width:43%} .w-pct-44{width:44%} .w-pct-45{width:45%} .w-pct-46{width:46%} .w-pct-47{width:47%} .w-pct-48{width:48%} .w-pct-49{width:49%} .w-pct-50{width:50%} .w-pct-51{width:51%} .w-pct-52{width:52%} .w-pct-53{width:53%} .w-pct-54{width:54%} .w-pct-55{width:55%} .w-pct-56{width:56%} .w-pct-57{width:57%} .w-pct-58{width:58%} .w-pct-59{width:59%} .w-pct-60{width:60%} .w-pct-61{width:61%} .w-pct-62{width:62%} .w-pct-63{width:63%} .w-pct-64{width:64%} .w-pct-65{width:65%} .w-pct-66{width:66%} .w-pct-67{width:67%} .w-pct-68{width:68%} .w-pct-69{width:69%} .w-pct-70{width:70%} .w-pct-71{width:71%} .w-pct-72{width:72%} .w-pct-73{width:73%} .w-pct-74{width:74%} .w-pct-75{width:75%} .w-pct-76{width:76%} .w-pct-77{width:77%} .w-pct-78{width:78%} .w-pct-79{width:79%} .w-pct-80{width:80%} .w-pct-81{width:81%} .w-pct-82{width:82%} .w-pct-83{width:83%} .w-pct-84{width:84%} .w-pct-85{width:85%} .w-pct-86{width:86%} .w-pct-87{width:87%} .w-pct-88{width:88%} .w-pct-89{width:89%} .w-pct-90{width:90%} .w-pct-91{width:91%} .w-pct-92{width:92%} .w-pct-93{width:93%} .w-pct-94{width:94%} .w-pct-95{width:95%} .w-pct-96{width:96%} .w-pct-97{width:97%} .w-pct-98{width:98%} .w-pct-99{width:99%} .w-pct-100{width:100%}
+.h-pct-0{height:0%} .h-pct-1{height:1%} .h-pct-2{height:2%} .h-pct-3{height:3%} .h-pct-4{height:4%} .h-pct-5{height:5%} .h-pct-6{height:6%} .h-pct-7{height:7%} .h-pct-8{height:8%} .h-pct-9{height:9%} .h-pct-10{height:10%} .h-pct-11{height:11%} .h-pct-12{height:12%} .h-pct-13{height:13%} .h-pct-14{height:14%} .h-pct-15{height:15%} .h-pct-16{height:16%} .h-pct-17{height:17%} .h-pct-18{height:18%} .h-pct-19{height:19%} .h-pct-20{height:20%} .h-pct-21{height:21%} .h-pct-22{height:22%} .h-pct-23{height:23%} .h-pct-24{height:24%} .h-pct-25{height:25%} .h-pct-26{height:26%} .h-pct-27{height:27%} .h-pct-28{height:28%} .h-pct-29{height:29%} .h-pct-30{height:30%} .h-pct-31{height:31%} .h-pct-32{height:32%} .h-pct-33{height:33%} .h-pct-34{height:34%} .h-pct-35{height:35%} .h-pct-36{height:36%} .h-pct-37{height:37%} .h-pct-38{height:38%} .h-pct-39{height:39%} .h-pct-40{height:40%} .h-pct-41{height:41%} .h-pct-42{height:42%} .h-pct-43{height:43%} .h-pct-44{height:44%} .h-pct-45{height:45%} .h-pct-46{height:46%} .h-pct-47{height:47%} .h-pct-48{height:48%} .h-pct-49{height:49%} .h-pct-50{height:50%} .h-pct-51{height:51%} .h-pct-52{height:52%} .h-pct-53{height:53%} .h-pct-54{height:54%} .h-pct-55{height:55%} .h-pct-56{height:56%} .h-pct-57{height:57%} .h-pct-58{height:58%} .h-pct-59{height:59%} .h-pct-60{height:60%} .h-pct-61{height:61%} .h-pct-62{height:62%} .h-pct-63{height:63%} .h-pct-64{height:64%} .h-pct-65{height:65%} .h-pct-66{height:66%} .h-pct-67{height:67%} .h-pct-68{height:68%} .h-pct-69{height:69%} .h-pct-70{height:70%} .h-pct-71{height:71%} .h-pct-72{height:72%} .h-pct-73{height:73%} .h-pct-74{height:74%} .h-pct-75{height:75%} .h-pct-76{height:76%} .h-pct-77{height:77%} .h-pct-78{height:78%} .h-pct-79{height:79%} .h-pct-80{height:80%} .h-pct-81{height:81%} .h-pct-82{height:82%} .h-pct-83{height:83%} .h-pct-84{height:84%} .h-pct-85{height:85%} .h-pct-86{height:86%} .h-pct-87{height:87%} .h-pct-88{height:88%} .h-pct-89{height:89%} .h-pct-90{height:90%} .h-pct-91{height:91%} .h-pct-92{height:92%} .h-pct-93{height:93%} .h-pct-94{height:94%} .h-pct-95{height:95%} .h-pct-96{height:96%} .h-pct-97{height:97%} .h-pct-98{height:98%} .h-pct-99{height:99%} .h-pct-100{height:100%}

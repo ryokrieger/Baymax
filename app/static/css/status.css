@@ -1,0 +1,136 @@
+/* ═══════════════════════════════════════════════════════════
+   STATUS — health status card, AI insight, top symptoms
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Status card ── */
+.status-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  text-align: center;
+  border-width: 4px;
+}
+
+.status-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  font-size: 1.8rem;
+  border: var(--border-thick);
+  border-radius: 50%;
+  box-shadow: var(--shadow-medium);
+}
+
+.status-title {
+  font-size: 1.4rem;
+}
+
+.status-summary {
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+/* Classification variants */
+.status-stable                  { border-color: var(--status-stable); }
+.status-stable .status-icon     { background: var(--status-stable); }
+
+.status-challenged              { border-color: var(--status-challenged); }
+.status-challenged .status-icon { background: var(--status-challenged); }
+
+.status-critical                { border-color: var(--status-critical); }
+.status-critical .status-icon   { background: var(--status-critical); }
+
+/* No assessment yet this semester */
+.status-none                    { border-color: var(--grey-300); border-style: dashed; }
+.status-none .status-icon       { background: var(--grey-100); }
+
+/* ── AI insight ── */
+.insight-card {
+  background: linear-gradient(135deg, var(--lavender-light), var(--bg-warm));
+}
+
+.insight-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.insight-icon {
+  font-size: 1.3rem;
+}
+
+.insight-text {
+  font-size: 0.95rem;
+  font-style: italic;
+  line-height: 1.7;
+}
+
+/* The description is still being generated, or the AI was unavailable */
+.insight-pending {
+  font-style: normal;
+  color: var(--text-muted);
+}
+
+.recommendation {
+  margin-top: var(--space-md);
+  padding: var(--space-sm);
+  font-size: var(--text-sm);
+  background: var(--white);
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+}
+
+.recommendation-label {
+  font-weight: 700;
+}
+
+/* ── Top symptoms ── */
+.symptom-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.symptom-rank {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.symptom-name {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.symptom-score {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.symptom-rank-1 { color: var(--peach-text); }
+.symptom-rank-2 { color: var(--mint-text); }
+.symptom-rank-3 { color: var(--lavender-text); }
+
+/* ── Help / appointment panel on the status page ── */
+.help-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+@media (max-width: 640px) {
+  .status-card {
+    padding: var(--space-md);
+  }
+}

@@ -1,0 +1,284 @@
+/* ═══════════════════════════════════════════════════════════
+   LAYOUT — page shell, navbar, container, footer, utilities
+   Every Django page is its own document, so the shell scrolls
+   normally (unlike the single-page mockup).
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Page shell ── */
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  animation: pageIn var(--duration-slow) ease-out;
+}
+
+.page-scroll {
+  flex: 1;
+}
+
+/* Pages with no navbar (landing, login, register): content centred */
+.page-centered {
+  align-items: center;
+  justify-content: flex-start;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ── Backgrounds ── */
+.bg-gradient-hero { background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-mid) 40%, var(--gradient-end) 100%); }
+.bg-gradient-soft { background: linear-gradient(180deg, var(--bg-warm) 0%, var(--bg-cream) 100%); }
+.bg-mint          { background: var(--mint-light); }
+.bg-peach         { background: var(--peach-light); }
+.bg-coral         { background: var(--coral-light); }
+.bg-lavender      { background: var(--lavender-light); }
+.bg-cream         { background: var(--bg-cream); }
+
+/* ── Navbar ── */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-nav);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--white);
+  border-bottom: var(--border-thick);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--black);
+  text-decoration: none;
+}
+
+.brand-face {
+  display: inline-block;
+  padding: 3px 10px;
+  font-size: 0.9rem;
+  background: var(--white);
+  border: var(--border-thin);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-small);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.nav-link {
+  position: relative;
+  padding: 6px 12px;
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--grey-500);
+  text-decoration: none;
+  border-radius: var(--radius-pill);
+  transition: color var(--duration-fast), background var(--duration-fast);
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: var(--black);
+  background: var(--bg-warm);
+}
+
+/* Notification count on a nav link (professional appointments) */
+.nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  margin-left: 6px;
+  padding: 0 6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--black);
+  background: var(--coral);
+  border: var(--border-thin);
+  border-radius: var(--radius-pill);
+}
+
+.nav-form {
+  display: inline;
+}
+
+/* ── Containers ── */
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-md);
+}
+
+.container-narrow {
+  max-width: var(--container-narrow);
+}
+
+/* ── Flash messages ── */
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-md) var(--space-md) 0;
+}
+
+/* ── Footer ── */
+.footer {
+  flex-shrink: 0;
+  padding: var(--space-md);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ── Landing & auth wrappers ── */
+.landing-wrap {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 900px;
+  padding: var(--space-xl) var(--space-md);
+  text-align: center;
+}
+
+.landing-title {
+  max-width: 750px;
+  margin: 0 auto;
+}
+
+.landing-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.auth-wrap {
+  width: 100%;
+  max-width: var(--auth-max);
+  padding: var(--space-lg) var(--space-md);
+}
+
+/* Decorative blobs behind the landing page */
+.deco-blob {
+  position: absolute;
+  border: var(--border-thick);
+  border-radius: 60% 40% 50% 50% / 50% 50% 40% 60%;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.deco-blob-1 {
+  top: 8%;
+  left: -6%;
+  width: 280px;
+  height: 280px;
+  background: var(--mint);
+}
+
+.deco-blob-2 {
+  right: -4%;
+  bottom: 8%;
+  width: 200px;
+  height: 200px;
+  background: var(--peach);
+  border-radius: 40% 60% 60% 40% / 60% 40% 60% 40%;
+}
+
+/* ── Grid ── */
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-md); }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-md); }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-md); }
+.grid-start { align-items: start; }
+
+/* ── Flex ── */
+.flex            { display: flex; }
+.flex-col        { flex-direction: column; }
+.flex-wrap       { flex-wrap: wrap; }
+.flex-1          { flex: 1; }
+.shrink-0        { flex-shrink: 0; }
+.items-center    { align-items: center; }
+.items-start     { align-items: flex-start; }
+.justify-between { justify-content: space-between; }
+.justify-center  { justify-content: center; }
+.justify-end     { justify-content: flex-end; }
+.ml-auto         { margin-left: auto; }
+
+/* ── Spacing ── */
+.gap-xs { gap: var(--space-xs); }
+.gap-sm { gap: var(--space-sm); }
+.gap-md { gap: var(--space-md); }
+.gap-lg { gap: var(--space-lg); }
+
+.mt-0  { margin-top: 0; }
+.mt-xs { margin-top: var(--space-xs); }
+.mt-sm { margin-top: var(--space-sm); }
+.mt-md { margin-top: var(--space-md); }
+.mt-lg { margin-top: var(--space-lg); }
+.mt-xl { margin-top: var(--space-xl); }
+
+.mb-0  { margin-bottom: 0; }
+.mb-xs { margin-bottom: var(--space-xs); }
+.mb-sm { margin-bottom: var(--space-sm); }
+.mb-md { margin-bottom: var(--space-md); }
+.mb-lg { margin-bottom: var(--space-lg); }
+.mb-xl { margin-bottom: var(--space-xl); }
+
+.w-full { width: 100%; }
+.block  { display: block; }
+.inline { display: inline; }
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .grid-2,
+  .grid-3,
+  .grid-4 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .grid-2,
+  .grid-3,
+  .grid-4 {
+    grid-template-columns: 1fr;
+  }
+
+  .navbar {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+  }
+
+  .nav-links {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .container {
+    padding: var(--space-sm);
+  }
+
+  .messages {
+    padding: var(--space-sm) var(--space-sm) 0;
+  }
+
+  .display-xl {
+    font-size: 2rem;
+  }
+}

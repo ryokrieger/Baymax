@@ -1,0 +1,107 @@
+/* ═══════════════════════════════════════════════════════════
+   BAYMAX — DESIGN TOKENS
+   The only file in the project that contains raw colour values.
+   Every other stylesheet uses var(--token).
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Backgrounds ── */
+  --bg-cream: #FFF8F0;
+  --bg-warm: #FFECD2;
+  --gradient-start: #FF9A8B;
+  --gradient-mid: #FFB085;
+  --gradient-end: #FFF5C3;
+
+  /* ── Brand palette (fills, borders, accents) ── */
+  --mint: #7FD8BE;
+  --mint-dark: #5BC8A0;
+  --mint-light: #E0F7F0;
+  --peach: #FFB085;
+  --peach-dark: #E8956A;
+  --peach-light: #FFF0E6;
+  --coral: #FF6B6B;
+  --coral-dark: #E85555;
+  --coral-light: #FFE0E0;
+  --lavender: #C9B8FF;
+  --lavender-light: #F0EBFF;
+
+  /* ── Text-safe brand colours ──
+     The fills above are too pale to read as text. Use these whenever a
+     brand colour is applied to text: each reaches at least 4.5:1 contrast
+     on white, cream and its own light tint. */
+  --mint-text: #1E7A5C;
+  --peach-text: #9C4F1B;
+  --coral-text: #B3262B;
+  --lavender-text: #5B3FBF;
+
+  /* ── Neutrals ── */
+  --black: #1A1A1A;
+  --white: #FFFFFF;
+  --grey-100: #F5F5F5;
+  --grey-200: #E8E8E8;
+  --grey-300: #D1D1D1;
+  --grey-400: #A0A0A0;
+  --grey-500: #6B6B6B;
+  --grey-placeholder: #767676;
+
+  /* ── Semantic roles ── */
+  --text: var(--black);
+  --text-muted: var(--grey-500);
+  --surface: var(--white);
+
+  --status-stable: var(--mint);
+  --status-challenged: var(--peach);
+  --status-critical: var(--coral);
+
+  --focus-ring: var(--lavender-text);
+  --overlay: color-mix(in srgb, var(--black) 45%, transparent);
+
+  /* ── Borders & shadows (neo-brutalist) ── */
+  --border-thick: 3px solid var(--black);
+  --border-thin: 2px solid var(--black);
+  --border-hairline: 1px solid var(--grey-200);
+
+  --shadow-small: 3px 3px 0 var(--black);
+  --shadow-medium: 4px 4px 0 var(--black);
+  --shadow-hard: 6px 6px 0 var(--black);
+  --shadow-hover: 8px 8px 0 var(--black);
+
+  /* ── Radii ── */
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 28px;
+  --radius-pill: 999px;
+
+  /* ── Typography ── */
+  --font-display: 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --text-xs: 0.7rem;
+  --text-sm: 0.85rem;
+  --text-base: 1rem;
+  --text-lg: 1.05rem;
+
+  /* ── Spacing ── */
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 20px;
+  --space-lg: 32px;
+  --space-xl: 48px;
+  --space-2xl: 64px;
+
+  /* ── Layout ── */
+  --container-max: 1200px;
+  --container-narrow: 780px;
+  --auth-max: 460px;
+  --navbar-height: 64px;
+
+  /* ── Motion ── */
+  --ease: ease;
+  --duration-fast: 0.15s;
+  --duration-base: 0.2s;
+  --duration-slow: 0.4s;
+
+  /* ── Stacking ── */
+  --z-nav: 50;
+  --z-overlay: 100;
+}

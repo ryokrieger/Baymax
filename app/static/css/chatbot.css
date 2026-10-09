@@ -1,0 +1,171 @@
+/* ═══════════════════════════════════════════════════════════
+   CHATBOT — the 26-question assessment (one question per page)
+
+   Each option is a <label class="option-btn"> that wraps a radio input
+   (class "option-input"), so the page works as a plain HTML form.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Progress header ── */
+.assessment-progress {
+  margin-bottom: var(--space-md);
+}
+
+.assessment-progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+}
+
+/* ── Question card ── */
+.question-card {
+  margin-bottom: var(--space-md);
+}
+
+.question-card:hover {
+  transform: none;
+  box-shadow: var(--shadow-hard);
+}
+
+.question-scale {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.question-text {
+  margin-bottom: var(--space-md);
+}
+
+/* ── Answer options ── */
+.option-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-sm);
+}
+
+/* Five-answer scale (PSS-10) */
+.option-grid-5 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.option-btn {
+  display: block;
+  position: relative;
+  padding: var(--space-md);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  text-align: left;
+  background: var(--white);
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-small);
+  cursor: pointer;
+  transition: transform var(--duration-fast), box-shadow var(--duration-fast), background var(--duration-fast);
+}
+
+.option-btn:hover {
+  background: var(--mint-light);
+  box-shadow: var(--shadow-medium);
+  transform: translateY(-2px);
+}
+
+.option-btn.selected,
+.option-btn:has(.option-input:checked) {
+  background: var(--mint);
+  box-shadow: var(--shadow-medium);
+}
+
+.option-btn:has(.option-input:focus-visible) {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* The radio stays in the page for keyboard and screen-reader users */
+.option-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.option-title {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+.option-desc {
+  display: block;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.option-btn.selected .option-desc,
+.option-btn:has(.option-input:checked) .option-desc {
+  color: var(--black);
+}
+
+/* ── Back / next ── */
+.chat-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+/* ── Conversation history (previous question and answer) ── */
+.chat-history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+  opacity: 0.7;
+}
+
+.chat-bubble {
+  max-width: 80%;
+  padding: var(--space-sm) var(--space-md);
+  border: var(--border-thin);
+  border-radius: var(--radius-md);
+}
+
+.chat-bubble-bot {
+  align-self: flex-start;
+  background: var(--white);
+  box-shadow: var(--shadow-small);
+}
+
+.chat-bubble-user {
+  align-self: flex-end;
+  background: var(--mint-light);
+}
+
+/* ── Saving / validation notice ── */
+.question-error {
+  margin-bottom: var(--space-sm);
+}
+
+@media (max-width: 900px) {
+  .option-grid-5 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .option-grid,
+  .option-grid-5 {
+    grid-template-columns: 1fr;
+  }
+
+  .chat-bubble {
+    max-width: 95%;
+  }
+
+  .chat-nav .btn {
+    flex: 1;
+  }
+}

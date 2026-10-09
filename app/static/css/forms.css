@@ -1,0 +1,244 @@
+/* ═══════════════════════════════════════════════════════════
+   FORMS — inputs, labels, validation, auth pages
+   ═══════════════════════════════════════════════════════════ */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+}
+
+.form-label {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.form-label-required::after {
+  content: ' *';
+  color: var(--coral-text);
+}
+
+.form-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.form-error {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--coral-text);
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.form-footer {
+  margin-top: var(--space-md);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ── Inputs ── */
+.input {
+  width: 100%;
+  padding: 12px 16px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--black);
+  background: var(--white);
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-small);
+  outline: none;
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+}
+
+.input::placeholder {
+  color: var(--grey-placeholder);
+}
+
+.input:hover {
+  box-shadow: var(--shadow-medium);
+}
+
+.input:focus,
+.input:focus-visible {
+  border-color: var(--black);
+  box-shadow: 3px 3px 0 var(--mint-dark);
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.input:disabled,
+.input[readonly] {
+  color: var(--text-muted);
+  background: var(--grey-100);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+textarea.input {
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+/* Native select with a CSS-drawn chevron (no image, no hex colour) */
+select.input {
+  padding-right: 40px;
+  cursor: pointer;
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--black) 50%),
+    linear-gradient(135deg, var(--black) 50%, transparent 50%);
+  background-position:
+    calc(100% - 22px) 50%,
+    calc(100% - 16px) 50%;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+
+/* Validation states */
+.input-error,
+.input[aria-invalid='true'] {
+  background: var(--coral-light);
+  border-color: var(--coral-dark);
+  box-shadow: 3px 3px 0 var(--coral-dark);
+}
+
+.input-success {
+  border-color: var(--mint-dark);
+  box-shadow: 3px 3px 0 var(--mint-dark);
+}
+
+/* ── Password field with show/hide toggle ── */
+.pwd-wrap {
+  position: relative;
+}
+
+.pwd-wrap .input {
+  padding-right: 72px;
+}
+
+.pwd-toggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  padding: 5px 10px;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  background: var(--bg-warm);
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+  transform: translateY(-50%);
+  user-select: none;
+  transition: background var(--duration-fast), transform var(--duration-fast);
+}
+
+.pwd-toggle:hover {
+  background: var(--peach);
+  transform: translateY(-50%) scale(1.05);
+}
+
+.pwd-toggle:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+/* ── Checkbox & radio ── */
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.check input {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--mint-dark);
+  cursor: pointer;
+}
+
+/* ── OTP code entry (Sprint 1) ── */
+.otp-input {
+  padding: 14px 16px;
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 0.6em;
+  text-align: center;
+  text-indent: 0.6em;
+}
+
+.otp-timer {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* ── Search box (list pages) ── */
+.search-form {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.search-form .input {
+  flex: 1;
+  min-width: 200px;
+}
+
+/* ── Auth card ── */
+.auth-card {
+  padding: var(--space-lg);
+}
+
+.auth-header {
+  margin-bottom: var(--space-md);
+  text-align: center;
+}
+
+.auth-header .brand-face {
+  margin-bottom: var(--space-sm);
+}
+
+@media (max-width: 640px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-card {
+    padding: var(--space-md);
+  }
+
+  .otp-input {
+    font-size: 1.4rem;
+    letter-spacing: 0.4em;
+    text-indent: 0.4em;
+  }
+}
