@@ -1,0 +1,93 @@
+/* TEMPORARY — style guide only. Deleted in Sprint 1 together with
+   styleguide.html and core/views/dev.py. Uses tokens only. */
+
+.sg-section { margin-top: var(--space-xl); }
+.sg-section:first-child { margin-top: 0; }
+
+.sg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-sm);
+}
+
+.sg-swatch {
+  overflow: hidden;
+  font-size: 0.75rem;
+  background: var(--white);
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+}
+
+.sg-chip {
+  height: 56px;
+  border-bottom: var(--border-thin);
+}
+
+.sg-label {
+  display: block;
+  padding: 6px 10px;
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.sg-token {
+  display: block;
+  padding: 0 10px 6px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.sg-text-sample {
+  padding: var(--space-sm);
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+}
+
+.sg-narrow { max-width: var(--auth-max); }
+.sg-shadow-sample {
+  padding: var(--space-md);
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--white);
+  border: var(--border-thick);
+  border-radius: var(--radius-md);
+}
+.sg-shadow-small  { box-shadow: var(--shadow-small); }
+.sg-shadow-medium { box-shadow: var(--shadow-medium); }
+.sg-shadow-hard   { box-shadow: var(--shadow-hard); }
+.sg-shadow-hover  { box-shadow: var(--shadow-hover); }
+
+.sg-chart-box { max-width: 420px; }
+
+/* Swatch fills */
+.sg-fill-bg-cream { background: var(--bg-cream); }
+.sg-fill-bg-warm { background: var(--bg-warm); }
+.sg-fill-mint { background: var(--mint); }
+.sg-fill-mint-dark { background: var(--mint-dark); }
+.sg-fill-mint-light { background: var(--mint-light); }
+.sg-fill-peach { background: var(--peach); }
+.sg-fill-peach-dark { background: var(--peach-dark); }
+.sg-fill-peach-light { background: var(--peach-light); }
+.sg-fill-coral { background: var(--coral); }
+.sg-fill-coral-dark { background: var(--coral-dark); }
+.sg-fill-coral-light { background: var(--coral-light); }
+.sg-fill-lavender { background: var(--lavender); }
+.sg-fill-lavender-light { background: var(--lavender-light); }
+.sg-fill-black { background: var(--black); }
+.sg-fill-white { background: var(--white); }
+.sg-fill-grey-100 { background: var(--grey-100); }
+.sg-fill-grey-200 { background: var(--grey-200); }
+.sg-fill-grey-300 { background: var(--grey-300); }
+.sg-fill-grey-400 { background: var(--grey-400); }
+.sg-fill-grey-500 { background: var(--grey-500); }
+
+/* Text-safe colour samples */
+.sg-on-mint-text { color: var(--mint-text); background: var(--white); }
+.sg-on-peach-text { color: var(--peach-text); background: var(--white); }
+.sg-on-coral-text { color: var(--coral-text); background: var(--white); }
+.sg-on-lavender-text { color: var(--lavender-text); background: var(--white); }

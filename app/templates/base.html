@@ -1,0 +1,66 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Baymax{% endblock %}</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="{% static 'css/variables.css' %}">
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'css/layout.css' %}">
+  <link rel="stylesheet" href="{% static 'css/components.css' %}">
+  <link rel="stylesheet" href="{% static 'css/forms.css' %}">
+  <link rel="stylesheet" href="{% static 'css/tables.css' %}">
+  <link rel="stylesheet" href="{% static 'css/chatbot.css' %}">
+  <link rel="stylesheet" href="{% static 'css/status.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <div class="page {% block page_class %}bg-gradient-soft{% endblock %}">
+
+    {% block navbar %}
+    <nav class="navbar" aria-label="Main">
+      <a class="brand" href="/">
+        <span class="brand-face" aria-hidden="true">(●—●)</span>
+        <span>Baymax</span>
+      </a>
+      <div class="nav-links">
+        {% block nav_links %}{% endblock %}
+      </div>
+    </nav>
+    {% endblock %}
+
+    {% block messages %}
+    {% if messages %}
+    <div class="messages" role="status">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }}">
+        <div class="alert-body">{{ message }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endblock %}
+
+    <main id="main" class="page-scroll">
+      {% block content %}{% endblock %}
+    </main>
+
+    {% block footer %}
+    <footer class="footer">
+      Baymax · A caring companion for student wellbeing
+    </footer>
+    {% endblock %}
+
+  </div>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

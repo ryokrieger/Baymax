@@ -1,0 +1,343 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Style Guide · Baymax{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/styleguide.css' %}">
+{% endblock %}
+
+{% block nav_links %}
+  <a class="nav-link active" href="#colours">Colours</a>
+  <a class="nav-link" href="#type">Type</a>
+  <a class="nav-link" href="#buttons">Buttons</a>
+  <a class="nav-link" href="#forms">Forms</a>
+  <a class="nav-link" href="#data">Data</a>
+  <a class="nav-link" href="#status">Status</a>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <div class="page-header">
+    <div>
+      <h1 class="display-lg">Baymax style guide</h1>
+      <p class="body-sm">Sprint 0 · every design-system component on one page. Temporary: removed in Sprint 1.</p>
+    </div>
+    <span class="badge badge-lavender">Debug only</span>
+  </div>
+
+  <!-- ───────── Colours ───────── -->
+  <section class="sg-section" id="colours">
+    <h2 class="display-md section-title">Colours</h2>
+    <div class="sg-grid">
+        <div class="sg-swatch"><div class="sg-chip sg-fill-bg-cream"></div><span class="sg-label">bg cream</span><span class="sg-token">--bg-cream</span></div>
+        <div class="sg-swatch"><div class="sg-chip sg-fill-bg-warm"></div><span class="sg-label">bg warm</span><span class="sg-token">--bg-warm</span></div>
+        <div class="sg-swatch"><div class="sg-chip sg-fill-mint"></div><span class="sg-label">mint</span><span class="sg-token">--mint</span></div>
+        <div class="sg-swatch"><div class="sg-chip sg-fill-mint-dark"></div><span class="sg-label">mint-dark</span><span class="sg-token">--mint-dark</span></div>
+        <div class="sg-swatch"><div class="sg-chip sg-fill-mint-light"></div><span class="sg-label">mint-light</span><span class="sg-token">--mint-light</span></div>
+        <div class="sg-swatch"><div class="sg-chip sg-fill-peach"></div><span class="sg-label">peach</span><span class="sg-token">--peach</span></div>
+        <div class="sg-swatch"><div class="sg-chip sg-fill-peach-dark"></div><span class="sg-label">peach-dark</span><span class="sg-token">--peach-dark</span></div>
+        <div class="sg-swatch"><div class="sg-chip sg-fill-peach-light"></div><span class="sg-label">peach-light</span><span class="sg-token">--peach-light</span></div>
+        <div class="sg-swatch"><div class="sg-chip sg-fill-coral"></div><span class="sg-label">coral</span><span class="sg-token">--coral</span></div>
+        <div class="sg-swatch"><div class="sg-chip sg-fill-coral-dark"></div><span class="sg-label">coral-dark</span><span class="sg-token">--coral-dark</span></div>
+        <div class="sg-swatch"><div class="sg-chip sg-fill-coral-light"></div><span class="sg-label">coral-light</span><span class="sg-token">--coral-light</span></div>
+        <div class="sg-swatch"><div class="sg-chip sg-fill-lavender"></div><span class="sg-label">lavender</span><span class="sg-token">--lavender</span></div>
+        <div class="sg-swatch"><div class="sg-chip sg-fill-lavender-light"></div><span class="sg-label">lavender-light</span><span class="sg-token">--lavender-light</span></div>
+        <div class="sg-swatch"><div class="sg-chip sg-fill-black"></div><span class="sg-label">black</span><span class="sg-token">--black</span></div>
+        <div class="sg-swatch"><div class="sg-chip sg-fill-white"></div><span class="sg-label">white</span><span class="sg-token">--white</span></div>
+        <div class="sg-swatch"><div class="sg-chip sg-fill-grey-100"></div><span class="sg-label">grey-100</span><span class="sg-token">--grey-100</span></div>
+        <div class="sg-swatch"><div class="sg-chip sg-fill-grey-200"></div><span class="sg-label">grey-200</span><span class="sg-token">--grey-200</span></div>
+        <div class="sg-swatch"><div class="sg-chip sg-fill-grey-300"></div><span class="sg-label">grey-300</span><span class="sg-token">--grey-300</span></div>
+        <div class="sg-swatch"><div class="sg-chip sg-fill-grey-400"></div><span class="sg-label">grey-400</span><span class="sg-token">--grey-400</span></div>
+        <div class="sg-swatch"><div class="sg-chip sg-fill-grey-500"></div><span class="sg-label">grey-500</span><span class="sg-token">--grey-500</span></div>
+    </div>
+
+    <h3 class="display-sm mt-lg mb-sm">Text-safe brand colours</h3>
+    <p class="body-sm mb-sm">Brand fills are too pale for text. These darker tokens reach at least 4.5:1 contrast.</p>
+    <div class="sg-grid">
+        <div class="sg-text-sample sg-on-mint-text">Mint text — Aa 4.5:1</div>
+        <div class="sg-text-sample sg-on-peach-text">Peach text — Aa 4.5:1</div>
+        <div class="sg-text-sample sg-on-coral-text">Coral text — Aa 4.5:1</div>
+        <div class="sg-text-sample sg-on-lavender-text">Lavender text — Aa 4.5:1</div>
+    </div>
+
+    <h3 class="display-sm mt-lg mb-sm">Shadows</h3>
+    <div class="sg-grid">
+      <div class="sg-shadow-sample sg-shadow-small">small</div>
+      <div class="sg-shadow-sample sg-shadow-medium">medium</div>
+      <div class="sg-shadow-sample sg-shadow-hard">hard</div>
+      <div class="sg-shadow-sample sg-shadow-hover">hover</div>
+    </div>
+  </section>
+
+  <!-- ───────── Typography ───────── -->
+  <section class="sg-section" id="type">
+    <h2 class="display-md section-title">Typography</h2>
+    <div class="card card-static">
+      <p class="label mb-sm">Display font: Space Grotesk · Body font: Inter</p>
+      <p class="display-xl mb-sm">Display XL</p>
+      <p class="display-lg mb-sm">Display large</p>
+      <p class="display-md mb-sm">Display medium</p>
+      <p class="display-sm mb-sm">Display small</p>
+      <p class="body-lg mb-xs">Body large: a calm, caring companion for student wellbeing.</p>
+      <p class="mb-xs">Body: Your responses across the PSS, GAD and PHQ scales are private to you and your care team.</p>
+      <p class="body-sm">Body small, muted: Spring 2026 semester</p>
+    </div>
+  </section>
+
+  <!-- ───────── Buttons, badges, alerts ───────── -->
+  <section class="sg-section" id="buttons">
+    <h2 class="display-md section-title">Buttons, badges and alerts</h2>
+
+    <div class="card card-static mb-md">
+      <div class="btn-row mb-md">
+        <button class="btn btn-primary" type="button">Primary</button>
+        <button class="btn btn-accent" type="button">Accent</button>
+        <button class="btn btn-peach" type="button">Peach</button>
+        <button class="btn btn-coral" type="button">Coral</button>
+        <button class="btn btn-white" type="button">White</button>
+        <button class="btn btn-outline" type="button">Outline</button>
+        <button class="btn btn-ghost" type="button">Ghost</button>
+        <button class="btn btn-primary" type="button" disabled>Disabled</button>
+      </div>
+      <div class="btn-row mb-md">
+        <button class="btn btn-accent btn-sm" type="button">Small</button>
+        <button class="btn btn-accent btn-xs" type="button">Extra small</button>
+      </div>
+      <div class="btn-row">
+        <span class="badge badge-stable">Stable</span>
+        <span class="badge badge-challenged">Challenged</span>
+        <span class="badge badge-critical">Critical</span>
+        <span class="badge badge-pending">Pending</span>
+        <span class="badge badge-active">Active</span>
+        <span class="badge badge-completed">Completed</span>
+        <span class="badge badge-declined">Declined</span>
+        <span class="badge badge-lavender">GAD-7</span>
+        <span class="badge badge-critical animate-pulse">3 new requests</span>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-sm">
+      <div class="alert alert-success"><span class="alert-icon" aria-hidden="true">✅</span><div class="alert-body"><span class="alert-title">Saved.</span> Your answer was recorded.</div></div>
+      <div class="alert alert-info"><span class="alert-icon" aria-hidden="true">💡</span><div class="alert-body"><span class="alert-title">Tip.</span> You can go back and change an answer before you finish.</div></div>
+      <div class="alert alert-warning"><span class="alert-icon" aria-hidden="true">⏳</span><div class="alert-body"><span class="alert-title">Almost there.</span> Your code expires in 2 minutes.</div></div>
+      <div class="alert alert-error"><span class="alert-icon" aria-hidden="true">⚠️</span><div class="alert-body"><span class="alert-title">That did not work.</span> Check your email and password.</div></div>
+    </div>
+  </section>
+
+  <!-- ───────── Forms ───────── -->
+  <section class="sg-section" id="forms">
+    <h2 class="display-md section-title">Forms</h2>
+    <div class="grid-2 grid-start">
+      <div class="card card-static">
+        <form class="form" onsubmit="return false">
+          <div class="form-group">
+            <label class="form-label form-label-required" for="sg-email">Email</label>
+            <input class="input" id="sg-email" type="email" placeholder="you@student.baymax.edu">
+            <span class="form-hint">Use your university address.</span>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="sg-dept">Department</label>
+              <select class="input" id="sg-dept"><option>CSE</option><option>EEE</option><option>ENG</option><option>ECO</option><option>BBA</option></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="sg-sem">Semester</label>
+              <select class="input" id="sg-sem"><option>1</option><option>2</option><option>3</option></select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="sg-pwd">Password</label>
+            <div class="pwd-wrap">
+              <input class="input input-error" id="sg-pwd" type="password" value="secret">
+              <button class="pwd-toggle" type="button">Show</button>
+            </div>
+            <span class="form-error">Password must be at least 8 characters.</span>
+          </div>
+          <label class="check"><input type="checkbox" checked> Remember me on this device</label>
+          <div class="form-actions">
+            <button class="btn btn-primary" type="button">Create account →</button>
+            <button class="btn btn-white" type="button">Continue with Google</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card card-static">
+        <p class="label mb-sm">Verification code</p>
+        <input class="input otp-input mb-sm" type="text" value="123456" aria-label="Verification code">
+        <p class="otp-timer mb-md">Code expires in 09:42</p>
+        <div class="divider mb-md"><span class="divider-line"></span>or<span class="divider-line"></span></div>
+        <div class="form-group mb-md">
+          <label class="form-label" for="sg-ta">Message</label>
+          <textarea class="input" id="sg-ta" placeholder="Tell us how we can help"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="sg-ro">Read-only</label>
+          <input class="input" id="sg-ro" value="Fall 2026" readonly>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────── Data ───────── -->
+  <section class="sg-section" id="data">
+    <h2 class="display-md section-title">Tables, pagination and charts</h2>
+
+    <div class="table-toolbar">
+      <div class="filter-bar">
+        <a class="filter-chip active" href="#data">All</a>
+        <a class="filter-chip" href="#data">Critical</a>
+        <a class="filter-chip" href="#data">Challenged</a>
+        <a class="filter-chip" href="#data">Stable</a>
+      </div>
+      <form class="search-form" onsubmit="return false">
+        <input class="input" type="search" placeholder="Search by name or email" aria-label="Search">
+        <button class="btn btn-sm btn-primary" type="button">Search</button>
+      </form>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Student</th><th>State</th><th>Classification</th><th class="td-actions">Actions</th></tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td><span class="cell-title">{{ row.name }}</span><span class="cell-sub">{{ row.meta }}</span></td>
+            <td><span class="badge badge-sm badge-{{ row.state }}">{{ row.state|capfirst }}</span></td>
+            <td><span class="badge badge-sm badge-{{ row.status|lower }}">{{ row.status }}</span></td>
+            <td class="td-actions">
+              <div class="btn-row">
+                {% if row.state == 'pending' %}
+                <button class="btn btn-xs btn-accent" type="button">Accept</button>
+                <button class="btn btn-xs btn-ghost" type="button">Decline</button>
+                {% elif row.state == 'active' %}
+                <button class="btn btn-xs btn-peach" type="button">Release</button>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <nav class="pagination" aria-label="Pagination">
+      <a class="page-link" href="#data">‹</a>
+      {% for p in pages %}
+        {% if p is None %}<span class="page-ellipsis">…</span>
+        {% elif p == current_page %}<a class="page-link active" href="#data" aria-current="page">{{ p }}</a>
+        {% else %}<a class="page-link" href="#data">{{ p }}</a>{% endif %}
+      {% endfor %}
+      <a class="page-link" href="#data">›</a>
+    </nav>
+    <p class="table-meta">Page {{ current_page }} of 20, from <code>core.utils.get_page_range()</code></p>
+
+    <div class="grid-2 grid-start mt-lg">
+      <div class="card card-static">
+        <p class="label mb-sm">Progress</p>
+        <div class="progress-track mb-sm"><div class="progress-fill w-pct-46"></div></div>
+        <div class="progress-track progress-sm mb-sm"><div class="progress-fill progress-fill-peach w-pct-60"></div></div>
+        <div class="progress-track progress-sm mb-sm"><div class="progress-fill progress-fill-coral w-pct-85"></div></div>
+        <div class="progress-track progress-sm"><div class="progress-fill progress-fill-lavender w-pct-25"></div></div>
+      </div>
+      <div class="card card-static">
+        <p class="label mb-sm">Bar chart</p>
+        <div class="bar-chart sg-chart-box">
+          <div class="bar-col"><div class="bar bar-mint h-pct-60" data-val="60%"></div><span class="bar-label">Stable</span></div>
+          <div class="bar-col"><div class="bar bar-peach h-pct-85" data-val="85%"></div><span class="bar-label">Challenged</span></div>
+          <div class="bar-col"><div class="bar bar-coral h-pct-30" data-val="30%"></div><span class="bar-label">Critical</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────── Status, assessment, dashboard ───────── -->
+  <section class="sg-section" id="status">
+    <h2 class="display-md section-title">Status and assessment</h2>
+
+    <div class="grid-3 mb-lg">
+      <div class="card card-top-mint">
+        <div class="label stat-label-row">Current status</div>
+        <div class="stat-value-lg text-mint">Stable</div>
+        <p class="stat-note">You are managing well this semester.</p>
+        <a class="btn btn-sm btn-ghost stat-action" href="#status">View details →</a>
+      </div>
+      <div class="card card-top-lavender">
+        <div class="label stat-label-row">Appointments</div>
+        <div class="stat-value-lg">No pending</div>
+        <p class="stat-note">You have no active appointments.</p>
+        <a class="btn btn-sm btn-ghost stat-action" href="#status">Request help →</a>
+      </div>
+      <div class="card card-top-coral">
+        <div class="label stat-label-row">Pending requests</div>
+        <div class="stat-value-lg text-coral">3</div>
+        <p class="stat-note">Students awaiting your response.</p>
+        <a class="btn btn-sm btn-ghost stat-action" href="#status">View requests →</a>
+      </div>
+    </div>
+
+    <div class="grid-3 mb-lg">
+      <div class="card card-static status-card status-stable">
+        <div class="status-icon animate-float" aria-hidden="true">✅</div>
+        <span class="badge badge-stable badge-lg">Stable</span>
+        <h3 class="display-lg status-title">You are doing well</h3>
+      </div>
+      <div class="card card-static status-card status-challenged">
+        <div class="status-icon" aria-hidden="true">💛</div>
+        <span class="badge badge-challenged badge-lg">Challenged</span>
+        <h3 class="display-lg status-title">You are carrying a lot</h3>
+      </div>
+      <div class="card card-static status-card status-critical">
+        <div class="status-icon" aria-hidden="true">🧡</div>
+        <span class="badge badge-critical badge-lg">Critical</span>
+        <h3 class="display-lg status-title">Let us support you</h3>
+      </div>
+    </div>
+
+    <div class="grid-2 grid-start mb-lg">
+      <div class="card card-static insight-card">
+        <div class="insight-head"><span class="insight-icon" aria-hidden="true">✨</span><span class="label">Baymax AI insight</span></div>
+        <p class="insight-text">“Your assessment shows a healthy profile this semester. Keep prioritising sleep and social connection.”</p>
+        <div class="recommendation"><span class="recommendation-label">💡 Recommendation:</span> Join the mindfulness workshop.</div>
+      </div>
+      <div class="flex flex-col gap-sm">
+        <div class="card card-left-peach symptom-card">
+          <div class="symptom-rank symptom-rank-1">🥇 Most impactful</div>
+          <div class="symptom-name">Academic pressure</div>
+          <div class="progress-track progress-sm"><div class="progress-fill progress-fill-peach w-pct-60"></div></div>
+          <p class="symptom-score">Score 2 / 4</p>
+        </div>
+        <div class="card card-left-mint symptom-card">
+          <div class="symptom-rank symptom-rank-2">🥈 2nd most impactful</div>
+          <div class="symptom-name">Sleep quality</div>
+          <div class="progress-track progress-sm"><div class="progress-fill progress-fill-mint w-pct-40"></div></div>
+          <p class="symptom-score">Score 1 / 4</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="assessment-progress sg-narrow">
+      <div class="assessment-progress-head"><span class="label">Question 12 of 26</span><span class="body-sm">46%</span></div>
+      <div class="progress-track"><div class="progress-fill w-pct-46"></div></div>
+    </div>
+    <form class="card card-static question-card" onsubmit="return false">
+      <div class="question-scale"><span class="badge badge-lavender">GAD-7</span><span class="body-sm">Anxiety scale</span></div>
+      <h3 class="display-md question-text">During a semester, how often have you felt nervous or stressed because of academic pressure?</h3>
+      <div class="option-grid">
+        <label class="option-btn"><input class="option-input" type="radio" name="sg-q" value="0"><span class="option-title">0 · Not at all</span><span class="option-desc">I have not experienced this</span></label>
+        <label class="option-btn"><input class="option-input" type="radio" name="sg-q" value="1" checked><span class="option-title">1 · Several days</span><span class="option-desc">A few days this semester</span></label>
+        <label class="option-btn"><input class="option-input" type="radio" name="sg-q" value="2"><span class="option-title">2 · More than half the days</span><span class="option-desc">Most of my semester</span></label>
+        <label class="option-btn"><input class="option-input" type="radio" name="sg-q" value="3"><span class="option-title">3 · Nearly every day</span><span class="option-desc">A constant experience</span></label>
+      </div>
+    </form>
+    <div class="chat-nav">
+      <button class="btn btn-ghost" type="button">← Previous</button>
+      <button class="btn btn-accent" type="button">Next question →</button>
+    </div>
+  </section>
+
+</div>
+{% endblock %}
