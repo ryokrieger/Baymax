@@ -18,7 +18,6 @@
 
 /* Pages with no navbar (landing, login, register): content centred */
 .page-centered {
-  align-items: center;
   justify-content: flex-start;
   position: relative;
   overflow-x: hidden;
@@ -148,6 +147,7 @@
 
 /* ── Landing & auth wrappers ── */
 .landing-wrap {
+  margin: 0 auto;
   position: relative;
   z-index: 1;
   width: 100%;
@@ -169,6 +169,7 @@
 }
 
 .auth-wrap {
+  margin: 0 auto;
   width: 100%;
   max-width: var(--auth-max);
   padding: var(--space-lg) var(--space-md);
@@ -281,4 +282,41 @@
   .display-xl {
     font-size: 2rem;
   }
+}
+
+/* Landing page extras and navbar user label */
+.landing-brand {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: var(--space-md);
+}
+
+.landing-highlight {
+  display: inline-block;
+  background: var(--white);
+  border: 3px solid var(--black);
+  box-shadow: var(--shadow-hard);
+  padding: 0 var(--space-sm);
+  transform: rotate(-1deg);
+}
+
+.landing-lede {
+  max-width: 560px;
+  margin: var(--space-md) auto var(--space-lg);
+}
+
+.landing-roles {
+  max-width: 700px;
+  margin: var(--space-lg) auto 0;
+}
+
+.landing-note {
+  margin-top: var(--space-lg);
+  font-size: 0.9rem;
+}
+
+.nav-user {
+  font-weight: 600;
+  font-size: 0.9rem;
 }

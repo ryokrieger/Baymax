@@ -10,3 +10,7 @@ ALTER TABLE users
 -- TRUE when a request is created; set to FALSE when the professional views it.
 ALTER TABLE appointments
     ADD COLUMN IF NOT EXISTS is_new BOOLEAN NOT NULL DEFAULT TRUE;
+
+-- Sprint 1: students pick their current semester (1-12) when they register.
+ALTER TABLE students
+    ADD COLUMN IF NOT EXISTS semester SMALLINT CHECK (semester BETWEEN 1 AND 12);

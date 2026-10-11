@@ -27,12 +27,21 @@
 
     {% block navbar %}
     <nav class="navbar" aria-label="Main">
-      <a class="brand" href="/">
+      <a class="brand" href="{{ nav.home_url }}">
         <span class="brand-face" aria-hidden="true">(●—●)</span>
         <span>Baymax</span>
       </a>
       <div class="nav-links">
-        {% block nav_links %}{% endblock %}
+        {% for item in nav.items %}
+        <a class="nav-link{% if item.active %} active{% endif %}" href="{{ item.url }}"{% if item.active %} aria-current="page"{% endif %}>{{ item.label }}</a>
+        {% endfor %}
+        {% if nav.is_authenticated %}
+        <span class="nav-user" title="{{ nav.role_label }}">{{ nav.user_name }}</span>
+        <form class="nav-form" method="post" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <button class="btn btn-sm btn-ghost" type="submit">Logout</button>
+        </form>
+        {% endif %}
       </div>
     </nav>
     {% endblock %}
@@ -61,6 +70,7 @@
 
   </div>
 
+  <script src="{% static 'js/app.js' %}" defer></script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>

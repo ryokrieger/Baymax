@@ -1,16 +1,25 @@
 """
 Baymax routes.
 
-Sprint 0 has one temporary route: the design-system style guide, shown at
-/ and /styleguide/ while DEBUG is on. Sprint 1 replaces it with the landing
-page and adds auth, then the four role portals:
-/student/, /professional/, /authority/, /admin/.
+Sprint 1 so far: landing, login, logout, password change and a placeholder
+dashboard for each role. Registration (OTP and Google) follows in this sprint;
+the real portals are built in Sprints 2-6.
 """
 from django.urls import path
 
-from core.views import dev
+from core.views import admin as admin_portal
+from core.views import auth, authority, professional, student
 
 urlpatterns = [
-    path('', dev.styleguide, name='styleguide'),
-    path('styleguide/', dev.styleguide),
+    # Authentication
+    path('',                 auth.landing,              name='landing'),
+    path('login/',           auth.login_view,           name='login'),
+    path('logout/',          auth.logout_view,          name='logout'),
+    path('account/password/', auth.password_change_view, name='password_change'),
+
+    # Role portals
+    path('student/',      student.student_dashboard,           name='student_dashboard'),
+    path('professional/', professional.professional_dashboard, name='professional_dashboard'),
+    path('authority/',    authority.authority_dashboard,       name='authority_dashboard'),
+    path('admin/',        admin_portal.admin_dashboard,        name='admin_dashboard'),
 ]

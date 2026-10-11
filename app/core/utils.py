@@ -1,6 +1,13 @@
-"""Shared helpers. Pagination lives here."""
+"""Shared helpers. Pagination and small reusable checks live here."""
+import re
+
+from core.db import connect_db, get_current_semester
+
+PASSWORD_MIN_LENGTH = 8
+PASSWORD_MAX_LENGTH = 128
 
 
+# ── Pagination ───────────────────────────────────────────────────────
 def get_page_param(request, name='page'):
     """Read ?page= safely. Anything invalid or below 1 becomes page 1."""
     try:
@@ -46,3 +53,34 @@ def get_page_range(current, total_pages, window=2):
         result.append(page)
         previous = page
     return result
+
+
+# ── Passwords ────────────────────────────────────────────────────────
+def validate_new_password(password):
+    """Return a list of problems with a proposed password (empty list = fine).
+
+    Used wherever a password is chosen: registration, password change and,
+    later, the admin password-set link.
+    """
+    problems = []
+    if len(password) < PASSWORD_MIN_LENGTH:
+        problems.append(f'Use at least {PASSWORD_MIN_LENGTH} characters.')
+    if len(password) > PASSWORD_MAX_LENGTH:
+        problems.append(f'Use no more than {PASSWORD_MAX_LENGTH} characters.')
+    if not re.search(r'[A-Za-z]', password):
+        problems.append('Include at least one letter.')
+    if not re.search(r'\d', password):
+        problems.append('Include at least one number.')
+    return problems
+
+
+# ── Database conveniences ────────────────────────────────────────────
+def fetch_current_semester():
+    """The current semester label (e.g. 'Fall 2026'), or None if none is set."""
+    conn = connect_db()
+    cursor = conn.cursor()
+    try:
+        return get_current_semester(cursor)
+    finally:
+        cursor.close()
+        conn.close()

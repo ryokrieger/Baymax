@@ -27,4 +27,7 @@ WHERE status = 'accepted';
 
 UPDATE appointments SET is_new = (status = 'pending');
 
+-- Sprint 1: give seed students a study semester (only where still empty).
+UPDATE students SET semester = ((id * 7) % 12) + 1 WHERE semester IS NULL;
+
 COMMIT;

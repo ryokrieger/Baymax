@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard · Baymax{% endblock %}
+{% block page_class %}bg-lavender{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <div>
+      <h1 class="display-lg">👋 Welcome, {{ full_name }}</h1>
+      <p class="body-sm">{% if semester %}{{ semester }} semester{% else %}No active semester{% endif %}</p>
+    </div>
+    <span class="badge badge-lavender">Mental Health Professional</span>
+  </div>
+
+  <div class="grid-3">
+    <div class="card card-top-mint">
+      <div class="label stat-label-row">Signed in as</div>
+      <div class="display-sm">{{ full_name }}</div>
+      <p class="stat-note">{{ email }}</p>
+    </div>
+    <div class="card card-top-lavender">
+      <div class="label stat-label-row">Role</div>
+      <div class="display-sm">Mental Health Professional</div>
+      <p class="stat-note">Detected from your account, not from the sign-in page.</p>
+    </div>
+    <div class="card card-top-peach">
+      <div class="label stat-label-row">Current semester</div>
+      <div class="display-sm">{% if semester %}{{ semester }}{% else %}Not set{% endif %}</div>
+      <p class="stat-note">Read from the database.</p>
+    </div>
+  </div>
+
+  <div class="alert alert-info mt-lg">
+    <span class="alert-icon" aria-hidden="true">🛠️</span>
+    <div class="alert-body"><span class="alert-title">Placeholder dashboard.</span> Appointments, student details and statistics arrive in Sprint 4.</div>
+  </div>
+</div>
+{% endblock %}

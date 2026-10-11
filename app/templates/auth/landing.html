@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Baymax · Your personal mental health companion{% endblock %}
+{% block page_class %}bg-gradient-hero page-centered{% endblock %}
+{% block navbar %}{% endblock %}
+
+{% block content %}
+<div class="deco-blob deco-blob-1" aria-hidden="true"></div>
+<div class="deco-blob deco-blob-2" aria-hidden="true"></div>
+
+<div class="landing-wrap">
+  <div class="brand-face landing-brand animate-float" aria-hidden="true">(●—●)</div>
+
+  <h1 class="display-xl landing-title">
+    Your Personal<br>
+    <span class="landing-highlight">Mental Health</span><br>
+    Companion
+  </h1>
+
+  <p class="body-lg landing-lede">
+    Baymax is here to help you track, understand, and improve your wellbeing throughout your university journey.
+  </p>
+
+  <div class="landing-actions mt-lg">
+    <a class="btn btn-primary" href="{% url 'login' %}">Get Started →</a>
+  </div>
+
+  <div class="grid-2 landing-roles">
+    {% for card in role_cards %}
+    <a class="card card-link role-card card-top-{{ card.accent }}" href="{% url 'login' %}?role={{ card.role }}">
+      <div class="role-icon" aria-hidden="true">{{ card.icon }}</div>
+      <div class="role-title">{{ card.title }}</div>
+      <p class="body-sm mt-sm">{{ card.blurb }}</p>
+    </a>
+    {% endfor %}
+  </div>
+
+  <p class="body-sm landing-note">© 2026 Baymax Project. Built with care for university students.</p>
+</div>
+{% endblock %}
+
+{% block footer %}{% endblock %}

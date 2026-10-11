@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign in · Baymax{% endblock %}
+{% block page_class %}bg-gradient-soft{% endblock %}
+{% block navbar %}{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <a class="btn btn-ghost btn-sm mb-md" href="{% url 'landing' %}">← Back to welcome</a>
+
+  <div class="card card-static auth-card">
+    <div class="auth-header">
+      <div class="brand-face" aria-hidden="true">(●—●)</div>
+      <h1 class="display-md">Welcome back</h1>
+      <p class="body-sm mt-sm">Sign in to your Baymax account</p>
+    </div>
+
+    <div class="filter-bar justify-center mb-md" role="group" aria-label="Sign in as">
+      {% for card in role_cards %}
+      <a class="filter-chip{% if card.role == role %} active{% endif %}" href="{% url 'login' %}?role={{ card.role }}"{% if card.role == role %} aria-current="true"{% endif %}>{{ card.title }}</a>
+      {% endfor %}
+    </div>
+
+    {% block login_messages %}
+    {% if messages %}
+    <div class="flex flex-col gap-xs mb-md" role="status">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'info' }}"><div class="alert-body">{{ message }}</div></div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endblock %}
+
+    {% if error %}
+    <div class="alert alert-error mb-md" role="alert">
+      <span class="alert-icon" aria-hidden="true">⚠️</span>
+      <div class="alert-body">{{ error }}</div>
+    </div>
+    {% endif %}
+
+    <form class="form" method="post" action="{% url 'login' %}" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="role" value="{{ role }}">
+
+      <div class="form-group">
+        <label class="form-label" for="login-email">Email address</label>
+        <input class="input" id="login-email" name="email" type="email" value="{{ email }}"
+               placeholder="you@university.edu" autocomplete="username" required autofocus>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="login-password">Password</label>
+        <div class="pwd-wrap">
+          <input class="input" id="login-password" name="password" type="password"
+                 placeholder="••••••••" autocomplete="current-password" required>
+          <button class="pwd-toggle" type="button" data-toggle-password="login-password"
+                  aria-label="Show password" aria-pressed="false">Show</button>
+        </div>
+      </div>
+
+      <button class="btn btn-primary w-full" type="submit">Sign In</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block messages %}{% endblock %}
+{% block footer %}{% endblock %}
