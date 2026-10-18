@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Create account · Baymax{% endblock %}
+{% block page_class %}bg-gradient-soft{% endblock %}
+{% block navbar %}{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <a class="btn btn-ghost btn-sm mb-md" href="{% url 'login' %}?role=student">← Back to sign in</a>
+
+  <div class="card card-static auth-card">
+    <div class="auth-header">
+      <div class="brand-face" aria-hidden="true">(●—●)</div>
+      <h1 class="display-md">Create your account</h1>
+      <p class="body-sm mt-sm">For students. We will email you a code to confirm your address.</p>
+    </div>
+
+    {% if errors.form %}
+    <div class="alert alert-error mb-md" role="alert">
+      <span class="alert-icon" aria-hidden="true">⚠️</span>
+      <div class="alert-body">{{ errors.form }}</div>
+    </div>
+    {% endif %}
+
+    <form class="form" method="post" action="{% url 'register' %}" novalidate>
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label form-label-required" for="reg-full_name">Full name</label>
+        <input class="input{% if errors.full_name %} input-error{% endif %}" id="reg-full_name" name="full_name" type="text" value="{{ values.full_name|default:'' }}" autocomplete="name" autofocus required>
+        {% if errors.full_name %}<span class="form-error">{{ errors.full_name }}</span>{% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label form-label-required" for="reg-email">Email address</label>
+        <input class="input{% if errors.email %} input-error{% endif %}" id="reg-email" name="email" type="email" value="{{ values.email|default:'' }}" autocomplete="email" placeholder="you@student.university.edu" required>
+        {% if errors.email %}<span class="form-error">{{ errors.email }}</span>{% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label form-label-required" for="reg-student_id">Student ID</label>
+        <input class="input{% if errors.student_id %} input-error{% endif %}" id="reg-student_id" name="student_id" type="text" value="{{ values.student_id|default:'' }}" autocomplete="off" maxlength="30" required>
+        {% if errors.student_id %}<span class="form-error">{{ errors.student_id }}</span>{% endif %}
+        <span class="form-hint">Letters, numbers and hyphens only.</span>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label form-label-required" for="reg-department">Department</label>
+          <select class="input{% if errors.department %} input-error{% endif %}" id="reg-department" name="department" required>
+            <option value="">Select</option>
+            {% for dept in departments %}<option value="{{ dept }}"{% if values.department == dept %} selected{% endif %}>{{ dept }}</option>{% endfor %}
+          </select>
+          {% if errors.department %}<span class="form-error">{{ errors.department }}</span>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label form-label-required" for="reg-semester">Semester</label>
+          <select class="input{% if errors.semester %} input-error{% endif %}" id="reg-semester" name="semester" required>
+            <option value="">Select</option>
+            {% for n in semesters %}<option value="{{ n }}"{% if values.semester == n %} selected{% endif %}>{{ n }}</option>{% endfor %}
+          </select>
+          {% if errors.semester %}<span class="form-error">{{ errors.semester }}</span>{% endif %}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label form-label-required" for="reg-password">Password</label>
+        <div class="pwd-wrap">
+          <input class="input{% if errors.password %} input-error{% endif %}" id="reg-password" name="password" type="password" autocomplete="new-password" required>
+          <button class="pwd-toggle" type="button" data-toggle-password="reg-password"
+                  aria-label="Show password" aria-pressed="false">Show</button>
+        </div>
+        {% if errors.password %}<span class="form-error">{{ errors.password }}</span>{% endif %}
+        <span class="form-hint">At least 8 characters, with a letter and a number.</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label form-label-required" for="reg-confirm_password">Confirm password</label>
+        <div class="pwd-wrap">
+          <input class="input{% if errors.confirm_password %} input-error{% endif %}" id="reg-confirm_password" name="confirm_password" type="password" autocomplete="new-password" required>
+          <button class="pwd-toggle" type="button" data-toggle-password="reg-confirm_password"
+                  aria-label="Show password" aria-pressed="false">Show</button>
+        </div>
+        {% if errors.confirm_password %}<span class="form-error">{{ errors.confirm_password }}</span>{% endif %}
+      </div>
+
+      <button class="btn btn-primary w-full" type="submit">Send verification code</button>
+    </form>
+
+    <p class="body-sm text-center mt-md">Already have an account? <a href="{% url 'login' %}?role=student">Sign in</a></p>
+  </div>
+</div>
+{% endblock %}
+
+{% block footer %}{% endblock %}
